@@ -1,0 +1,26 @@
+# ignore mac's folder info file (DS_Store)
+*.DS_Store
+
+# txt files: Be careful not to upload experiments datasets
+#*.txt
+#*.csv
+#*.docx
+#*.xlsx
+#*.dat
+
+#*.gz
+#*.tar.gz
+#*.tar
+#*.zip
+
+# Ignore output of CtauErr: 3 - 70 MB
+# /Macros/**/roots/2DFit_No_Weight/CtauErr/
+
+
+# Ignore main inputs - GB level
+skimmed_files/
+
+# Code test folder
+local_develop/
+local_*
+
