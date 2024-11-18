@@ -20,6 +20,7 @@
 # Ignore main inputs - GB level
 skimmed_files/
 Oniatree/
+*.root
 
 # Code test folder
 local_develop/
