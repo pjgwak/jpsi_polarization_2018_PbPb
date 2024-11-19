@@ -14,13 +14,13 @@ double getEffWeight(TH1D *h = 0, double pt = 0);
 // nevt: -1 = Loop all events, isMC: Data or MC, MCtype: 1(Signal) or 2(NP)
 // kTrigSel: Apply run2 particle trigger,
 // hiHFBinEdge: Heavy ion group Forward Calorimeter systematics info. None(0), Up(1), Down(2),
-// PDtype: Central(1) or Peripheral(2)
-void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1)
+// PDtype: DoubleMuon(1) or Peripheral(2)
+void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1)
 {
 	using namespace std;
 	using namespace hi;
 
-	TString date_label = "240910";
+	TString date_label = "241119";
 
 	// Example of using event plane namespace
 	cout
@@ -29,10 +29,10 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 	cout << " Index of " << EPNames[trackmid2] << " = " << trackmid2 << endl;
 
 	// Input path
-	TString fnameDataReReco = "/disk1/Oniatree/miniAOD/OniaTree_miniAOD_HIDoubleMuonPD_addQVect_merged.root";
-	TString fnameDataReRecoPeri = "/disk1/Oniatree/miniAOD/OniaTree_miniAOD_HIDoubleMuonPsiPeriPD_addQVect_merged.root";
-	TString fnameMC = "/disk1/Oniatree/miniAOD/OniaTreeMC_miniAOD_Jpsi_HydjetMB_5p02TeV_merged.root";
-	TString fnameMC_BtoJ = "/disk1/Oniatree/miniAOD/Oniatree_MC_BToJpsi_pThat-2_TuneCP5-EvtGen_HydjetDrumMB_5p02TeV_pythia8_miniAOD.root";
+	TString fnameDataReReco = "../Oniatree/Oniatree_miniAOD_Data_DoubleMuon.root";
+	TString fnameDataReRecoPeri = "../Oniatree/Oniatree_miniAOD_Data_Peri.root";
+	TString fnameMC = "../Oniatree/Oniatree_miniAOD_MC_Prompt.root";
+	TString fnameMC_BtoJ = "../Oniatree/Oniatree_miniAOD_MC_Nonprompt.root";
 
 	// Label of output
 	TString fPD;
@@ -154,12 +154,14 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 	Int_t Reco_mu_nTrkWMea[maxBranchSize]; //[Reco_mu_size]
 	TBranch *b_Reco_mu_nTrkWMea;
 	mytree->SetBranchAddress("Reco_mu_nTrkWMea", Reco_mu_nTrkWMea, &b_Reco_mu_nTrkWMea);
-	Bool_t Reco_mu_TMOneStaTight[maxBranchSize]; //[Reco_mu_size]
-	TBranch *b_Reco_mu_TMOneStaTight;
-	if (!isMC)
-	{
-		mytree->SetBranchAddress("Reco_mu_TMOneStaTight", Reco_mu_TMOneStaTight, &b_Reco_mu_TMOneStaTight);
-	}
+
+	// Not used?
+	// Bool_t Reco_mu_TMOneStaTight[maxBranchSize]; //[Reco_mu_size]
+	// TBranch *b_Reco_mu_TMOneStaTight;
+	// if (!isMC)
+	// {
+	// 	mytree->SetBranchAddress("Reco_mu_TMOneStaTight", Reco_mu_TMOneStaTight, &b_Reco_mu_TMOneStaTight);
+	// }
 
 	Int_t Reco_mu_nPixWMea[maxBranchSize]; //[Reco_mu_size]
 	TBranch *b_Reco_mu_nPixWMea;
@@ -167,9 +169,6 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 	Short_t Reco_QQ_sign[maxBranchSize]; //[Reco_QQ_size]
 	TBranch *b_Reco_QQ_sign;
 	mytree->SetBranchAddress("Reco_QQ_sign", Reco_QQ_sign, &b_Reco_QQ_sign);
-	Float_t rpAng[29]; //[nEP]
-	TBranch *b_rpAng;
-	// mytree->SetBranchAddress("rpAng", rpAng, &b_rpAng);
 
 	Int_t Reco_mu_nPixValHits[maxBranchSize]; //[Reco_QQ_size]
 	TBranch *b_Reco_mu_nPixValHits;
@@ -199,6 +198,11 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 		mytree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen, &b_Reco_mu_whichGen);
 		mytree->SetBranchAddress("Gen_weight", &Gen_weight, &b_Gen_weight);
 	}
+
+	// rpAngle
+	Float_t rpAng[12]; //[nEP]
+	TBranch *b_rpAng;  //!
+	mytree->SetBranchAddress("rpAng", rpAng, &b_rpAng);
 
 	// Particle tirgger selection
 	// Refer to "Eff_Acc/cutsAndBin.h:int kTrigJpsi = 12;"
@@ -272,6 +276,7 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 	double TnPweight[nMaxDimu] = {1.};
 	double weight = 1;
 	double cos_theta_hx[nMaxDimu];
+	float cos_ep[nMaxDimu];
 
 	// Connec to output tree branch
 	// muon+muon pair event tree
@@ -301,6 +306,7 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 	mmevttree->Branch("weight", &weight, "weight/D");
 	mmevttree->Branch("TnPweight", TnPweight, "TnPweight[nDimu]/D");
 	mmevttree->Branch("cos_theta_hx", cos_theta_hx, "cos_theta_hx[nDimu]/D");
+	mmevttree->Branch("cos_ep", cos_ep, "cos_ep[nDimu]/F");
 	////////////////////////////////////////////////////////////////////////
 	////////////////// TLorentzVector dummies
 	////////////////////////////////////////////////////////////////////////
@@ -340,6 +346,15 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 		// HLT trigger - Must match to Jpsi
 		if (!((HLTriggers & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
 			continue;
+
+		// unit vectors
+		TVector3 uy_lab(0, 1, 0);
+		TVector3 uz_lab(0, 0, 1);
+		TVector3 uy_rotated = uy_lab;
+
+		// get rpAngles
+		float rpHFm2 = rpAng[HFm2];
+		float rpHFp2 = rpAng[HFp2];
 
 		// cout << "Reco_QQ_size : " << Reco_QQ_size << endl;
 		for (Int_t irqq = 0; irqq < Reco_QQ_size; ++irqq)
@@ -506,22 +521,30 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 			}
 			// End of selection cuts
 
-			// Lorentz transfomration
-			// Define 4-momentum in Lab frame
-			TLorentzVector jpsi_lab(JP_Reco->Px(), JP_Reco->Py(),
-									JP_Reco->Pz(), JP_Reco->Energy());
-			TLorentzVector mupl_lab(mupl_Reco->Px(), mupl_Reco->Py(),
-									mupl_Reco->Pz(), mupl_Reco->Energy());
-			TLorentzVector mumi_lab(mumi_Reco->Px(), mumi_Reco->Py(),
-									mumi_Reco->Pz(), mumi_Reco->Energy());
+			// consider auto correleation
+			float eta_ = JP_Reco->Eta();
+			float rpAng = 0;
+			if (eta_ >= 0)
+			{
+				rpAng = rpHFm2;
+			}
+			else
+			{
+				rpAng = rpHFp2;
+			}
 
-			// Copy 4-momentum
-			TLorentzVector *mupl_QRF = new TLorentzVector(mupl_lab);
-			TLorentzVector *mumi_QRF = new TLorentzVector(mumi_lab);
+			// rotate axis
+			uy_rotated.Rotate(rpAng, uz_lab);
 
 			// Boost to Quarkonia rest frame
-			mupl_QRF->Boost(-jpsi_lab.BoostVector());
-			mumi_QRF->Boost(-jpsi_lab.BoostVector());
+			std::unique_ptr<TLorentzVector> mupl_qrf = std::make_unique<TLorentzVector>(*mupl_Reco);
+			mupl_qrf->Boost(-JP_Reco->BoostVector());
+			std::unique_ptr<TLorentzVector> mumi_qrf = std::make_unique<TLorentzVector>(*mumi_Reco);
+			mumi_qrf->Boost(-JP_Reco->BoostVector());
+
+			TVector3 mupl_qrf_3d = mupl_qrf->Vect(); // get px, py, pz
+			// cos(theta) in EP
+			double cos_ep_ = mupl_qrf_3d.Dot(uy_rotated) / mupl_qrf_3d.Mag(); // Mag of unit vector is 1
 
 			// Push the values into the branches
 			if (isMC)
@@ -543,16 +566,18 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = true, int MCtype = 1, int kTri
 			ctau3D2S[nDimu] = ctau3D[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DErr2S[nDimu] = ctau3DErr[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DRes2S[nDimu] = ctau3DRes[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
-			cos_theta_hx[irqq] = TMath::Cos(jpsi_lab.Angle(mupl_QRF->Vect()));
+			// cos_theta_hx[irqq] = TMath::Cos(jpsi_lab.Angle(mupl_qrf->Vect()));
+			cos_ep[irqq] = cos_ep_;
 			nDimu++;
 
-			// Delocate memories of object
-			mupl_QRF->Delete();
-			mumi_QRF->Delete();
+			// cout << "Reco QQ Iterator: " << irqq << "\n";
+			// cout << "cos_theta_ep: " << cos_ep_ << endl;
 		} // end of dimuon loop
 
 		if (nDimu > 0)
+		{
 			mmevttree->Fill();
+		}
 
 	} // end of event loop
 
