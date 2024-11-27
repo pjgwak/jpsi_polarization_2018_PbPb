@@ -15,12 +15,13 @@ double getEffWeight(TH1D *h = 0, double pt = 0);
 // kTrigSel: Apply run2 particle trigger,
 // hiHFBinEdge: Heavy ion group Forward Calorimeter systematics info. None(0), Up(1), Down(2),
 // PDtype: DoubleMuon(1) or Peripheral(2)
-void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1)
+void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1, string data_label_ = "24XXXX")
 {
 	using namespace std;
 	using namespace hi;
 
-	TString date_label = "241119";
+	//TString date_label = data_label_;
+	TString date_label = "241127";
 
 	// Example of using event plane namespace
 	cout
@@ -238,11 +239,11 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	TFile *out_file;
 	if (isMC)
 	{
-		out_file = new TFile(Form("skimmed_files/OniaFlowSkim_%s_miniAOD_isMC%d_%s_%s_%s.root", fTrigName[trigIndx].Data(), isMC, fMCtype.Data(), fCentSelHF.Data(), date_label.Data()), "recreate");
+		out_file = new TFile(Form("../skimmed_files/OniaFlowSkim_%s_miniAOD_isMC%d_%s_%s_%s.root", fTrigName[trigIndx].Data(), isMC, fMCtype.Data(), fCentSelHF.Data(), date_label.Data()), "recreate");
 	}
 	else
 	{
-		out_file = new TFile(Form("skimmed_files/OniaFlowSkim_%sTrig_%sPD_miniAOD_isMC%d_%s_%s.root", fTrigName[trigIndx].Data(), fPD.Data(), isMC, fCentSelHF.Data(), date_label.Data()), "recreate");
+		out_file = new TFile(Form("../skimmed_files/OniaFlowSkim_%sTrig_%sPD_miniAOD_isMC%d_%s_%s.root", fTrigName[trigIndx].Data(), fPD.Data(), isMC, fCentSelHF.Data(), date_label.Data()), "recreate");
 	}
 
 	// Variables for output
@@ -275,8 +276,18 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	float ctau3DRes2S[nMaxDimu];
 	double TnPweight[nMaxDimu] = {1.};
 	double weight = 1;
-	double cos_theta_hx[nMaxDimu];
+	float cos_gj1[nMaxDimu];
+	float phi_gj1[nMaxDimu];
+	float cos_cs[nMaxDimu];
+	float phi_cs[nMaxDimu];
+	float cos_hx[nMaxDimu];
+	float phi_hx[nMaxDimu];
+	float cos_px[nMaxDimu];
+	float phi_px[nMaxDimu];
 	float cos_ep[nMaxDimu];
+	float phi_ep[nMaxDimu];
+	float cos_lab[nMaxDimu];
+	float phi_lab[nMaxDimu];
 
 	// Connec to output tree branch
 	// muon+muon pair event tree
@@ -305,14 +316,42 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	mmevttree->Branch("ctau3DRes2S", ctau3DRes2S, "ctau3DRes2S[nDimu]/F");
 	mmevttree->Branch("weight", &weight, "weight/D");
 	mmevttree->Branch("TnPweight", TnPweight, "TnPweight[nDimu]/D");
-	mmevttree->Branch("cos_theta_hx", cos_theta_hx, "cos_theta_hx[nDimu]/D");
+	mmevttree->Branch("cos_gj1", cos_gj1, "cos_gj1[nDimu]/F");
+	mmevttree->Branch("phi_gj1", phi_gj1, "phi_gj1[nDimu]/F");
+	mmevttree->Branch("cos_cs", cos_cs, "cos_cs[nDimu]/F");
+	mmevttree->Branch("phi_cs", phi_cs, "phi_cs[nDimu]/F");
+	mmevttree->Branch("cos_hx", cos_hx, "cos_hx[nDimu]/F");
+	mmevttree->Branch("phi_hx", phi_hx, "phi_hx[nDimu]/F");
+	mmevttree->Branch("cos_px", cos_px, "cos_px[nDimu]/F");
+	mmevttree->Branch("phi_px", phi_px, "phi_px[nDimu]/F");
 	mmevttree->Branch("cos_ep", cos_ep, "cos_ep[nDimu]/F");
+	mmevttree->Branch("phi_ep", phi_ep, "phi_ep[nDimu]/F");
+	mmevttree->Branch("cos_lab", cos_lab, "cos_lab[nDimu]/F");
+	mmevttree->Branch("phi_lab", phi_lab, "phi_lab[nDimu]/F");
 	////////////////////////////////////////////////////////////////////////
 	////////////////// TLorentzVector dummies
 	////////////////////////////////////////////////////////////////////////
 	TLorentzVector *JP_Reco = new TLorentzVector;
 	TLorentzVector *mupl_Reco = new TLorentzVector;
 	TLorentzVector *mumi_Reco = new TLorentzVector;
+
+	// prepare h1 and h2
+	double sqrt_S_NN = 5.02; // TeV
+	// Assuming p1 = -p2, two hadron beams are symmetric and and E >> m0
+	// Mendelstam value reads sqrt_S_NN = 2 * E.
+	double beam1_E = 5.02 / 2; // One beam have half of the energy
+	beam1_E *= 1000;		   // change TeV->GeV
+	double p1_mag = beam1_E;   // Approximation for E >> m0.
+
+	double beam2_E = beam1_E; // symmetry
+	double p2_mag = -p1_mag;
+
+	// build vectors
+	TVector3 p1_3d_lab(0, 0, p1_mag);
+	TVector3 p2_3d_lab(0, 0, p2_mag);
+
+	auto *p1_lab = new TLorentzVector(p1_3d_lab, beam1_E);
+	auto *p2_lab = new TLorentzVector(p2_3d_lab, beam2_E);
 
 	// Event loop start
 	if (nevt == -1)
@@ -350,7 +389,7 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 		// unit vectors
 		TVector3 uy_lab(0, 1, 0);
 		TVector3 uz_lab(0, 0, 1);
-		TVector3 uy_rotated = uy_lab;
+		TVector3 uz_ep = uy_lab;
 
 		// get rpAngles
 		float rpHFm2 = rpAng[HFm2];
@@ -534,17 +573,78 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 			}
 
 			// rotate axis
-			uy_rotated.Rotate(rpAng, uz_lab);
+			uz_ep.Rotate(rpAng, uz_lab);
 
 			// Boost to Quarkonia rest frame
 			std::unique_ptr<TLorentzVector> mupl_qrf = std::make_unique<TLorentzVector>(*mupl_Reco);
 			mupl_qrf->Boost(-JP_Reco->BoostVector());
 			std::unique_ptr<TLorentzVector> mumi_qrf = std::make_unique<TLorentzVector>(*mumi_Reco);
 			mumi_qrf->Boost(-JP_Reco->BoostVector());
+			std::unique_ptr<TLorentzVector> p1_qrf = std::make_unique<TLorentzVector>(*p1_lab);
+			p1_qrf->Boost(-JP_Reco->BoostVector());
+			std::unique_ptr<TLorentzVector> p2_qrf = std::make_unique<TLorentzVector>(*p2_lab);
+			p2_qrf->Boost(-JP_Reco->BoostVector());
 
-			TVector3 mupl_qrf_3d = mupl_qrf->Vect(); // get px, py, pz
-			// cos(theta) in EP
-			double cos_ep_ = mupl_qrf_3d.Dot(uy_rotated) / mupl_qrf_3d.Mag(); // Mag of unit vector is 1
+			// u_p1, u_p2
+			TVector3 u_p1 = p1_qrf->Vect();
+			u_p1 = u_p1.Unit();
+			TVector3 u_p2 = p2_qrf->Vect();
+			u_p2 = u_p2.Unit();
+
+			// unit vector of mupl
+			TVector3 u_mupl = mupl_qrf->Vect(); // get px, py, pz
+			u_mupl = u_mupl.Unit();
+
+			// y axis - common except the EP
+			TVector3 uy_pol = u_p1.Cross(u_p2); // p1 cross p2
+			uy_pol = uy_pol.Unit();
+
+			// GJ1
+			// GJ: GJ1 = u_p1, GJ2 = u_p2
+			TVector3 uz_gj1 = u_p1;
+			uz_gj1 = uz_gj1.Unit();
+			// TVector3 uz_gj2 = u_p2;
+			// uz_gj2 = uz_gj2.Unit();
+			TVector3 ux_gj1 = uy_pol.Cross(uz_gj1); // y cross z
+			ux_gj1 = ux_gj1.Unit();
+			float cos_gj1_ = u_mupl.Dot(uz_gj1);
+			float phi_gj1_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_gj1));
+
+			// CS
+			TVector3 uz_cs = u_p1 - u_p2;
+			uz_cs = uz_cs.Unit();
+			TVector3 ux_cs = uy_pol.Cross(uz_cs);
+			ux_cs = ux_cs.Unit();
+			float cos_cs_ = u_mupl.Dot(uz_cs);
+			float phi_cs_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_cs));
+
+			// HX
+			TVector3 uz_hx = JP_Reco->Vect();
+			uz_hx = uz_hx.Unit();
+			TVector3 ux_hx = uy_pol.Cross(uz_hx); // y cross z
+			ux_hx = ux_hx.Unit();
+			float cos_hx_ = u_mupl.Dot(uz_hx);
+			float phi_hx_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_hx));
+
+			// PX
+			TVector3 uz_px = u_p1 + u_p2;
+			uz_px = uz_px.Unit();
+			TVector3 ux_px = uy_pol.Cross(uz_px);
+			ux_px = ux_px.Unit();
+			float cos_px_ = u_mupl.Dot(uz_px);
+			float phi_px_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_px));
+
+			// EP
+			TVector3 uy_ep = p1_3d_lab;
+			uy_ep = uy_ep.Unit();
+			TVector3 ux_ep = uy_ep.Cross(uz_ep);
+			ux_ep = ux_ep.Unit();
+			float cos_ep_ = u_mupl.Dot(uz_ep);
+			float phi_ep_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_ep));
+
+			// in lab
+			float cos_lab_ = mupl_Reco->CosTheta();
+			float phi_lab_ = mupl_Reco->Phi();
 
 			// Push the values into the branches
 			if (isMC)
@@ -566,8 +666,18 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 			ctau3D2S[nDimu] = ctau3D[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DErr2S[nDimu] = ctau3DErr[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DRes2S[nDimu] = ctau3DRes[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
-			// cos_theta_hx[irqq] = TMath::Cos(jpsi_lab.Angle(mupl_qrf->Vect()));
+			cos_gj1[irqq] = cos_gj1_;
+			phi_gj1[irqq] = phi_gj1_;
+			cos_cs[irqq] = cos_cs_;
+			phi_cs[irqq] = phi_cs_;
+			cos_hx[irqq] = cos_hx_;
+			phi_hx[irqq] = phi_hx_;
+			cos_px[irqq] = cos_px_;
+			phi_px[irqq] = phi_px_;
 			cos_ep[irqq] = cos_ep_;
+			phi_ep[irqq] = phi_ep_;
+			cos_lab[irqq] = cos_lab_;
+			phi_lab[irqq] = phi_lab_;
 			nDimu++;
 
 			// cout << "Reco QQ Iterator: " << irqq << "\n";
