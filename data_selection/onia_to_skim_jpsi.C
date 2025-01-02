@@ -11,17 +11,18 @@ static const long MAXTREESIZE = 1000000000000;
 double getAccWeight(TH1D *h = 0, double pt = 0);
 double getEffWeight(TH1D *h = 0, double pt = 0);
 
-// nevt: -1 = Loop all events, isMC: Data or MC, MCtype: 1(Signal) or 2(NP)
+// nevt: How many events will be used. Use 10 or 100 for test. Use -1 for full skim.
+// isMC: Data or MC -> Don't touch it. There is skim code for MC.
+// MCtype (MC only): 1(Signal) or 2(NP) -> Don't touch it. There is skim code for MC.
 // kTrigSel: Apply run2 particle trigger,
-// hiHFBinEdge: Heavy ion group Forward Calorimeter systematics info. None(0), Up(1), Down(2),
-// PDtype: DoubleMuon(1) or Peripheral(2)
-void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1, string data_label_ = "24XXXX")
+// hiHFBinEdge: Heavy ion group Forward Calorimeter systematics info. Norminal(0), Up(1), Down(2),
+// PDtype (Data only): DoubleMuon(1) or Peripheral(2)
+void onia_to_skim_jpsi(string data_label_ = "241231_Raa_onia", int nevt = -1, int PDtype = 1, int hiHFBinEdge = 0, bool isMC = false, int MCtype = 1, int kTrigSel = kTrigJpsi)
 {
 	using namespace std;
 	using namespace hi;
 
-	//TString date_label = data_label_;
-	TString date_label = "241127";
+	TString date_label = data_label_;
 
 	// Example of using event plane namespace
 	cout
@@ -30,7 +31,8 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	cout << " Index of " << EPNames[trackmid2] << " = " << trackmid2 << endl;
 
 	// Input path
-	TString fnameDataReReco = "../Oniatree/Oniatree_miniAOD_Data_DoubleMuon.root";
+	//TString fnameDataReReco = "../Oniatree/Oniatree_miniAOD_Data_DoubleMuon.root";
+	 TString fnameDataReReco = "/mnt/Oniatree/old_raa_flow_onia/OniaTree_miniAOD_HiDoubleMuonPD_Glb_5p02TeV_merged.root";
 	TString fnameDataReRecoPeri = "../Oniatree/Oniatree_miniAOD_Data_Peri.root";
 	TString fnameMC = "../Oniatree/Oniatree_miniAOD_MC_Prompt.root";
 	TString fnameMC_BtoJ = "../Oniatree/Oniatree_miniAOD_MC_Nonprompt.root";
@@ -66,7 +68,7 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	}
 
 	// ROOT file has limit for # of branch
-	const int maxBranchSize = 500;
+	const int maxBranchSize = 1000;
 
 	// Prepare variables
 	UInt_t runNb;
@@ -203,7 +205,7 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 	// rpAngle
 	Float_t rpAng[12]; //[nEP]
 	TBranch *b_rpAng;  //!
-	mytree->SetBranchAddress("rpAng", rpAng, &b_rpAng);
+	//mytree->SetBranchAddress("rpAng", rpAng, &b_rpAng);
 
 	// Particle tirgger selection
 	// Refer to "Eff_Acc/cutsAndBin.h:int kTrigJpsi = 12;"
@@ -679,9 +681,6 @@ void onia_to_skim_jpsi(int nevt = -1, bool isMC = false, int MCtype = 1, int kTr
 			cos_lab[irqq] = cos_lab_;
 			phi_lab[irqq] = phi_lab_;
 			nDimu++;
-
-			// cout << "Reco QQ Iterator: " << irqq << "\n";
-			// cout << "cos_theta_ep: " << cos_ep_ << endl;
 		} // end of dimuon loop
 
 		if (nDimu > 0)

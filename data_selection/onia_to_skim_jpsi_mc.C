@@ -16,12 +16,15 @@ double getEffWeight(TH1D *h = 0, double pt = 0);
 // kTrigSel: Apply run2 particle trigger,
 // hiHFBinEdge: Heavy ion group Forward Calorimeter systematics info. None(0), Up(1), Down(2),
 // PDtype: Central(1) or Peripheral(2)
-void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int kTrigSel = kTrigJpsi, int hiHFBinEdge = 0, int PDtype = 1, bool isPtWeight = true)
+void onia_to_skim_jpsi_mc(
+	string data_label_ = "241231_Raa_Onia", int nevt = -1, int MCtype = 1, 
+	int hiHFBinEdge = 0, bool isPtWeight = false, 
+	bool isMC = true, int kTrigSel = kTrigJpsi, int PDtype = 2)
 {
 	using namespace std;
 	using namespace hi;
 
-	TString date_label = "241010";
+	TString date_label = data_label_;
 
 	// Example of using event plane namespace
 	cout
@@ -29,27 +32,29 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	cout << " Index of " << EPNames[HFp2] << " = " << HFp2 << endl;
 	cout << " Index of " << EPNames[trackmid2] << " = " << trackmid2 << endl;
 
-	// Onia input path
-	TString fnameDataReReco = "/disk1/Oniatree/miniAOD/OniaTree_miniAOD_HIDoubleMuonPD_addQVect_merged.root";
-	TString fnameDataReRecoPeri = "/disk1/Oniatree/miniAOD/OniaTree_miniAOD_HIDoubleMuonPsiPeriPD_addQVect_merged.root";
-	TString fnameMC = "/disk1/Oniatree/miniAOD/OniaTreeMC_miniAOD_Jpsi_HydjetMB_5p02TeV_merged.root";
-	TString fnameMC_BtoJ = "/disk1/Oniatree/miniAOD/Oniatree_MC_BToJpsi_pThat-2_TuneCP5-EvtGen_HydjetDrumMB_5p02TeV_pythia8_miniAOD.root";
+	// Input path
+	TString fnameDataReReco = "../Oniatree/Oniatree_miniAOD_Data_DoubleMuon.root";
+	TString fnameDataReRecoPeri = "../Oniatree/Oniatree_miniAOD_Data_Peri.root";
+	//TString fnameMC = "/mnt/Oniatree/Oniatree_miniAOD_MC_Prompt.root";
+	TString fnameMC = "/mnt/Oniatree/old_raa_flow_onia/OniaTreeMC_miniAOD_Jpsi_HydjetMB_5p02TeV_merged.root";
+	//TString fnameMC_BtoJ = "../Oniatree/Oniatree_miniAOD_MC_Nonprompt.root";
+	TString fnameMC_BtoJ = "/mnt/Oniatree/old_raa_flow_onia/Oniatree_MC_BToJpsi_pThat-2_TuneCP5-EvtGen_HydjetDrumMB_5p02TeV_pythia8_miniAOD.root";
 
-	// pT weighting function inputs
-	TFile *fPtW1;
-	TFile *fPtW2;
-	if (PDtype == 1 || MCtype == 1)
-	{
-		fPtW1 = new TFile("local_cos_eff_acc_study/pt_weight_inputs/ratioDataMC_AA_Jpsi_DATA_y0_1p6_211201.root", "read");
-		fPtW2 = new TFile("local_cos_eff_acc_study/pt_weight_inputs/ratioDataMC_AA_Jpsi_DATA_Forward_y_211218.root", "read");
-	}
-	else if (PDtype == 2 || MCtype == 2)
-	{
-		fPtW1 = new TFile("./compareDataToMC/WeightedFcN_fit/ratioDataMC_AA_BtoJpsi_DATA_All_y.root", "read");
-		fPtW2 = new TFile("./compareDataToMC/WeightedFcN_fit/ratioDataMC_AA_BtoJpsi_DATA_Forward_y.root", "read");
-	}
-	TF1 *fptw1 = (TF1 *)fPtW1->Get("dataMC_Ratio1");
-	TF1 *fptw2 = (TF1 *)fPtW2->Get("dataMC_Ratio1");
+	// pT weighting function inputs - We will not apply pT weight here.
+	// TFile *fPtW1;
+	// TFile *fPtW2;
+	// if (PDtype == 1 || MCtype == 1)
+	// {
+	// 	fPtW1 = new TFile("local_cos_eff_acc_study/pt_weight_inputs/ratioDataMC_AA_Jpsi_DATA_y0_1p6_211201.root", "read");
+	// 	fPtW2 = new TFile("local_cos_eff_acc_study/pt_weight_inputs/ratioDataMC_AA_Jpsi_DATA_Forward_y_211218.root", "read");
+	// }
+	// else if (PDtype == 2 || MCtype == 2)
+	// {
+	// 	fPtW1 = new TFile("./compareDataToMC/WeightedFcN_fit/ratioDataMC_AA_BtoJpsi_DATA_All_y.root", "read");
+	// 	fPtW2 = new TFile("./compareDataToMC/WeightedFcN_fit/ratioDataMC_AA_BtoJpsi_DATA_Forward_y.root", "read");
+	// }
+	// TF1 *fptw1 = (TF1 *)fPtW1->Get("dataMC_Ratio1");
+	// TF1 *fptw2 = (TF1 *)fPtW2->Get("dataMC_Ratio1");
 
 	// Label of output
 	TString fPD;
@@ -62,7 +67,7 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	if (MCtype == 1)
 		fMCtype = "Signal";
 	else if (MCtype == 2)
-		fMCtype = "NPOnly";
+		fMCtype = "BtoJpsi";
 
 	// Read tree inside root file by using TChain
 	TChain *mytree = new TChain("hionia/myTree");
@@ -82,7 +87,7 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	}
 
 	// ROOT file has limit for # of branch
-	const int maxBranchSize = 500;
+	const int maxBranchSize = 1000;
 
 	// Prepare variables
 	UInt_t runNb;
@@ -184,7 +189,7 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	Short_t Reco_QQ_sign[maxBranchSize]; //[Reco_QQ_size]
 	TBranch *b_Reco_QQ_sign;
 	mytree->SetBranchAddress("Reco_QQ_sign", Reco_QQ_sign, &b_Reco_QQ_sign);
-	Float_t rpAng[29]; //[nEP]
+	Float_t rpAng[12]; //[nEP]
 	TBranch *b_rpAng;
 	// mytree->SetBranchAddress("rpAng", rpAng, &b_rpAng);
 
@@ -263,11 +268,11 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	TFile *out_file;
 	if (isMC)
 	{
-		out_file = new TFile(Form("skimmed_files/OniaFlowSkim_%s_miniAOD_isMC%d_%s_%s_%s.root", fTrigName[trigIndx].Data(), isMC, fMCtype.Data(), fCentSelHF.Data(), date_label.Data()), "recreate");
+		out_file = new TFile(Form("../skimmed_files/OniaFlowSkim_%s_miniAOD_isMC%d_%s_%s_%s.root", fTrigName[trigIndx].Data(), isMC, fMCtype.Data(), fCentSelHF.Data(), date_label.Data()), "recreate");
 	}
 	else
 	{
-		out_file = new TFile(Form("skimmed_files/OniaFlowSkim_%sTrig_%sPD_miniAOD_isMC%d_%s_%s.root", fTrigName[trigIndx].Data(), fPD.Data(), isMC, fCentSelHF.Data(), date_label.Data()), "recreate");
+		out_file = new TFile(Form("../skimmed_files/OniaFlowSkim_%sTrig_%sPD_miniAOD_isMC%d_%s_%s.root", fTrigName[trigIndx].Data(), fPD.Data(), isMC, fCentSelHF.Data(), date_label.Data()), "recreate");
 	}
 
 	// Variables for output
@@ -301,7 +306,18 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	double TnPweight[nMaxDimu] = {1.};
 	double weight[nMaxDimu] = {1.};
 	double pt_weight = 1;
-	double cos_theta_hx[nMaxDimu];
+	float cos_gj1[nMaxDimu];
+	float phi_gj1[nMaxDimu];
+	float cos_cs[nMaxDimu];
+	float phi_cs[nMaxDimu];
+	float cos_hx[nMaxDimu];
+	float phi_hx[nMaxDimu];
+	float cos_px[nMaxDimu];
+	float phi_px[nMaxDimu];
+	float cos_ep[nMaxDimu];
+	float phi_ep[nMaxDimu];
+	float cos_lab[nMaxDimu];
+	float phi_lab[nMaxDimu];
 
 	// Connec to output tree branch
 	// muon+muon pair event tree
@@ -330,7 +346,18 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	mmevttree->Branch("ctau3DRes2S", ctau3DRes2S, "ctau3DRes2S[nDimu]/F");
 	mmevttree->Branch("weight", &weight, "weight[nDimu]/D");
 	mmevttree->Branch("TnPweight", TnPweight, "TnPweight[nDimu]/D");
-	mmevttree->Branch("cos_theta_hx", cos_theta_hx, "cos_theta_hx[nDimu]/D");
+	mmevttree->Branch("cos_gj1", cos_gj1, "cos_gj1[nDimu]/F");
+	mmevttree->Branch("phi_gj1", phi_gj1, "phi_gj1[nDimu]/F");
+	mmevttree->Branch("cos_cs", cos_cs, "cos_cs[nDimu]/F");
+	mmevttree->Branch("phi_cs", phi_cs, "phi_cs[nDimu]/F");
+	mmevttree->Branch("cos_hx", cos_hx, "cos_hx[nDimu]/F");
+	mmevttree->Branch("phi_hx", phi_hx, "phi_hx[nDimu]/F");
+	mmevttree->Branch("cos_px", cos_px, "cos_px[nDimu]/F");
+	mmevttree->Branch("phi_px", phi_px, "phi_px[nDimu]/F");
+	mmevttree->Branch("cos_ep", cos_ep, "cos_ep[nDimu]/F");
+	mmevttree->Branch("phi_ep", phi_ep, "phi_ep[nDimu]/F");
+	mmevttree->Branch("cos_lab", cos_lab, "cos_lab[nDimu]/F");
+	mmevttree->Branch("phi_lab", phi_lab, "phi_lab[nDimu]/F");
 	////////////////////////////////////////////////////////////////////////
 	////////////////// TLorentzVector dummies
 	////////////////////////////////////////////////////////////////////////
@@ -338,37 +365,47 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 	TLorentzVector *mupl_Reco = new TLorentzVector;
 	TLorentzVector *mumi_Reco = new TLorentzVector;
 
+	// prepare h1 and h2
+	double sqrt_S_NN = 5.02; // TeV
+	// Assuming p1 = -p2, two hadron beams are symmetric and and E >> m0
+	// Mendelstam value reads sqrt_S_NN = 2 * E.
+	double beam1_E = 5.02 / 2; // One beam have half of the energy
+	beam1_E *= 1000;		   // change TeV->GeV
+	double p1_mag = beam1_E;   // Approximation for E >> m0.
+
+	double beam2_E = beam1_E; // symmetry
+	double p2_mag = -p1_mag;
+
+	// build vectors
+	TVector3 p1_3d_lab(0, 0, p1_mag);
+	TVector3 p2_3d_lab(0, 0, p2_mag);
+
+	TLorentzVector *p1_lab = new TLorentzVector(p1_3d_lab, beam1_E);
+	TLorentzVector *p2_lab = new TLorentzVector(p2_3d_lab, beam2_E);
+
 	int counts[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	// Event loop start
 	if (nevt == -1)
 		nevt = mytree->GetEntries();
+	nevt = mytree->GetEntries();
+	cout << "Total number of events: " << nevt << endl
+		 << endl;
 
-	cout << "Total events = " << nevt << endl;
 	double weight_ = 1;
 	for (int iev = 0; iev < nevt; ++iev)
 	{
-		// if (iev == 1627597 || iev == 5734759 || iev == 6916044 || iev == 11512879 || iev == 14288366)
-		//{
-		//	continue;
-		// }
-		//  cout << iev << endl;
 		//   Progress announcement
-		if (iev % 100000 == 0)
+		if (iev % 200000 == 0)
 		{
 			cout << ">>>>> EVENT " << iev << " / " << mytree->GetEntries() << " (" << (int)(100. * iev / mytree->GetEntries()) << "%)" << endl;
 			cout << "# of dimuon pair: " << count << endl;
 		}
-
+		
 		// Get values from input tree
 		mytree->GetEntry(iev);
-
 		nDimu = 0;
-
-		// Need for PD file - PD file has both PD and Peri runs. Only run < 327123: central collision
-		if (!isMC && PDtype == 1 && runNb >= 327123)
-			continue;
-
+		
 		// weight 1 means no weight - usually data events have no weight.
 		weight_ = 1.;
 		if (isMC)
@@ -376,13 +413,22 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 			weight_ = findNcoll(Centrality) * Gen_weight;
 		}
 		counts[0]++;
-
+		
 		// HLT trigger - Must match to Jpsi
 		if (!((HLTriggers & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
 			continue;
 
 		counts[1]++;
 		counts[2] += Reco_QQ_size;
+		
+		// unit vectors
+		TVector3 uy_lab(0, 1, 0);
+		TVector3 uz_lab(0, 0, 1);
+		TVector3 uz_ep = uy_lab;
+
+		// get rpAngles
+		float rpHFm2 = rpAng[HFm2];
+		float rpHFp2 = rpAng[HFp2];
 
 		// cout << "Reco_QQ_size : " << Reco_QQ_size << endl;
 		for (Int_t irqq = 0; irqq < Reco_QQ_size; ++irqq)
@@ -558,28 +604,97 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 			}
 			// End of selection cuts
 
-			// Lorentz transfomration
-			// Define 4-momentum in Lab frame
-			TLorentzVector jpsi_lab(JP_Reco->Px(), JP_Reco->Py(),
-									JP_Reco->Pz(), JP_Reco->Energy());
-			TLorentzVector mupl_lab(mupl_Reco->Px(), mupl_Reco->Py(),
-									mupl_Reco->Pz(), mupl_Reco->Energy());
-			TLorentzVector mumi_lab(mumi_Reco->Px(), mumi_Reco->Py(),
-									mumi_Reco->Pz(), mumi_Reco->Energy());
+			// consider auto correleation
+			float eta_ = JP_Reco->Eta();
+			float rpAng = 0;
+			if (eta_ >= 0)
+			{
+				rpAng = rpHFm2;
+			}
+			else
+			{
+				rpAng = rpHFp2;
+			}
 
-			// Copy 4-momentum
-			TLorentzVector *mupl_QRF = new TLorentzVector(mupl_lab);
-			TLorentzVector *mumi_QRF = new TLorentzVector(mumi_lab);
+			// rotate axis
+			uz_ep.Rotate(rpAng, uz_lab);
 
 			// Boost to Quarkonia rest frame
-			mupl_QRF->Boost(-jpsi_lab.BoostVector());
-			mumi_QRF->Boost(-jpsi_lab.BoostVector());
+			TLorentzVector *mupl_qrf = new TLorentzVector(*mupl_Reco);
+			mupl_qrf->Boost(-JP_Reco->BoostVector());
+			TLorentzVector *mumi_qrf = new TLorentzVector(*mumi_Reco);
+			mumi_qrf->Boost(-JP_Reco->BoostVector());
+			TLorentzVector *p1_qrf = new TLorentzVector(*p1_lab);
+			p1_qrf->Boost(-JP_Reco->BoostVector());
+			TLorentzVector *p2_qrf = new TLorentzVector(*p2_lab);
+			p2_qrf->Boost(-JP_Reco->BoostVector());
+
+			// u_p1, u_p2
+			TVector3 u_p1 = p1_qrf->Vect();
+			u_p1 = u_p1.Unit();
+			TVector3 u_p2 = p2_qrf->Vect();
+			u_p2 = u_p2.Unit();
+
+			// unit vector of mupl
+			TVector3 u_mupl = mupl_qrf->Vect(); // get px, py, pz
+			u_mupl = u_mupl.Unit();
+
+			// y axis - common except the EP
+			TVector3 uy_pol = u_p1.Cross(u_p2); // p1 cross p2
+			uy_pol = uy_pol.Unit();
+
+			// GJ1
+			// GJ: GJ1 = u_p1, GJ2 = u_p2
+			TVector3 uz_gj1 = u_p1;
+			uz_gj1 = uz_gj1.Unit();
+			// TVector3 uz_gj2 = u_p2;
+			// uz_gj2 = uz_gj2.Unit();
+			TVector3 ux_gj1 = uy_pol.Cross(uz_gj1); // y cross z
+			ux_gj1 = ux_gj1.Unit();
+			float cos_gj1_ = u_mupl.Dot(uz_gj1);
+			float phi_gj1_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_gj1));
+
+			// CS
+			TVector3 uz_cs = u_p1 - u_p2;
+			uz_cs = uz_cs.Unit();
+			TVector3 ux_cs = uy_pol.Cross(uz_cs);
+			ux_cs = ux_cs.Unit();
+			float cos_cs_ = u_mupl.Dot(uz_cs);
+			float phi_cs_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_cs));
+
+			// HX
+			TVector3 uz_hx = JP_Reco->Vect();
+			uz_hx = uz_hx.Unit();
+			TVector3 ux_hx = uy_pol.Cross(uz_hx); // y cross z
+			ux_hx = ux_hx.Unit();
+			float cos_hx_ = u_mupl.Dot(uz_hx);
+			float phi_hx_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_hx));
+
+			// PX
+			TVector3 uz_px = u_p1 + u_p2;
+			uz_px = uz_px.Unit();
+			TVector3 ux_px = uy_pol.Cross(uz_px);
+			ux_px = ux_px.Unit();
+			float cos_px_ = u_mupl.Dot(uz_px);
+			float phi_px_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_px));
+
+			// EP
+			TVector3 uy_ep = p1_3d_lab;
+			uy_ep = uy_ep.Unit();
+			TVector3 ux_ep = uy_ep.Cross(uz_ep);
+			ux_ep = ux_ep.Unit();
+			float cos_ep_ = u_mupl.Dot(uz_ep);
+			float phi_ep_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_ep));
+
+			// in lab
+			float cos_lab_ = mupl_Reco->CosTheta();
+			float phi_lab_ = mupl_Reco->Phi();
 
 			pt_weight = 1;
-			if (isPtWeight && fabs(JP_Reco->Rapidity()) < 1.6)
-				pt_weight = fptw1->Eval(JP_Reco->Pt());
-			if (isPtWeight && fabs(JP_Reco->Rapidity()) > 1.6)
-				pt_weight = fptw2->Eval(JP_Reco->Pt());
+			//if (isPtWeight && fabs(JP_Reco->Rapidity()) < 1.6)
+			//	pt_weight = fptw1->Eval(JP_Reco->Pt());
+			//if (isPtWeight && fabs(JP_Reco->Rapidity()) > 1.6)
+			//	pt_weight = fptw2->Eval(JP_Reco->Pt());
 
 			// Push the values into the branches
 			if (isMC)
@@ -605,12 +720,20 @@ void onia_to_skim_jpsi_mc(int nevt = -1, bool isMC = true, int MCtype = 1, int k
 			ctau3D2S[nDimu] = ctau3D[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DErr2S[nDimu] = ctau3DErr[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
 			ctau3DRes2S[nDimu] = ctau3DRes[nDimu] * (pdgMass.Psi2S / pdgMass.JPsi);
-			cos_theta_hx[irqq] = TMath::Cos(jpsi_lab.Angle(mupl_QRF->Vect()));
+			cos_gj1[irqq] = cos_gj1_;
+			phi_gj1[irqq] = phi_gj1_;
+			cos_cs[irqq] = cos_cs_;
+			phi_cs[irqq] = phi_cs_;
+			cos_hx[irqq] = cos_hx_;
+			phi_hx[irqq] = phi_hx_;
+			cos_px[irqq] = cos_px_;
+			phi_px[irqq] = phi_px_;
+			cos_ep[irqq] = cos_ep_;
+			phi_ep[irqq] = phi_ep_;
+			cos_lab[irqq] = cos_lab_;
+			phi_lab[irqq] = phi_lab_;
 			nDimu++;
 
-			// Delocate memories of object
-			mupl_QRF->Delete();
-			mumi_QRF->Delete();
 		} // end of dimuon loop
 
 		if (nDimu > 0)
