@@ -1,5 +1,6 @@
-# ignore mac's folder info file (DS_Store)
+# mac's folder info file (DS_Store)
 *.DS_Store
+*.vscode
 
 # txt files: Be careful not to upload experiments datasets
 #*.txt
@@ -7,24 +8,22 @@
 #*.docx
 #*.xlsx
 #*.dat
-
-*.vscode
-
 #*.gz
 #*.tar.gz
 #*.tar
 #*.zip
 
-# Ignore output of CtauErr: 3 - 70 MB
-# /Macros/**/roots/2DFit_No_Weight/CtauErr/
+# output of CtauErr: 3 - 70 MB
+**/CtauErr/*.root
 
 
-# Ignore main inputs - GB level
-skimmed_files/
-Oniatree/
-*.root
+# main inputs - GB level
+skimmed_files/*.root
+Oniatree/*.root
+files_skim/*.root
+files_roodata/*.root
 
-# Code test folder
-local_develop/
-local_*
 
+# test codes
+**/study_*/
+# study_*/
