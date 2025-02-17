@@ -8,6 +8,8 @@
 #*.xlsx
 #*.dat
 
+*.vscode
+
 #*.gz
 #*.tar.gz
 #*.tar
