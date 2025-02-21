@@ -8,10 +8,10 @@ print(script_dir)
 ROOT.gROOT.LoadMacro('onia_to_skim.C')
 
 # what smaples to skim?
-is_data_double_muon = True
-is_data_peripheral = True
-is_mc_prompt = True
-is_mc_nonprompt = True
+is_data_double_muon = False
+is_data_peripheral = False
+is_mc_prompt = False
+is_mc_nonprompt = False
 # You have to merge data DB and Peri samples
 
 # pp MC
@@ -20,7 +20,7 @@ is_mc_nonprompt_pp = False
 
 # parameters
 date_label = '250217'
-n_evt = -1 # -1 for all events
+n_evt = 100 # -1 for all events
 
 if is_data_double_muon:
     ROOT.onia_to_skim(

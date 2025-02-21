@@ -1,6 +1,6 @@
 # mac's folder info file (DS_Store)
-*.DS_Store
-*.vscode
+**/.DS_Store
+**/.vscode/
 
 # txt files: Be careful not to upload experiments datasets
 #*.txt

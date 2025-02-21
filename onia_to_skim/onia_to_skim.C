@@ -50,8 +50,10 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   else if (kTrigSel == kTrigL1DB50100)
     trigIndx = 3;
   
-  int kL2filter = 38;
-  int kL3filter = 39;
+  // int kL2filter = 38;
+  // int kL3filter = 39;
+  int kL2filter = 16;
+  int kL3filter = 17;
 
   TString fCentSelHF = "HFNom";
   if (hiHFBinEdge == 1)
@@ -136,16 +138,29 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   TBranch *b_Reco_mu_trig;    //!
   TBranch *b_Reco_QQ_VtxProb; //!
 
+  // Gen level variables
+  Int_t Gen_QQ_size;
+  Int_t Gen_mu_size;
+  TClonesArray *Gen_QQ_4mom = nullptr;
+  TClonesArray *Gen_mu_4mom = nullptr;
+  Int_t Gen_QQ_mupl_idx[maxBranchSize];
+  Int_t Gen_QQ_mumi_idx[maxBranchSize];
+  Float_t Gen_QQ_ctau3D[maxBranchSize]; //[Reco_QQ_size]
+
+  TBranch *b_Gen_QQ_size; //!
+  TBranch *b_Gen_mu_size; //!
+  TBranch *b_Gen_QQ_4mom; //!
+  TBranch *b_Gen_mu_4mom; //!
+  TBranch *b_Gen_QQ_ctau3D;
+  TBranch *b_Gen_QQ_mupl_idx;
+  TBranch *b_Gen_QQ_mumi_idx;
+
   Bool_t Reco_mu_highPurity[maxBranchSize]; //[Reco_QQ_size]
   TBranch *b_Reco_mu_highPurity;            //!
   muon_chain.SetBranchAddress("Reco_mu_highPurity", Reco_mu_highPurity, &b_Reco_mu_highPurity);
   
-  if (!isMC)
-  {
-    muon_chain.SetBranchAddress("runNb", &runNb, &b_runNb);
-    muon_chain.SetBranchAddress("LS", &LS, &b_LS);
-  }
-  
+  muon_chain.SetBranchAddress("runNb", &runNb, &b_runNb);
+  muon_chain.SetBranchAddress("LS", &LS, &b_LS);
   muon_chain.SetBranchAddress("eventNb", &eventNb, &b_eventNb);
   muon_chain.SetBranchAddress("zVtx", &zVtx, &b_zVtx);
   muon_chain.SetBranchAddress("Centrality", &Centrality, &b_Centrality);
@@ -237,6 +252,13 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   {
     muon_chain.SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen, &b_Reco_mu_whichGen);
     muon_chain.SetBranchAddress("Gen_weight", &Gen_weight, &b_Gen_weight);
+    muon_chain.SetBranchAddress("Gen_QQ_size", &Gen_QQ_size, &b_Gen_QQ_size);
+    muon_chain.SetBranchAddress("Gen_mu_size", &Gen_mu_size, &b_Gen_mu_size);
+    muon_chain.SetBranchAddress("Gen_QQ_4mom", &Gen_QQ_4mom, &b_Gen_QQ_4mom);
+    muon_chain.SetBranchAddress("Gen_mu_4mom", &Gen_mu_4mom, &b_Gen_mu_4mom);
+    muon_chain.SetBranchAddress("Gen_QQ_ctau3D", Gen_QQ_ctau3D, &b_Gen_QQ_ctau3D);
+    muon_chain.SetBranchAddress("Gen_QQ_mupl_idx", Gen_QQ_mupl_idx, &b_Gen_QQ_mupl_idx);
+    muon_chain.SetBranchAddress("Gen_QQ_mumi_idx", Gen_QQ_mumi_idx, &b_Gen_QQ_mumi_idx);
   }
 
 
@@ -282,6 +304,8 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   int recoQQsign[nMaxDimu];
   float ctau3D[nMaxDimu];
   float ctau3DErr[nMaxDimu];
+  float ctau3DTrue[nMaxDimu];
+  float ctau3DRes[nMaxDimu];
   double TnPweight[nMaxDimu] = {1.};
   double weight = 1;
 
@@ -320,6 +344,8 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   mmevttree->Branch("recoQQsign", recoQQsign, "recoQQsign[nDimu]/I");
   mmevttree->Branch("ctau3D", ctau3D, "ctau3D[nDimu]/F");
   mmevttree->Branch("ctau3DErr", ctau3DErr, "ctau3DErr[nDimu]/F");
+  mmevttree->Branch("ctau3DTrue", ctau3DTrue, "ctau3DTrue[nDimu]/F");
+  mmevttree->Branch("ctau3DRes", ctau3DRes, "ctau3DRes[nDimu]/F");
   mmevttree->Branch("weight", &weight, "weight/D");
   mmevttree->Branch("TnPweight", TnPweight, "TnPweight[nDimu]/D");
 
@@ -335,10 +361,55 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   mmevttree->Branch("cos_ep", cos_ep, "cos_ep[nDimu]/F");
   mmevttree->Branch("phi_ep", phi_ep, "phi_ep[nDimu]/F");
 
+
+  // ===== output Gen tree ===== //
+  int nDimuGen;
+  float Genmass[nMaxDimu];
+  float Genpt[nMaxDimu];
+  float Genpt1[nMaxDimu];
+  float Genpt2[nMaxDimu];
+  float Geny[nMaxDimu];
+  float Geneta[nMaxDimu];
+  float Geneta1[nMaxDimu];
+  float Geneta2[nMaxDimu];
+  float Genphi[nMaxDimu];
+  float Genphi1[nMaxDimu];
+  float Genphi2[nMaxDimu];
+  float Gencos_theta[nMaxDimu];
+  float Gencos_theta1[nMaxDimu];
+  float Gencos_theta2[nMaxDimu];
+  float Genctau3D[nMaxDimu];
+
+
+  TTree *mmgentree = new TTree("mmgentree", "Gen Di-muon Pairs");
+  mmgentree->SetMaxTreeSize(MAXTREESIZE);
+  // mmgentree->Branch("event", &evt, "event/I");
+  mmgentree->Branch("nDimuGen", &nDimuGen, "nDimuGen/I");
+  mmgentree->Branch("mass", Genmass, "Genmass[nDimuGen]/F");
+  mmgentree->Branch("y", Geny, "Geny[nDimuGen]/F");
+  mmgentree->Branch("pt", Genpt, "Genpt[nDimuGen]/F");
+  mmgentree->Branch("pt1", Genpt1, "Genpt1[nDimuGen]/F");
+  mmgentree->Branch("pt2", Genpt2, "Genpt2[nDimuGen]/F");
+  mmgentree->Branch("eta", Geneta, "Geneta[nDimuGen]/F");
+  mmgentree->Branch("eta1", Geneta1, "Geneta1[nDimuGen]/F");
+  mmgentree->Branch("eta2", Geneta2, "Geneta2[nDimuGen]/F");
+  mmgentree->Branch("phi", Genphi, "Genphi[nDimuGen]/F");
+  mmgentree->Branch("phi1", Genphi1, "Genphi1[nDimuGen]/F");
+  mmgentree->Branch("phi2", Genphi2, "Genphi2[nDimuGen]/F");
+  mmgentree->Branch("Gencos_theta", Gencos_theta, "Gencos_theta[nDimuGen]/F");
+  mmgentree->Branch("Gencos_theta1", Gencos_theta1, "Gencos_theta1[nDimuGen]/F");
+  mmgentree->Branch("Gencos_theta2", Gencos_theta2, "Gencos_theta2[nDimuGen]/F");
+  mmgentree->Branch("ctau3D", Genctau3D, "Genctau3D[nDimuGen]/F");
+
+
   // ===== declare Lorentz vectors ===== //
   TLorentzVector *JP_Reco = new TLorentzVector;
   TLorentzVector *mupl_Reco = new TLorentzVector;
   TLorentzVector *mumi_Reco = new TLorentzVector;
+
+  TLorentzVector *JP_Gen = new TLorentzVector;
+  TLorentzVector *mupl_Gen = new TLorentzVector;
+  TLorentzVector *mumi_Gen = new TLorentzVector;
 
 
   // ===== set beam information ===== //
@@ -473,6 +544,10 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
       recoQQsign[irqq] = Reco_QQ_sign[irqq];
 
       count++;
+      // -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-
+      // -*-*-*-*-*- Start TnP Loop for MC -*-*-*-*-*-
+      // -*-*-*-*-*--*-*-*-*-*--*-*-*-*-*--*-*-*-*-*-
+      // Calculate TnP weighting -> Used to get acc and eff weightings in other codes
       if (isMC)
       {
         tnp_weight = 1;
@@ -504,6 +579,7 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
         bool mumi_isL3 = (mumi_L2Filter && mumi_L3Filter) ? true : false;
         bool SelDone = false;
 
+        // one of three cases must be matched
         if (mupl_isL2 && mumi_isL3)
         {
           tnp_trig_weight_mupl = tnp_weight_trg_pbpb(mupl_Reco->Pt(), mupl_Reco->Eta(), 2, 0);
@@ -538,6 +614,8 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
           }
           SelDone = true;
         }
+
+        // Check tnp weighting is applied or not
         if (SelDone == false || (tnp_trig_weight_mupl == -1 || tnp_trig_weight_mumi == -1))
         {
           cout << "ERROR :: No muon filter combination selected !!!!" << endl;
@@ -545,7 +623,9 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
         }
         tnp_weight = tnp_weight * tnp_trig_weight_mupl * tnp_trig_weight_mumi;
         counttnp++;
-      } // end of MC tnp loop
+        // MC selection end
+      }
+      // End of selection cuts
 
 
       // ===== calculate polarization angles
@@ -617,8 +697,10 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
       float phi_ep_ = TMath::ATan2(u_mupl.Dot(uy_pol), u_mupl.Dot(ux_ep));
 
       // ===== Fill the output tree
-      if (isMC)
+      if (isMC) {
         TnPweight[nDimu] = tnp_weight;
+        ctau3DTrue[nDimu] = Gen_QQ_ctau3D[Reco_mu_whichGen[Reco_QQ_mupl_idx[irqq]]];
+      }
       mass[nDimu] = JP_Reco->M();
       phi[nDimu] = JP_Reco->Phi();
       phi1[nDimu] = mupl_Reco->Phi();
@@ -634,6 +716,7 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
       cos_theta1[nDimu] = mupl_Reco->CosTheta();
       ctau3D[nDimu] = Reco_QQ_ctau3D[irqq];
       ctau3DErr[nDimu] = Reco_QQ_ctauErr3D[irqq];
+      ctau3DRes[nDimu] = (Reco_QQ_ctau3D[irqq]) / (Reco_QQ_ctauErr3D[irqq]);
       cos_cs[nDimu] = cos_cs_;
       phi_cs[nDimu] = phi_cs_;
       cos_hx[nDimu] = cos_hx_;
@@ -649,6 +732,50 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
       mmevttree->Fill();
 
   } // end of event loop
+
+  // ===== Gen tree ===== //
+  if (isMC)
+  {
+    // for Gen vs Reco study and ctau3DTrue fit
+    for (int iev = 0; iev < nevt; ++iev)
+    {
+      // if(iev==1000)break;
+      // if(iev==10000)break;
+      if (iev % 100000 == 0)
+        cout << ">>>>> EVENT " << iev << " / " << muon_chain.GetEntries() << " (" << (int)(100. * iev / muon_chain.GetEntries()) << "%)" << endl;
+
+      muon_chain.GetEntry(iev);
+      nDimuGen = 0;
+
+      for (Int_t irgen = 0; irgen < Gen_QQ_size; ++irgen)
+      {
+        JP_Gen = (TLorentzVector *)Gen_QQ_4mom->At(irgen);
+        mupl_Gen = (TLorentzVector *)Gen_mu_4mom->At(Gen_QQ_mupl_idx[irgen]);
+        mumi_Gen = (TLorentzVector *)Gen_mu_4mom->At(Gen_QQ_mumi_idx[irgen]);
+
+        Genmass[nDimuGen] = JP_Gen->M();
+        Genpt[nDimuGen] = JP_Gen->Pt();
+        Genpt1[nDimuGen] = mupl_Gen->Pt();
+        Genpt2[nDimuGen] = mumi_Gen->Pt();
+        Geny[nDimuGen] = JP_Gen->Rapidity();
+        Geneta[nDimuGen] = JP_Gen->Eta();
+        Geneta1[nDimuGen] = mupl_Gen->Eta();
+        Geneta2[nDimuGen] = mumi_Gen->Eta();
+        Genphi[nDimuGen] = JP_Gen->Phi();
+        Genphi1[nDimuGen] = mupl_Gen->Phi();
+        Genphi2[nDimuGen] = mumi_Gen->Phi();
+        Gencos_theta[nDimuGen] = JP_Gen->CosTheta();
+        Gencos_theta1[nDimuGen] = mupl_Gen->CosTheta();
+        Gencos_theta2[nDimuGen] = mumi_Gen->CosTheta();
+        Genctau3D[nDimuGen] = Gen_QQ_ctau3D[irgen];
+        nDimuGen++;
+      }
+
+      if (nDimuGen > 0)
+        mmgentree->Fill();
+    }
+  }
+
   cout << "count " << count << endl;
   cout << "counttnp " << counttnp << endl;
 
@@ -656,6 +783,8 @@ void onia_to_skim(string data_label_ = "test", int nevt = 1000, bool isMC = true
   // ===== save output ===== //
   newfile->cd();
   mmevttree->Write();
+  if (isMC)
+    mmgentree->Write();
   newfile->Close();
 
   cout << "\n=================================\n";
