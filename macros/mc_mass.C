@@ -41,7 +41,7 @@ void mc_mass()
     // 3.34 for forward
     // 3.28 for mid , 3.19837 (3.3까지 그리고 그림 확대해서 데이터랑 pdf 엇나가는 부분을 눈으로 보고 잘랐다.) -> AN21-003 Fig.21을 봐도 Pull이 6.8까지 튀어도 일단 넘어갈 수 있다. 풀 전체가 요동치지만 않으면
 
-    // input parameters - main
+    // input parameters
     float cos_low = 0.5, cos_high = 0.6;
     float ptLow = 3;
     float ptHigh = 6.5;
@@ -65,6 +65,8 @@ void mc_mass()
     RooMsgService::instance().getStream(1).removeTopic(Caching);
     RooMsgService::instance().getStream(0).removeTopic(Plotting);
     RooMsgService::instance().getStream(1).removeTopic(Plotting);
+    RooMsgService::instance().getStream(0).removeTopic(Integration);
+    RooMsgService::instance().getStream(1).removeTopic(Integration);
     RooMsgService::instance().getStream(0).removeTopic(InputArguments);
     RooMsgService::instance().getStream(1).removeTopic(InputArguments);
     RooMsgService::instance().getStream(1).removeTopic(NumIntegration);
@@ -78,6 +80,7 @@ void mc_mass()
                   << "_cent" << cLow << "-" << cHigh << "_absY" << yLow << "-" << yHigh
                   << "_cos" << cos_low << "_" << cos_high;
     string out_ss = out_file_path.str();
+
 
     // ===== make output folders ===== //
     gSystem->mkdir(Form("roots/mc_mass/"), kTRUE);
@@ -188,6 +191,7 @@ void mc_mass()
     // mc_mass_frame->GetXaxis()->SetRangeUser(massLow, massHigh);
     // mc_mass_frame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{-}} (GeV/c^{2})");
     mc_mass_frame->Draw();
+
 
     // ===== draw legends for PDFs and dataset ===== //
     // mc_mass_pdf->plotOn(mc_mass_frame, Name("pdfMASS_Tot"), LineColor(kBlack));
