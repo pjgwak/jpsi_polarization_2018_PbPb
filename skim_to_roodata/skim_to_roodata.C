@@ -236,16 +236,16 @@ void skim_to_roodata(
     RooRealVar *eta1Var = new RooRealVar("eta1", "eta of muon+", -4, 4, "");
     RooRealVar *pt2Var = (RooRealVar *)pt1Var->Clone("pt2");
     RooRealVar *eta2Var = (RooRealVar *)eta1Var->Clone("eta2");
-    RooRealVar *cBinVar = new RooRealVar("cBin", "Centrality bin", -100, 500, "");
+    RooRealVar *cBinVar = new RooRealVar("cBin", "Centrality bin", 0, 200, "");
     RooRealVar *ep2Var = new RooRealVar("ep2", "2nd order event plane", -100, 100, "");
     RooRealVar *evtWeight = new RooRealVar("weight", "corr weight", 0, 10000, "");
     // local name은 evtWeight인데 root 이름연 weight이라 output에 weight으로 저장된다.
     RooRealVar *recoQQ = new RooRealVar("recoQQsign", "qq sign", -1, 3, "");
-    RooRealVar *ctau3DVar = new RooRealVar("ctau3D", "c_{#tau}", -1000.0, 1000.0, "mm");
-    RooRealVar *ctau3DErrVar = new RooRealVar("ctau3DErr", "#sigma_{c#tau}", -1000.0, 1000.0, "mm");
-    RooRealVar *ctau3DResVar = new RooRealVar("ctau3DRes", "c_{#tau} res", -1000.0, 1000.0, "");
-    RooRealVar *ctau3DTrueVar = new RooRealVar("ctau3DTrue", "c_{#tau} true", -100.0, 100.0, "");
-    RooRealVar *NumDimu = new RooRealVar("NumDimu", "number of dimuon", 0, 100, "");
+    RooRealVar *ctau3DVar = new RooRealVar("ctau3D", "c_{#tau}", -10.0, 10.0, "mm");
+    RooRealVar *ctau3DErrVar = new RooRealVar("ctau3DErr", "#sigma_{c#tau}", 0, 10.0, "mm");
+    RooRealVar *ctau3DResVar = new RooRealVar("ctau3DRes", "c_{#tau} res", -100.0, 100.0, "");
+    RooRealVar *ctau3DTrueVar = new RooRealVar("ctau3DTrue", "c_{#tau} true", -10.0, 10.0, "");
+    RooRealVar *NumDimu = new RooRealVar("NumDimu", "number of dimuon", 0, 1000, "");
     
     // polarization variables
     RooRealVar *cos_thetaVar = new RooRealVar("cos_theta", "", -1.0, 1.0, "");

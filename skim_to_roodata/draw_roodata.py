@@ -12,7 +12,7 @@ in_file = TFile()
 if sample == 'data':
     in_file = TFile('../files_roodata/RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_HFHFNom_250201.root')
 elif sample == 'mc_pr':
-    in_file = TFile('../files_roodata/RooDataSet_miniAOD_isMC1_PR_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_HFHFNom_test.root')
+    in_file = TFile('../files_roodata/RooDataSet_miniAOD_isMC1_PR_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root')
 elif sample == 'mc_np':
     in_file = TFile('../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_HFHFNom_250201.root')
 
@@ -44,6 +44,7 @@ phi_cs = RooRealVar("phi_cs", "", -5.0, 5.0, "")
 cos_hx = RooRealVar("cos_hx", "", -1.0, 1.0, "")
 phi_hx = RooRealVar("phi_hx", "", -5.0, 5.0, "")
 cos_ep = RooRealVar("cos_ep", "", -1.0, 1.0, "")
+phi_ep = RooRealVar("phi_ep", "", -5.0, 5.0, "")
 # phi_cs = RooRealVar("phi_cs", "", -5.0, 5.0, "")
 
 if is_draw_all:
@@ -55,7 +56,7 @@ if not is_draw_all:
     is1D = True
     
     if is1D: # 1D
-        my_hist = ds.createHistogram("my_hist", cos_ep)
+        my_hist = ds.createHistogram("my_hist", phi_ep)
         my_hist.Draw()
     else: # 2D
         my_list = [mass, ctau3DRes]
