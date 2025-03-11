@@ -54,6 +54,7 @@ void mass()
                   << "_cos" << cos_low << "_" << cos_high;
     string out_ss = out_file_path.str();
 
+
     // ===== make output folders ===== //
     gSystem->mkdir(Form("roots/mass/"), kTRUE);
     gSystem->mkdir(Form("figs/mass"), kTRUE);
@@ -307,14 +308,14 @@ void mass()
     // ===== Export results ===== //    
     auto out_file = new TFile(("roots/" + out_ss + ".root").c_str(), "recreate");
 
-    // auto ws_mass = new RooWorkspace("ws_mass");
-    // ws_mass->import(*mass_pdf);
+    auto ws_mass = new RooWorkspace("ws_mass");
+    ws_mass->import(*mass_pdf);
 
     c_mass->Write();
     fit_mass->Write();
     mass_pdf->Write();
     ds_red_mass->Write();
-    // ws_mass->Write();
+    ws_mass->Write();
     out_file->Close();
 
     cout << "\n=================================\n";

@@ -442,13 +442,14 @@ void err()
 
 
     // ===== Export results ===== //
-    // TFile *outFile = new TFile(Form("roots/2DFit_%s/CtauErr_v2Bins/CtauErrResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d_v2_%.2f.root", DATE.Data(), kineLabel.Data(), fname.Data(), fEffW, fAccW, isPtW, isTnP, v2), "recreate");
-    // ds_bkg_err->Write();
-    // ds_sig_err->Write();
-    // err_tot_pdf->Write();
-    // err_bkg_pdf->Write();
-    // err_sig_pdf->Write();
-    // outFile->Close();
+    auto out_file = new TFile(("roots/" + out_ss + ".root").c_str(), "recreate");
+    ds_bkg_err->Write();
+    ds_sig_err->Write();
+    err_tot_pdf->Write();
+    err_bkg_pdf->Write();
+    err_sig_pdf->Write();
+    ws_err->Write();
+    out_file->Close();
 
     cout << "\n=================================\n";
     cout << "\n Finish ctau3DErr sPlot work\n";
