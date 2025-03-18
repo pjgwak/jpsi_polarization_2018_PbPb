@@ -16,6 +16,9 @@
 # output of CtauErr: 3 - 70 MB
 **/CtauErr/*.root
 
+# Temporal - no root file at all
+**/*.root
+
 
 # main inputs - GB level
 skimmed_files/*.root
