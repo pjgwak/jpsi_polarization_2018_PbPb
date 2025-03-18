@@ -149,6 +149,10 @@ void bkg()
     ws_bkg->var("f_CtauRes")->setConstant(kTRUE);
     
     cout << "\nn_bkg: " << ws_bkg->var("n_bkg")->getVal() << "+/-" << ws_bkg->var("n_bkg")->getError() << endl;
+
+    auto n_bkg_ctau = (RooRealVar *)ws_bkg->var("n_bkg")->Clone("n_bkg_ctau");
+    ws_bkg->import(*n_bkg_ctau);
+
     cout << "Bias of gaus1: " << ws_bkg->var("ctau1_CtauRes")->getVal() << endl;
     cout << "Fraction of gaus1: " << ws_bkg->var("f_CtauRes")->getVal() << "+/-" << ws_bkg->var("f_CtauRes")->getError() << endl;
     cout << "Sigma of gaus1: " << ws_bkg->var("s1_CtauRes")->getVal() << endl;
@@ -180,8 +184,12 @@ void bkg()
     ws_bkg->factory("fDLIV[0.1, 1e-3, 1.]");
     ws_bkg->factory("lambdaDDS_Bkg[0.5, 0, 10]");
     ws_bkg->factory("lambdaDF_Bkg[ 0.5, 0, 10]");
+    // ws_bkg->factory("lambdaDF_Bkg2[ 0.5, 0, 10]");
     ws_bkg->factory("lambdaDSS_Bkg[0.5, 0, 10]");
-    
+    // ws_bkg->factory("lambdaDSS_Bkg2[0.5, 0, 10]");
+    // ws_bkg->factory("fSS[0.1, 1e-3, 1.]");
+    // ws_bkg->factory("fFF[0.1, 1e-3, 1.]");
+
     // make 3 exp
     ws_bkg->factory(Form("Decay::%s(%s, %s, %s, RooDecay::SingleSided)", "pdfCTAUDSS1", "ctau3D", "lambdaDSS_Bkg", "pdfCTAURES"));
     ws_bkg->factory(Form("Decay::%s(%s, %s, %s, RooDecay::SingleSided)", "pdfCTAUDSS2", "ctau3D", "lambdaDSS_Bkg2[0.1,0.01,1]", "pdfCTAURES"));
@@ -205,16 +213,16 @@ void bkg()
     ws_bkg->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUCOND_Bkg", "b_Bkg", "pdfCTAUCOND_BkgNoPR", "pdfCTAUCOND_BkgPR"));
 
     // total
-    ws_bkg->factory(Form("RooExtendPdf::%s(%s,%s)", "pdfTot_Bkg", "pdfCTAUCOND_Bkg", "n_bkg")); // n_bkg is number of bkg from ds_bkg_err
+    ws_bkg->factory(Form("RooExtendPdf::%s(%s,%s)", "pdfTot_Bkg", "pdfCTAUCOND_Bkg", "n_bkg_ctau")); // n_bkg_ctau is number of bkg from ds_bkg_err
 
     RooProdPdf pdfPR("pdfCTAU_BkgPR", "", *ws_bkg->pdf("err_bkg_pdf"), Conditional(*ws_bkg->pdf("pdfCTAUCOND_BkgPR"), RooArgList(*ws_bkg->var("ctau3D"))));
     ws_bkg->import(pdfPR);
     RooProdPdf pdfNoPR("pdfCTAU_BkgNoPR", "", *ws_bkg->pdf("err_bkg_pdf"), Conditional(*ws_bkg->pdf("pdfCTAUCOND_BkgNoPR"), RooArgList(*ws_bkg->var("ctau3D"))));
     ws_bkg->import(pdfNoPR);
     ws_bkg->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU_Bkg", "b_Bkg", "pdfCTAU_BkgNoPR", "pdfCTAU_BkgPR"));
-    RooAbsPdf *bkg_fit_pdf = new RooAddPdf("bkg_fit_pdf", "bkg_fit_pdf", RooArgList(*ws_bkg->pdf("pdfCTAU_Bkg")), RooArgList(*ws_bkg->var("n_bkg")));
+    RooAbsPdf *bkg_fit_pdf = new RooAddPdf("bkg_fit_pdf", "bkg_fit_pdf", RooArgList(*ws_bkg->pdf("pdfCTAU_Bkg")), RooArgList(*ws_bkg->var("n_bkg_ctau")));
     ws_bkg->import(*bkg_fit_pdf);
-    // RooAbsPdf* ctauBkgModel = ctauBkgModel = new RooAddPdf("pdfTot_Bkg","pdfTot_Bkg",*ws_bkg->pdf("pdfCTAUCOND_Bkg"), *ws_bkg->var("n_bkg"));
+    // RooAbsPdf* ctauBkgModel = ctauBkgModel = new RooAddPdf("pdfTot_Bkg","pdfTot_Bkg",*ws_bkg->pdf("pdfCTAUCOND_Bkg"), *ws_bkg->var("n_bkg_ctau"));
     // ws_bkg->import(*pdfCTAUCOND_Bkg);
 
 
@@ -281,8 +289,11 @@ void bkg()
     ws_bkg->var("fDLIV")->setConstant(kTRUE);
     ws_bkg->var("lambdaDDS_Bkg")->setConstant(kTRUE);
     ws_bkg->var("lambdaDF_Bkg")->setConstant(kTRUE);
+    ws_bkg->var("lambdaDF_Bkg2")->setConstant(kTRUE);
     ws_bkg->var("lambdaDSS_Bkg")->setConstant(kTRUE);
+    ws_bkg->var("lambdaDSS_Bkg2")->setConstant(kTRUE);
     ws_bkg->var("fSS")->setConstant(kTRUE);
+    ws_bkg->var("fFF")->setConstant(kTRUE);
 
     // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
     // *-* Plotting - very long but simple *-*//

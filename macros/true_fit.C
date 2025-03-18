@@ -146,21 +146,21 @@ void true_fit()
     RooDecay true_decay_r2("true_decay_r2", "decay model", *ws_true->var("ctau3D"), true_tau2, delta_fcn, RooDecay::SingleSided);
     //      RooDecay decay_r3("decay_r3", "decay model", *ws_true->var("ctau3D"), tau3, true_gm1, RooDecay::SingleSided);
 
-    RooRealVar ture_frac1("ture_frac1", "Weight for decay1", 0.5, 0.01, 1.0); // 가중치 ture_frac1
+    RooRealVar true_frac1("true_frac1", "Weight for decay1", 0.5, 0.01, 1.0); // 가중치 true_frac1
 
-    RooAddPdf true_decay("true_decay", "", RooArgList(true_decay_r1, true_decay_r2), RooArgList(ture_frac1));
-    //      RooAddPdf decay("decay", "", RooArgList(decay_r1, true_decay_r2, decay_r3), RooArgList(ture_frac1, w2, w3));
+    RooAddPdf true_decay("true_decay", "", RooArgList(true_decay_r1, true_decay_r2), RooArgList(true_frac1));
+    //      RooAddPdf decay("decay", "", RooArgList(decay_r1, true_decay_r2, decay_r3), RooArgList(true_frac1, w2, w3));
 
     // extend decay model
     RooRealVar true_n_dimu("true_n_dimu", "", 500000, 200000, 1000000);
-    RooExtendPdf fit_model("fit_model", "", true_decay, true_n_dimu);
-    ws_true->import(fit_model);
+    auto fit_model = new RooExtendPdf("fit_model", "", true_decay, true_n_dimu);
+    ws_true->import(*fit_model);
 
     // ===== Fit here ===== //
     bool isWeighted = ds_red_np_mc->isWeighted();
 
     // auto fit_true = decay.fitTo(*ds_red_np_mc, Save(1), SumW2Error(isWeighted), NumCPU(6), Extended(1), Range("ctauTrueRange"), PrintLevel(-1));
-    auto fit_true = fit_model.fitTo(*ds_red_np_mc, Save(1), Extended(1), SumW2Error(false), NumCPU(12), Range("trueFitWindow"), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1));
+    auto fit_true = ws_true->pdf("fit_model")->fitTo(*ds_red_np_mc, Save(1), Extended(1), SumW2Error(false), NumCPU(12), Range("trueFitWindow"), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1));
     fit_true->Print("v");
 
     // set constant
@@ -171,7 +171,7 @@ void true_fit()
     true_tau1.setConstant(true);
     true_tau2.setConstant(true);
     true_tau3.setConstant(true);
-    ture_frac1.setConstant(true);
+    true_frac1.setConstant(true);
 
 
     // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -192,7 +192,7 @@ void true_fit()
     RooPlot *true_frame = ws_true->var("ctau3D")->frame(Bins(nCtauBins),Range(trueMin, trueMax));
     // fit_model.setNormRange("ctauTrueRange");
     ds_red_np_mc->plotOn(true_frame, DataError(RooAbsData::SumW2), Name("ds_red_np_mc"));
-    fit_model.plotOn(true_frame, Range("trueFitWindow"), NormRange("trueFitWindow"), Name("fit_model"));
+    ws_true->pdf("fit_model")->plotOn(true_frame, Range("trueFitWindow"), NormRange("trueFitWindow"), Name("fit_model"));
 
     // set y plot range
     // RooPlot *true_frame = mass->frame(nMassBin); // bins
@@ -323,6 +323,10 @@ void true_fit()
     cout << "\n=================================\n";
     t->Stop();
     printf("RealTime=%f seconds, CpuTime=%f seconds\n", t->RealTime(), t->CpuTime());
+
+    ws_true->Print("V");
+    ws_true->var("true_tau1")->Print("V");
+    cout << ws_true->var("true_tau1")->getVal() << endl;
 }
 
 

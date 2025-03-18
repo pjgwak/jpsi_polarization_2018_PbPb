@@ -293,7 +293,7 @@ void final()
     // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
     // *-* Fit here *-*//
     // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-    auto fit_2d = ws_final->pdf("themodel")->fitTo(*ds_tmp, Save(1), SumW2Error(true), NumCPU(12), Extended(1), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1));
+    auto fit_2d = ws_final->pdf("themodel")->fitTo(*ds_final, Save(1), SumW2Error(true), NumCPU(12), Extended(1), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1));
     fit_2d->Print("V");
 
 

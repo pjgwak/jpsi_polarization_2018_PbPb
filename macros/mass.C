@@ -86,6 +86,8 @@ void mass()
     // ds_red_mass->Print("V");
     // ws_mass->import(*ds_red_mass);
 
+    auto ws_mass = new RooWorkspace("ws_mass");
+
     // set mass range
     RooRealVar *mass = (RooRealVar *)ds_red_mass->get(0)->find("mass");
     mass->setRange(massLow, massHigh);
@@ -131,21 +133,22 @@ void mass()
     auto n_sig = new RooRealVar("n_sig", "", 5000, 1, 25000);
     auto n_bkg = new RooRealVar("n_bkg", "", 20000, 1, 100000);
     auto mass_pdf = new RooAddPdf("mass_pdf", "", RooArgList(*mass_sig, *mass_bkg), RooArgList(*n_sig, *n_bkg));
+    ws_mass->import(*mass_pdf);
 
     // ===== fit here ===== //
     bool is_weighted = ds_red_mass->isWeighted();
     cout << "Is weighted: " << is_weighted << endl;
 
-    auto fit_mass = mass_pdf->fitTo(*ds_red_mass, Extended(1), Save(1), AsymptoticError(is_weighted), NumCPU(12), Strategy(2));
+    auto fit_mass = ws_mass->pdf("mass_pdf")->fitTo(*ds_red_mass, Extended(1), Save(1), AsymptoticError(is_weighted), NumCPU(12), Strategy(2));
     // PrintLevel(-1), AsymptoticError(), SumW2Error();
     fit_mass->Print("v");
 
     // fix parameters for next steps (err, res ...)
-    mass_mean->setConstant(kTRUE);
-    mass_sigma1->setConstant(kTRUE);
-    mass_sigma2->setConstant(kTRUE);
-    mass_sl1->setConstant(kTRUE);
-    mass_sl2->setConstant(kTRUE);
+    ws_mass->var("mass_mean")->setConstant(kTRUE);
+    ws_mass->var("mass_sigma1")->setConstant(kTRUE);
+    ws_mass->var("mass_sigma2")->setConstant(kTRUE);
+    ws_mass->var("mass_sl1")->setConstant(kTRUE);
+    ws_mass->var("mass_sl2")->setConstant(kTRUE);
 
 
     // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -162,10 +165,10 @@ void mass()
     // mass dist.
     auto mass_frame = (RooPlot *)mass->frame(Range(2.6, 3.5));
     ds_red_mass->plotOn(mass_frame, Name("ds_red_mass"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerSize(.7));
-    mass_pdf->plotOn(mass_frame, Name("mass_pdf"), LineColor(kBlack));
-    mass_pdf->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg, *CB1Sig)), Name("CB1Sig"), LineColor(44), LineWidth(2));
-    mass_pdf->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg, *G1Sig)), Name("G1Sig"), LineColor(8), LineWidth(2));
-    mass_pdf->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg)), Name("mass_bkg"), LineColor(kBlue+2), LineWidth(2));
+    ws_mass->pdf("mass_pdf")->plotOn(mass_frame, Name("mass_pdf"), LineColor(kBlack));
+    ws_mass->pdf("mass_pdf")->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg, *CB1Sig)), Name("CB1Sig"), LineColor(44), LineWidth(2));
+    ws_mass->pdf("mass_pdf")->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg, *G1Sig)), Name("G1Sig"), LineColor(8), LineWidth(2));
+    ws_mass->pdf("mass_pdf")->plotOn(mass_frame, LineStyle(kDashed), Components(RooArgSet(*mass_bkg)), Name("mass_bkg"), LineColor(kBlue+2), LineWidth(2));
 
     // set y plot range
     // RooPlot *mass_frame = mass->frame(nMassBin); // bins
@@ -205,7 +208,8 @@ void mass()
     leg_pdfs->AddEntry(mass_frame->findObject("mass_bkg"), "2nd Chebychev", "l");
     leg_pdfs->Draw("same");
 
-
+    // ws_mass->var(;
+    
     // ===== draw legends ===== //
     drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c ; Cent. %d - %d%s; %.2f < cos#theta_{EP} < %.2f", ptLow, ptHigh, cLow / 2, cHigh / 2, "%", cos_low, cos_high), text_x, text_y, text_color, text_size);
     if (yLow == 0)
@@ -213,14 +217,14 @@ void mass()
     else if (yLow != 0)
         drawText(Form("%.1f < |y^{#mu#mu}| < %.1f", yLow, yHigh), text_x, text_y - y_diff, text_color, text_size);
     // drawText(Form("Cent. %d - %d%s", cLow/2, cHigh/2, "%"),text_x,text_y-y_diff*2,text_color,text_size);
-    drawText(Form("N_{J/#psi} = %.f #pm %.f; N_{Bkg} = %.f #pm %.f", n_sig->getVal(), n_sig->getError(), n_bkg->getVal(), n_bkg->getError()), text_x, text_y - y_diff * 2, text_color, text_size);
-    drawText(Form("m_{J/#psi} = %.4f #pm %.4f", mass_mean->getVal(), mass_mean->getError()), text_x, text_y - y_diff * 3, text_color, text_size);
-    drawText(Form("#alpha_{J/#psi} = %.4f (fixed); n_{J/#psi} = %.4f (fixed)", mass_alpha1->getVal(), mass_power1->getVal()), text_x, text_y - y_diff * 4, text_color, text_size);
+    drawText(Form("N_{J/#psi} = %.f #pm %.f; N_{Bkg} = %.f #pm %.f", ws_mass->var("n_sig")->getVal(), ws_mass->var("n_sig")->getError(), ws_mass->var("n_bkg")->getVal(), ws_mass->var("n_bkg")->getError()), text_x, text_y - y_diff * 2, text_color, text_size);
+    drawText(Form("m_{J/#psi} = %.4f #pm %.4f", ws_mass->var("mass_mean")->getVal(), ws_mass->var("mass_mean")->getError()), text_x, text_y - y_diff * 3, text_color, text_size);
+    drawText(Form("#alpha_{J/#psi} = %.4f (fixed); n_{J/#psi} = %.4f (fixed)", ws_mass->var("mass_alpha1")->getVal(), ws_mass->var("mass_power1")->getVal()), text_x, text_y - y_diff * 4, text_color, text_size);
     drawText(Form("f_{G1} = %.4f (fixed)", mass_fracG1->getVal()), text_x, text_y - y_diff * 5, text_color, text_size);
-    drawText(Form("#sigma1_{J/#psi} = %.2f #pm %.2f MeV/c^{2}", mass_sigma1->getVal() * 1000, mass_sigma1->getError() * 1000), text_x, text_y - y_diff * 6, text_color, text_size);
-    drawText(Form("#sigma2_{J/#psi} = %.2f #pm %.2f MeV/c^{2}", mass_sigma2->getVal() * 1000, mass_sigma2->getError() * 1000), text_x, text_y - y_diff * 7, text_color, text_size);
-    drawText(Form("slope1_{Bkg} = %.2f #pm %.2f MeV/c^{2}", (mass_sl1->getVal()), (mass_sl1->getError())), text_x, text_y - y_diff * 8, text_color, text_size);
-    drawText(Form("slope2_{Bkg} = %.2f #pm %.2f MeV/c^{2}", (mass_sl2->getVal()), (mass_sl2->getError())), text_x, text_y - y_diff * 9, text_color, text_size);
+    drawText(Form("#sigma1_{J/#psi} = %.2f #pm %.2f MeV/c^{2}", ws_mass->var("mass_sigma1")->getVal() * 1000, ws_mass->var("mass_sigma1")->getError() * 1000), text_x, text_y - y_diff * 6, text_color, text_size);
+    drawText(Form("#sigma2_{J/#psi} = %.2f #pm %.2f MeV/c^{2}", ws_mass->var("mass_sigma2")->getVal() * 1000, ws_mass->var("mass_sigma2")->getError() * 1000), text_x, text_y - y_diff * 7, text_color, text_size);
+    drawText(Form("slope1_{Bkg} = %.2f #pm %.2f MeV/c^{2}", (ws_mass->var("mass_sl1")->getVal()), (ws_mass->var("mass_sl1")->getError())), text_x, text_y - y_diff * 8, text_color, text_size);
+    drawText(Form("slope2_{Bkg} = %.2f #pm %.2f MeV/c^{2}", (ws_mass->var("mass_sl2")->getVal()), (ws_mass->var("mass_sl2")->getError())), text_x, text_y - y_diff * 9, text_color, text_size);
 
 
     // ===== draw pull dist. ===== //
@@ -308,8 +312,7 @@ void mass()
     // ===== Export results ===== //    
     auto out_file = new TFile(("roots/" + out_ss + ".root").c_str(), "recreate");
 
-    auto ws_mass = new RooWorkspace("ws_mass");
-    ws_mass->import(*mass_pdf);
+    
 
     c_mass->Write();
     fit_mass->Write();
