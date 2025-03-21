@@ -1,5 +1,3 @@
-# ../..//eff_acc/roots/mc_eff_vs_pt_cent_rap_prompt_pbpb_Jpsi_PtW1_tnp1_250221.root
-
 import ROOT
 from ROOT import TFile
 # TFile, TCanvas, RooWorkspace, TH2D, RooFit, RooRealVar
@@ -11,7 +9,7 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch(True)
 
 # bring input root file
-in_file = TFile('../..//eff_acc/roots/mc_eff_vs_pt_cent_rap_prompt_pbpb_Jpsi_PtW1_tnp1_250221.root')
+in_file = TFile('../../eff_acc/roots/mc_eff_vs_pt_cent_rap_prompt_pbpb_Jpsi_PtW1_tnp1_250221.root')
 # in_file.Print('V')
 
 # bring histograms
