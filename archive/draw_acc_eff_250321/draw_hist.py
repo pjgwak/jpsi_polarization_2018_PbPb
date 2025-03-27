@@ -5,7 +5,7 @@ from ROOT import TFile
 # no stat box for histogram
 ROOT.gStyle.SetOptStat(0)
 
-# batch mode - dont' draw the plot
+# batch mode - don't show the plot
 ROOT.gROOT.SetBatch(True)
 
 # bring input root file
