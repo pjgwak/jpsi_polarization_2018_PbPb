@@ -311,6 +311,7 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             mumi_Gen = (TLorentzVector *)Gen_mu_4mom->At(Gen_QQ_mumi_idx[igen]);
 
             Double_t Rapidity_gen = fabs(JP_Gen->Rapidity());
+            double pt_gen = JP_Gen->Pt();
 
             pt_weight = 1;
             if (isPtWeight)
@@ -324,7 +325,7 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             if (!(fabs(JP_Gen->Rapidity()) < 2.4))
                 continue;
 
-            if (!(JP_Gen->Pt() > 0 && JP_Gen->Pt() < 50 && fabs(JP_Gen->Rapidity()) < 2.4 && IsAcceptable(mupl_Gen->Pt(), fabs(mupl_Gen->Eta())) && IsAcceptable(mumi_Gen->Pt(), fabs(mumi_Gen->Eta()))))
+            if (!(fabs(JP_Gen->Rapidity()) < 2.4 && IsAcceptable(mupl_Gen->Pt(), fabs(mupl_Gen->Eta())) && IsAcceptable(mumi_Gen->Pt(), fabs(mumi_Gen->Eta())) ))
                 continue;
 
             if (!(fabs(JP_Gen->Rapidity()) < 2.4 && fabs(mupl_Gen->Eta()) < 2.4 && fabs(mumi_Gen->Eta()) < 2.4))
@@ -394,17 +395,17 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             // rapidity
             y_lab_den->Fill(JP_Gen->Rapidity(), weight * pt_weight);
 
-            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
+            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4 && pt_gen > 3 && pt_gen < 50)
             {
-                fwd_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                fwd_lab_den->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                fwd_hx_den->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                fwd_cs_den->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
-            else
+            else if (Rapidity_gen < 1.6 && pt_gen > 6.5 && pt_gen < 50)
             {
-                mid_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                mid_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                mid_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                mid_lab_den->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                mid_hx_den->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                mid_cs_den->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
         } // end of gen loop
 
@@ -418,6 +419,8 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             JP_Reco = (TLorentzVector *)Reco_QQ_4mom->At(irqq);
             mupl_Reco = (TLorentzVector *)Reco_mu_4mom->At(Reco_QQ_mupl_idx[irqq]);
             mumi_Reco = (TLorentzVector *)Reco_mu_4mom->At(Reco_QQ_mumi_idx[irqq]);
+
+            double pt_reco = JP_Reco->Pt();
 
             bool HLTFilterPass = false;
             if ((Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel)))
@@ -461,15 +464,23 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
 
             Double_t Rapidity_reco = fabs(JP_Reco->Rapidity());
 
-            if (Rapidity_reco < 1.2)
-                muPtCut = 3.5;
-            else if (Rapidity_reco > 1.2 && Rapidity_reco < 2.1)
-                muPtCut = (5.47 - 1.89 * Rapidity_reco);
-            else if (Rapidity_reco > 2.1 && Rapidity_reco < 2.4)
-                muPtCut = 1.5;
+            // if (Rapidity_reco < 1.2)
+            //     muPtCut = 3.5;
+            // else if (Rapidity_reco > 1.2 && Rapidity_reco < 2.1)
+            //     muPtCut = (5.47 - 1.89 * Rapidity_reco);
+            // else if (Rapidity_reco > 2.1 && Rapidity_reco < 2.4)
+            //     muPtCut = 1.5;
 
-            if (!((mupl_Reco->Pt() > muPtCut && fabs(mupl_Reco->Eta()) < 2.4) && (mumi_Reco->Pt() > muPtCut && fabs(mumi_Reco->Eta()) < 2.4) && (fabs(JP_Reco->Rapidity()) < 2.4 && JP_Reco->Pt() < 50 && JP_Reco->Pt() > 3 && JP_Reco->M() > massLow && JP_Reco->M() < massHigh)))
+            // if (!((mupl_Reco->Pt() > muPtCut && fabs(mupl_Reco->Eta()) < 2.4) && (mumi_Reco->Pt() > muPtCut && fabs(mumi_Reco->Eta()) < 2.4) && (fabs(JP_Reco->Rapidity()) < 2.4 && JP_Reco->Pt() < 50 && JP_Reco->Pt() > 3 && JP_Reco->M() > massLow && JP_Reco->M() < massHigh)))
+            //     continue;
+
+            if (!(fabs(JP_Reco->Rapidity()) < 2.4 && IsAcceptable(mupl_Reco->Pt(), fabs(mupl_Reco->Eta())) && IsAcceptable(mumi_Reco->Pt(), fabs(mumi_Reco->Eta()))))
                 continue;
+
+            if (!(fabs(mupl_Reco->Eta()) < 2.4 && fabs(mumi_Reco->Eta()) < 2.4 && fabs(JP_Reco->Rapidity()) < 2.4 && JP_Reco->M() > massLow && JP_Reco->M() < massHigh))
+                continue;
+
+        
 
             if (HLTPass == true && HLTFilterPass == true)
                 count++;
@@ -582,17 +593,17 @@ void eff_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             // ===== fill the numerator ===== //
             y_lab_num->Fill(JP_Reco->Rapidity(), weight * pt_weight);
 
-            if (Rapidity_reco > 1.6 && Rapidity_reco < 2.4)
+            if (Rapidity_reco > 1.6 && Rapidity_reco < 2.4 && pt_reco > 3 && pt_reco < 50)
             {
-                fwd_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                fwd_lab_num->Fill(cos_lab_, phi_lab_, pt_reco, weight * pt_weight);
+                fwd_hx_num->Fill(cos_hx_, phi_hx_, pt_reco, weight * pt_weight);
+                fwd_cs_num->Fill(cos_cs_, phi_cs_, pt_reco, weight * pt_weight);
             }
-            else
+            else if (Rapidity_reco < 1.6 && pt_reco > 6.5 && pt_reco < 50)
             {
-                mid_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                mid_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                mid_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                mid_lab_num->Fill(cos_lab_, phi_lab_, pt_reco, weight * pt_weight);
+                mid_hx_num->Fill(cos_hx_, phi_hx_, pt_reco, weight * pt_weight);
+                mid_cs_num->Fill(cos_cs_, phi_cs_, pt_reco, weight * pt_weight);
             }
         } // end of reco loop
     } // end of main loop

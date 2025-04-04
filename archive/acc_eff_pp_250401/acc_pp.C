@@ -7,12 +7,7 @@
 #include "../../headers/HiEvtPlaneList.h"
 #include "../../headers/cutsAndBin.h"
 #include "../../headers/Style.h"
-#include "../../headers/tnp_weight_lowptPbPb_num_den_new.h"
-// #include "../headers/tnp_weight_lowptPbPb.h"
 
-void divide_2d_hist(const std::shared_ptr<TH2D> &h_num, const std::shared_ptr<TH2D> &h_den,
-                    std::shared_ptr<TH2D> &h_eff);
-void draw_2d_hist(const std::shared_ptr<TH2D> &h_eff, string legend, int MCtype);
 bool IsAcceptable(double pt, double eta);
 
 void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, bool isTnP = true, bool isPtWeight = true)
@@ -70,7 +65,7 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     vector<double> mid_pt_bin = {6.5, 9.0, 12, 15.0, 20, 50};
     vector<double> cos_bin = {-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     vector<double> phi_bin = {-3.15, -2.835, -2.52, -2.205, -1.89, -1.575, -1.26, -0.945, -0.63, -0.315, 0.0, 0.315, 0.63, 0.945, 1.26, 1.575, 1.89, 2.205, 2.52, 2.835, 3.15};
-    vector<double> y_bin = {-2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3, 0.0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4};
+    vector<double> y_bin = {-2.4, -2.0, -1.6, -1.2, -0.8, -0.4, 0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4};
 
     double n_fwd_pt = fwd_pt_bin.size() - 1;
     double n_mid_pt = mid_pt_bin.size() - 1;
@@ -220,6 +215,7 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             mumi_Gen = (TLorentzVector *)Gen_QQ_mumi_4mom->At(igen);
 
             Double_t Rapidity_gen = fabs(JP_Gen->Rapidity());
+            double pt_gen = JP_Gen->Pt();
 
             // some kinematic varialbes in lab
             double cos_lab_ = mupl_Gen->CosTheta();
@@ -229,9 +225,9 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             if (isPtWeight)
             {
                 if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
-                    pt_weight = fptw_fwd->Eval(JP_Gen->Pt());
+                    pt_weight = fptw_fwd->Eval(pt_gen);
                 else
-                    pt_weight = fptw_mid->Eval(JP_Gen->Pt());
+                    pt_weight = fptw_mid->Eval(pt_gen);
             }
 
             // ===== Acc denominator cut ===== //
@@ -294,17 +290,20 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             // rapidity
             y_lab_den->Fill(JP_Gen->Rapidity(), weight * pt_weight);
 
-            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
+
+            // explicit pt_gen, rapidity ranges are required. 
+            // If not, values out of histogram ragnes will be stored at the edges of histograms
+            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4 && pt_gen > 3 && pt_gen < 50)
             {
-                fwd_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                fwd_lab_den->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                fwd_hx_den->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                fwd_cs_den->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
-            else
+            else if (Rapidity_gen < 1.6 && pt_gen > 6.5 && pt_gen < 50)
             {
-                mid_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                mid_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                mid_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                mid_lab_den->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                mid_hx_den->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                mid_cs_den->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
 
             // ===== numerator cuts ===== //
@@ -314,7 +313,7 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             if (mu1pass != true || mu2pass != true)
                 continue;
 
-            // if (!(JP_Gen->Pt() > 0 && JP_Gen->Pt() < 50 && fabs(JP_Gen->Rapidity()) < 2.4 && IsAcceptable(mupl_Gen->Pt(), fabs(mupl_Gen->Eta())) && IsAcceptable(mumi_Gen->Pt(), fabs(mumi_Gen->Eta()))))
+            // if (!(pt_gen > 0 && pt_gen < 50 && fabs(JP_Gen->Rapidity()) < 2.4 && IsAcceptable(mupl_Gen->Pt(), fabs(mupl_Gen->Eta())) && IsAcceptable(mumi_Gen->Pt(), fabs(mumi_Gen->Eta()))))
             //     continue;
 
             // if (!(fabs(JP_Gen->Rapidity()) < 2.4 && fabs(mupl_Gen->Eta()) < 2.4 && fabs(mumi_Gen->Eta()) < 2.4))
@@ -327,17 +326,17 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
             ++count_num;
             y_lab_num->Fill(JP_Gen->Rapidity(), weight * pt_weight);
 
-            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
+            if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4 && pt_gen > 3 && pt_gen < 50)
             {
-                fwd_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                fwd_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                fwd_lab_num->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                fwd_hx_num->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                fwd_cs_num->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
-            else
+            else if (Rapidity_gen < 1.6 && pt_gen > 6.5 && pt_gen < 50)
             {
-                mid_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
-                mid_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
-                mid_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
+                mid_lab_num->Fill(cos_lab_, phi_lab_, pt_gen, weight * pt_weight);
+                mid_hx_num->Fill(cos_hx_, phi_hx_, pt_gen, weight * pt_weight);
+                mid_cs_num->Fill(cos_cs_, phi_cs_, pt_gen, weight * pt_weight);
             }
         } // end of gen loop
     } // end of main loop
@@ -379,49 +378,6 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     cout << "\n=================================\n\n";
     t->Stop();
     printf("RealTime=%f seconds, CpuTime=%f seconds\n", t->RealTime(), t->CpuTime());
-}
-
-void divide_2d_hist(const std::shared_ptr<TH2D> &h_num, const std::shared_ptr<TH2D> &h_den,
-                    std::shared_ptr<TH2D> &h_eff)
-{
-    if (h_num->GetNbinsX() != h_den->GetNbinsX() || h_num->GetNbinsY() != h_den->GetNbinsY())
-    {
-        std::cerr << "Error: The histograms have different binning!" << std::endl;
-        return;
-    }
-
-    for (int i = 1; i <= h_num->GetNbinsX(); ++i)
-    {
-        for (int j = 1; j <= h_num->GetNbinsY(); ++j)
-        {
-            double content1 = h_num->GetBinContent(i, j);
-            double content2 = h_den->GetBinContent(i, j);
-
-            if (content2 != 0)
-            {
-                double eff = content1 / content2;
-                h_eff->SetBinContent(i, j, eff);
-            }
-            else
-                h_eff->SetBinContent(i, j, 0);
-        }
-    }
-}
-
-void draw_2d_hist(const std::shared_ptr<TH2D> &h_eff, string legend, int MCtype)
-{
-    TCanvas cpt_eff("cpt_eff", "cpt_eff", 0, 0, 900, 800);
-    cpt_eff.cd();
-    h_eff->SetTitle("Acc x Eff");
-    h_eff->SetMarkerStyle(24);
-    h_eff->SetMarkerColor(1);
-    h_eff->SetLineColor(1);
-    h_eff->GetXaxis()->SetTitle("cos#theta_{EP}");
-    h_eff->GetYaxis()->SetTitle("p_{T}[GeV/c]");
-    // h_eff->GetYaxis()->SetRangeUser(0., 1.3);
-    h_eff->SetMinimum(0);
-    h_eff->SetMaximum(1);
-    h_eff->Draw("colz");
 }
 
 bool IsAcceptable(double pt, double eta)
