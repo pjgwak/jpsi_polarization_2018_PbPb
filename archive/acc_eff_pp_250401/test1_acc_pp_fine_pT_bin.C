@@ -15,12 +15,12 @@ void divide_2d_hist(const std::shared_ptr<TH2D> &h_num, const std::shared_ptr<TH
 void draw_2d_hist(const std::shared_ptr<TH2D> &h_eff, string legend, int MCtype);
 bool IsAcceptable(double pt, double eta);
 
-void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, bool isTnP = true, bool isPtWeight = true)
+void test1_acc_pp_fine_pT_bin(string data_label_ = "test", int nevt = -1, int MCtype = 1, bool isTnP = true, bool isPtWeight = true)
 {
     TStopwatch *t = new TStopwatch;
     t->Start();
     cout << "\n=================================\n";
-    cout << "\n Start Acc Calculation\n";
+    cout << "\n Start pp Acc Calculation\n";
     cout << "\n=================================\n\n";
 
     using namespace std;
@@ -50,41 +50,44 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     TChain muon_chain("hionia/myTree");
 
     if (MCtype == 1)
-        for (int i = 1; i <= 2; ++i)
-        {
-            // PbPb MC prompt
-            TString filename = Form("/disk1/Oniatree/Jpsi/OniaTree_JpsiMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root");
-            std::cout << "Adding PbPb MC prompt sample: " << filename << std::endl;
-            muon_chain.Add(filename);
-        }
+    {
+        // pp MC prompt
+        TString filename = Form("/disk1/Oniatree/Jpsi/OniaTree_JpsiMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root");
+        std::cout << "Adding pp MC prompt sample: " << filename << std::endl;
+        muon_chain.Add(filename);
+    }
     else if (MCtype == 2)
     {
-        // PbPb MC nonprompt
+        // not used
+        // pp MC nonprompt
         TString filename = "";
-        std::cout << "Adding PbPb MC nonprompt sample: " << filename << std::endl;
+        std::cout << "Adding pp MC nonprompt sample: " << filename << std::endl;
 
         muon_chain.Add(filename);
     }
 
     // ===== build histograms ===== //
-    vector<double> fwd_pt_bin = {0, 3, 6.5, 9, 12, 50};
-    vector<double> mid_pt_bin = {0, 6.5, 9, 12, 15, 20, 25, 50};
-    vector<double> cos_bin = {-1.0, -0.95, -0.9, -0.85, -0.8, -0.75, -0.7, -0.65, -0.6, -0.55, -0.5, -0.45, -0.4, -0.35, -0.3, -0.25, -0.2, -0.15, -0.1, -0.05, 0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0};
-    vector<double> phi_bin = {-3.3, -3.19, -3.08, -2.97, -2.86, -2.75, -2.64, -2.53, -2.42, -2.31,
-                              -2.2, -2.09, -1.98, -1.87, -1.76, -1.65, -1.54, -1.43, -1.32, -1.21,
-                              -1.1, -0.99, -0.88, -0.77, -0.66, -0.55, -0.44, -0.33, -0.22, -0.11,
-                              0.0, 0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88, 0.99,
-                              1.1, 1.21, 1.32, 1.43, 1.54, 1.65, 1.76, 1.87, 1.98, 2.09,
-                              2.2, 2.31, 2.42, 2.53, 2.64, 2.75, 2.86, 2.97, 3.08, 3.19, 3.3};
+    vector<double> fwd_pt_bin = {3, 6, 9, 12, 15, 20, 25, 30, 35, 40, 45, 50};
+    vector<double> mid_pt_bin = {6.5, 9.0, 12, 15.0, 20, 25, 30, 35, 40, 45, 50};
+    vector<double> cos_bin = {-1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    vector<double> phi_bin = {-3.15, -2.835, -2.52, -2.205, -1.89, -1.575, -1.26, -0.945, -0.63, -0.315, 0.0, 0.315, 0.63, 0.945, 1.26, 1.575, 1.89, 2.205, 2.52, 2.835, 3.15};
+    vector<double> y_bin = {-2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3, 0.0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4};
 
     double n_fwd_pt = fwd_pt_bin.size() - 1;
     double n_mid_pt = mid_pt_bin.size() - 1;
     double n_cos = cos_bin.size() - 1;
     double n_phi = phi_bin.size() - 1;
+    double n_rapidity = y_bin.size() - 1;
 
+    // 1d histograms
+    auto y_lab_num = std::make_shared<TH1D>("y_lab_num", "", n_rapidity, &y_bin[0]);
+    auto y_lab_den = std::make_shared<TH1D>("y_lab_den", "", n_rapidity, &y_bin[0]);
 
     // 3d histograms
     // ===== fwd ===== //
+    auto fwd_lab_num = std::make_shared<TH3D>("fwd_lab_num", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_fwd_pt, &fwd_pt_bin[0]);
+    auto fwd_lab_den = std::make_shared<TH3D>("fwd_lab_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_fwd_pt, &fwd_pt_bin[0]);
+
     auto fwd_hx_num = std::make_shared<TH3D>("fwd_hx_num", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_fwd_pt, &fwd_pt_bin[0]);
     auto fwd_hx_den = std::make_shared<TH3D>("fwd_hx_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_fwd_pt, &fwd_pt_bin[0]);
 
@@ -92,6 +95,9 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     auto fwd_cs_den = std::make_shared<TH3D>("fwd_cs_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_fwd_pt, &fwd_pt_bin[0]);
 
     // ===== mid ===== //
+    auto mid_lab_num = std::make_shared<TH3D>("mid_lab_num", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_mid_pt, &mid_pt_bin[0]);
+    auto mid_lab_den = std::make_shared<TH3D>("mid_lab_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_mid_pt, &mid_pt_bin[0]);
+
     auto mid_hx_num = std::make_shared<TH3D>("mid_hx_num", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_mid_pt, &mid_pt_bin[0]);
     auto mid_hx_den = std::make_shared<TH3D>("mid_hx_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_mid_pt, &mid_pt_bin[0]);
 
@@ -99,13 +105,20 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     auto mid_cs_den = std::make_shared<TH3D>("mid_cs_den", "", n_cos, &cos_bin[0], n_phi, &phi_bin[0], n_mid_pt, &mid_pt_bin[0]);
 
     // =====  make hists to save error ===== //
+    y_lab_num->Sumw2();
+    y_lab_den->Sumw2();
+
     // fwd
+    fwd_lab_num->Sumw2();
+    fwd_lab_den->Sumw2();
     fwd_hx_num->Sumw2();
     fwd_hx_den->Sumw2();
     fwd_cs_num->Sumw2();
     fwd_cs_den->Sumw2();
 
     // mid
+    mid_lab_num->Sumw2();
+    mid_lab_den->Sumw2();
     mid_hx_num->Sumw2();
     mid_hx_den->Sumw2();
     mid_cs_num->Sumw2();
@@ -209,6 +222,10 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
 
             Double_t Rapidity_gen = fabs(JP_Gen->Rapidity());
 
+            // some kinematic varialbes in lab
+            double cos_lab_ = mupl_Gen->CosTheta();
+            double phi_lab_ = mupl_Gen->Phi();
+
             pt_weight = 1;
             if (isPtWeight)
             {
@@ -275,14 +292,18 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
 
             // ===== fill the denominator ===== //
             ++count_den;
+            // rapidity
+            y_lab_den->Fill(JP_Gen->Rapidity(), weight * pt_weight);
+
             if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
             {
-
+                fwd_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
                 fwd_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
                 fwd_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
             }
             else
             {
+                mid_lab_den->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
                 mid_hx_den->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
                 mid_cs_den->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
             }
@@ -305,13 +326,17 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
 
             // ===== fill the numerator ===== //
             ++count_num;
+            y_lab_num->Fill(JP_Gen->Rapidity(), weight * pt_weight);
+
             if (Rapidity_gen > 1.6 && Rapidity_gen < 2.4)
             {
+                fwd_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
                 fwd_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
                 fwd_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
             }
             else
             {
+                mid_lab_num->Fill(cos_lab_, phi_lab_, JP_Gen->Pt(), weight * pt_weight);
                 mid_hx_num->Fill(cos_hx_, phi_hx_, JP_Gen->Pt(), weight * pt_weight);
                 mid_cs_num->Fill(cos_cs_, phi_cs_, JP_Gen->Pt(), weight * pt_weight);
             }
@@ -321,22 +346,6 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     cout << "count_den: " << count_den << endl;
     cout << "count_num: " << count_num << endl;
 
-    // ===== pT weight function fitting ===== //
-    // 왜 있지?
-    // 2D hist라 피팅 불가능.
-    // f1->SetLineColor(kBlack);
-    // f1->SetLineWidth(2);
-    // eff_c0_20_fwd->Fit(f1);
-    // eff_c0_20_mid->Fit(f1);
-    // eff_c20_60_fwd->Fit(f1);
-    // eff_c20_60_mid->Fit(f1);
-    // eff_fwd_ep->Fit(f1);
-    // eff_mid->Fit(f1);
-
-    // ===== draw plots ===== //
-    // gROOT->Macro("~/rootlogon.C");
-    // gStyle->SetOptFit(0);
-
 
     // ===== save output ===== //
     TString outFileName = Form("roots/acc_pp_Jpsi_PtW%d_tnp%d_%s.root", isPtWeight, isTnP, date_label.Data());
@@ -345,12 +354,20 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     TFile *outFile = new TFile(outFileName, "RECREATE");
 
     // histograms
+    y_lab_num->Write();
+    y_lab_den->Write();
+
+    // fwd
+    fwd_lab_num->Write();
+    fwd_lab_den->Write();
     fwd_hx_num->Write();
     fwd_hx_den->Write();
     fwd_cs_num->Write();
     fwd_cs_den->Write();
 
     // mid
+    mid_lab_num->Write();
+    mid_lab_den->Write();
     mid_hx_num->Write();
     mid_hx_den->Write();
     mid_cs_num->Write();
@@ -359,7 +376,7 @@ void acc_pp(string data_label_ = "all_event", int nevt = -1, int MCtype = 1, boo
     outFile->Close();
 
     cout << "\n=================================\n";
-    cout << "\n Finish Acc(x)Eff Calculation\n";
+    cout << "\n Finish pp Acc  Calculation\n";
     cout << "\n=================================\n\n";
     t->Stop();
     printf("RealTime=%f seconds, CpuTime=%f seconds\n", t->RealTime(), t->CpuTime());

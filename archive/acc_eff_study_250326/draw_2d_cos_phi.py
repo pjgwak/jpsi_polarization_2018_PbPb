@@ -240,94 +240,11 @@ h3_mid_cs_num_pp = in_file_pp.Get('mid_cs_num')
 h3_mid_cs_den_pp = in_file_pp.Get('mid_cs_den')
 
 # 1d map - projection
-# cos, phi, pT
-h_fwd_cos_hx_num_pp = h3_fwd_hx_num_pp.ProjectionX()
-h_fwd_phi_hx_num_pp = h3_fwd_hx_num_pp.ProjectionY()
-h_fwd_pT_hx_num_pp = h3_fwd_hx_num_pp.ProjectionX()
-h_fwd_cos_hx_den_pp = h3_fwd_hx_den_pp.ProjectionX()
-h_fwd_phi_hx_den_pp = h3_fwd_hx_den_pp.ProjectionY()
-h_fwd_pT_hx_den_pp = h3_fwd_hx_den_pp.ProjectionX()
-
-h_fwd_cos_cs_num_pp = h3_fwd_cs_num_pp.ProjectionX()
-h_fwd_phi_cs_num_pp = h3_fwd_cs_num_pp.ProjectionY()
-h_fwd_pT_cs_num_pp = h3_fwd_cs_num_pp.ProjectionX()
-h_fwd_cos_cs_den_pp = h3_fwd_cs_den_pp.ProjectionX()
-h_fwd_phi_cs_den_pp = h3_fwd_cs_den_pp.ProjectionY()
-h_fwd_pT_cs_den_pp = h3_fwd_cs_den_pp.ProjectionX()
-
 # 2d map
 h2_fwd_cos_phi_hx_num_pp = h3_fwd_hx_num_pp.Project3D("yx")
 h2_fwd_cos_phi_cs_num_pp = h3_fwd_cs_num_pp.Project3D("yx")
 h2_fwd_cos_phi_hx_den_pp = h3_fwd_hx_den_pp.Project3D("yx")
 h2_fwd_cos_phi_cs_den_pp = h3_fwd_cs_den_pp.Project3D("yx")
-
-
-# 1D - pT on vs off -> cos_hx 1 vs 2
-# cos_hx
-draw_comparison_plot(h_fwd_cos_hx_den_pb, h_fwd_cos_hx_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='# of dimuon (denominator)',
-    save_name='cos_hx_Pb_vs_pp_den')
-draw_comparison_plot(h_fwd_cos_hx_num_pb, h_fwd_cos_hx_num_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='# of dimuon (numerator)',
-    save_name='cos_hx_Pb_vs_pp_num')
-draw_correction_plot(
-    h1_num=h_fwd_cos_hx_num_pb, h1_den=h_fwd_cos_hx_den_pb,
-    h2_num=h_fwd_cos_hx_num_pp, h2_den=h_fwd_cos_hx_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='Acc',
-    save_name='cos_hx_Pb_vs_pp')
-
-# cos_cs
-draw_comparison_plot(h_fwd_cos_cs_den_pb, h_fwd_cos_cs_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{CS}', y_title='# of dimuon (denominator)',
-    save_name='cos_cs_Pb_vs_pp_den')
-draw_comparison_plot(h_fwd_cos_cs_num_pb, h_fwd_cos_cs_num_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{CS}', y_title='# of dimuon (numerator)',
-    save_name='cos_cs_Pb_vs_pp_num')
-draw_correction_plot(
-    h1_num=h_fwd_cos_cs_num_pb, h1_den=h_fwd_cos_cs_den_pb,
-    h2_num=h_fwd_cos_cs_num_pp, h2_den=h_fwd_cos_cs_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{CS}', y_title='Acc',
-    save_name='cos_cs_Pb_vs_pp')
-
-
-# phi_hx
-draw_comparison_plot(h_fwd_phi_hx_den_pb, h_fwd_phi_hx_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='# of dimuon (denominator)',
-    save_name='phi_hx_Pb_vs_pp_den')
-draw_comparison_plot(h_fwd_phi_hx_num_pb, h_fwd_phi_hx_num_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='# of dimuon (numerator)',
-    save_name='phi_hx_Pb_vs_pp_num')
-draw_correction_plot(
-    h1_num=h_fwd_phi_hx_num_pb, h1_den=h_fwd_phi_hx_den_pb,
-    h2_num=h_fwd_phi_hx_num_pp, h2_den=h_fwd_phi_hx_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='cos#theta_{HX}', y_title='Acc',
-    save_name='phi_hx_Pb_vs_pp')
-
-# phi_cs
-draw_comparison_plot(h_fwd_phi_cs_den_pb, h_fwd_phi_cs_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='#phi_{CS}', y_title='# of dimuon (denominator)',
-    save_name='phi_cs_Pb_vs_pp_den')
-draw_comparison_plot(h_fwd_phi_cs_num_pb, h_fwd_phi_cs_num_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='#phi_{CS}', y_title='# of dimuon (numerator)',
-    save_name='phi_cs_Pb_vs_pp_num')
-draw_correction_plot(
-    h1_num=h_fwd_phi_cs_num_pb, h1_den=h_fwd_phi_cs_den_pb,
-    h2_num=h_fwd_phi_cs_num_pp, h2_den=h_fwd_phi_cs_den_pp,
-    legend1='PbPb', legend2='pp',
-    x_title='#phi_{CS}', y_title='Acc',
-    save_name='phi_cs_Pb_vs_pp')
-
 
 
 # ===== draw 2d plots ===== #
@@ -336,49 +253,61 @@ draw_correction_plot(
 # h2_fwd_cos_phi_cs_num_pb = h3_fwd_cs_num_pb.Project3D("xy")
 
 # cos vs phi - hx
-draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_num_pb,
-    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pb_num', label1='PbPb', label2='')
-draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_den_pb,
-    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pb_den', label1='PbPb', label2='')
-draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_hx_num_pb, h2_den=h2_fwd_cos_phi_hx_den_pb,
-    legend1='PbPb', legend2='',
-    x_title='cos#theta_{HX}', y_title='#phi_{HX}',
-    save_name='2d_cos_hx_vs_phi_pb')
 
+
+# vector<double> fwd_pt_bin = {0, 3, 6.5, 9, 12, 50};
+# c60_180_fwd_ep_num->GetZaxis()->SetRange(2,2);
+# c60_180_fwd_ep_num->Project3D("yx")->Draw("colz");
+
+h3_fwd_hx_num_pp.GetZaxis().SetRange(2,2)
+h3_fwd_hx_den_pp.GetZaxis().SetRange(2,2)
+h2_fwd_cos_phi_hx_num_pp = h3_fwd_hx_num_pp.Project3D("yx")
+h2_fwd_cos_phi_hx_den_pp = h3_fwd_hx_den_pp.Project3D("yx")
 draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_num_pp,
-    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_num', label1='pp', label2='')
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT3_6p5num', label1='pp', label2='')
 draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_den_pp,
-    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_den', label1='pp', label2='')
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT3_6p5den', label1='pp', label2='')
 draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_hx_num_pp, h2_den=h2_fwd_cos_phi_hx_den_pp,
     legend1='pp', legend2='',
     x_title='cos#theta_{HX}', y_title='#phi_{HX}',
-    save_name='2d_cos_hx_vs_phi_pp')
+    save_name='2d_cos_hx_vs_phi_pp_pT3_6p5')
 
-# cos vs phi - cs
-draw_2d_plot(hist2D=h2_fwd_cos_phi_cs_num_pb,
-    title='', x_title='cos#theta_{CS}', y_title='#phi_{CS}', save_name='2d_cos_cs_vs_phi_pb_num', label1='PbPb', label2='')
-draw_2d_plot(hist2D=h2_fwd_cos_phi_cs_den_pb,
-    title='', x_title='cos#theta_{CS}', y_title='#phi_{CS}', save_name='2d_cos_cs_vs_phi_pb_den', label1='PbPb', label2='')
-draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_cs_num_pb, h2_den=h2_fwd_cos_phi_cs_den_pb,
-    legend1='PbPb', legend2='',
-    x_title='cos#theta_{HX}', y_title='#phi_{HX}',
-    save_name='2d_cos_cs_vs_phi_pb')
 
-draw_2d_plot(hist2D=h2_fwd_cos_phi_cs_num_pp,
-    title='', x_title='cos#theta_{CS}', y_title='#phi_{CS}', save_name='2d_cos_cs_vs_phi_pp_num', label1='pp', label2='')
-draw_2d_plot(hist2D=h2_fwd_cos_phi_cs_den_pp,
-    title='', x_title='cos#theta_{CS}', y_title='#phi_{CS}', save_name='2d_cos_cs_vs_phi_pp_den', label1='pp', label2='')
-draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_cs_num_pp, h2_den=h2_fwd_cos_phi_cs_den_pp,
+h3_fwd_hx_num_pp.GetZaxis().SetRange(3,3)
+h3_fwd_hx_den_pp.GetZaxis().SetRange(3,3)
+h2_fwd_cos_phi_hx_num_pp = h3_fwd_hx_num_pp.Project3D("yx")
+h2_fwd_cos_phi_hx_den_pp = h3_fwd_hx_den_pp.Project3D("yx")
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_num_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT6p5_9num', label1='pp', label2='')
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_den_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT6p5_9den', label1='pp', label2='')
+draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_hx_num_pp, h2_den=h2_fwd_cos_phi_hx_den_pp,
     legend1='pp', legend2='',
-    x_title='cos#theta_{CS}', y_title='#phi_{CS}',
-    save_name='2d_cos_cs_vs_phi_pp')
+    x_title='cos#theta_{HX}', y_title='#phi_{HX}',
+    save_name='2d_cos_hx_vs_phi_pp_pT6p5_9')
 
-# cos vs phi - ep
-draw_2d_plot(hist2D=h2_fwd_cos_phi_ep_num_pb,
-    title='', x_title='cos#theta_{EP}', y_title='#phi_{EP}', save_name='2d_cos_ep_vs_phi_pb_num', label1='PbPb', label2='')
-draw_2d_plot(hist2D=h2_fwd_cos_phi_ep_den_pb,
-    title='', x_title='cos#theta_{EP}', y_title='#phi_{EP}', save_name='2d_cos_ep_vs_phi_pb_den', label1='PbPb', label2='')
-draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_ep_num_pb, h2_den=h2_fwd_cos_phi_ep_den_pb,
-    legend1='PbPb', legend2='',
-    x_title='cos#theta_{EP}', y_title='#phi_{EP}',
-    save_name='2d_cos_ep_vs_phi_pb')
+h3_fwd_hx_num_pp.GetZaxis().SetRange(4,4)
+h3_fwd_hx_den_pp.GetZaxis().SetRange(4,4)
+h2_fwd_cos_phi_hx_num_pp = h3_fwd_hx_num_pp.Project3D("yx")
+h2_fwd_cos_phi_hx_den_pp = h3_fwd_hx_den_pp.Project3D("yx")
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_num_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT9_12num', label1='pp', label2='')
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_den_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT9_12den', label1='pp', label2='')
+draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_hx_num_pp, h2_den=h2_fwd_cos_phi_hx_den_pp,
+    legend1='pp', legend2='',
+    x_title='cos#theta_{HX}', y_title='#phi_{HX}',
+    save_name='2d_cos_hx_vs_phi_pp_pT9_12')
+
+h3_fwd_hx_num_pp.GetZaxis().SetRange(5,5)
+h3_fwd_hx_den_pp.GetZaxis().SetRange(5,5)
+h2_fwd_cos_phi_hx_num_pp = h3_fwd_hx_num_pp.Project3D("yx")
+h2_fwd_cos_phi_hx_den_pp = h3_fwd_hx_den_pp.Project3D("yx")
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_num_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT12_50num', label1='pp', label2='')
+draw_2d_plot(hist2D=h2_fwd_cos_phi_hx_den_pp,
+    title='', x_title='cos#theta_{HX}', y_title='#phi_{HX}', save_name='2d_cos_hx_vs_phi_pp_pT12_50den', label1='pp', label2='')
+draw_2d_correction_plot(h2_num=h2_fwd_cos_phi_hx_num_pp, h2_den=h2_fwd_cos_phi_hx_den_pp,
+    legend1='pp', legend2='',
+    x_title='cos#theta_{HX}', y_title='#phi_{HX}',
+    save_name='2d_cos_hx_vs_phi_pp_pT12_50')
