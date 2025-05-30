@@ -3,6 +3,11 @@
 **/.vscode/
 **/__pycache__/
 
+# compiling files
+**/*.pcm
+**/*.so
+**/*.o
+
 # txt files: Be careful not to upload experiments datasets
 #*.txt
 #*.csv
