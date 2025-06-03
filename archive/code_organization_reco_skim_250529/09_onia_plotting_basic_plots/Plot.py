@@ -1,3 +1,4 @@
+import ROOT
 from ROOT import TCanvas, TFile, gPad, kWhite, kBlue
 
 class Plot1D(object):
@@ -62,3 +63,88 @@ class Plot1D(object):
       self.leg.AddEntry(self.legEntry[3], self.legEntry[3], '')
 
     self.leg.Draw()
+
+class PlotOverlaid(object):
+  """ overlay three plots on one canvas
+  Fwd, Mid, AllY
+  """
+
+  def __init__(self, canvas, legend):
+    self.canvas = canvas
+    self.legend = legend
+    self.plots = [] # tree, var, cut, hist, legEntries, draw_opt
+    
+    # set basic legend style
+    self.legend.SetBorderSize(0)
+    self.legend.SetFillColorAlpha(ROOT.kWhite, 0)
+    self.legend.SetTextSize(0.035)
+
+  def add(self, tree, var, cut, hist, legEntry, drawOpt='EP'):
+    """
+    tree: TTre instance, var: branch name
+    cut: selection cut, hist: TH1 instance
+    legEntry: text to draw as legends
+    """
+    self.plots.append({
+      'tree': tree,
+      'var': var,
+      'cut': cut,
+      'hist': hist,
+      'legEntry': legEntry,
+      'drawOpt': drawOpt
+    })
+
+  def draw(self):
+    self.canvas.cd()
+
+    # fill the histogram without drawing (GOFF option)
+    hists = []
+    for plot in self.plots:
+      hist = plot['hist']
+      drawCommand = f"{plot['var']}>>{hist.GetName()}"
+      plot['tree'].Draw(drawCommand, plot['cut'], 'GOFF')
+      hists.append(hist)
+
+    # find Y max value
+    maxY = 0
+    for hist in hists:
+      if hist.GetEntries() > 0: # check when a hist is not empty
+        currentMax = hist.GetMaximum()
+        if currentMax > maxY:
+          maxY = currentMax
+    
+    # set Y max
+    firstPlot = self.plots[0]
+    firstHist = firstPlot['hist']
+    firstHist.GetYaxis().SetRangeUser(0, maxY * 1.4 if maxY > 0 else 1)
+
+    # draw first hist
+    firstHist.Draw(firstPlot['drawOpt'])
+    self.legend.AddEntry(firstHist, firstPlot['legEntry'], 'ep')
+    firstHist.GetXaxis().CenterTitle(True)
+    firstHist.GetYaxis().CenterTitle(True)
+
+    # draw other hists
+    for idx in range(1, len(self.plots)):
+      plot = self.plots[idx]
+      hist = plot['hist']
+      drawOpt = plot['drawOpt']
+      if 'SAME' not in drawOpt.upper():
+        drawOpt += ' SAME'
+      hist.Draw(drawOpt)
+      self.legend.AddEntry(hist, plot['legEntry'], 'ep')
+
+    # draw legend
+    self.legend.Draw()
+    
+    # update canvas
+    self.canvas.Update()
+    
+    # draw axes
+    gPad.RedrawAxis()
+
+  
+  def save(self, fPath='', formats=('png')):
+    for fmt in formats:
+      fullPath = f'{fPath}.{fmt}'
+      self.canvas.SaveAs(fullPath)
