@@ -30,7 +30,7 @@ for eventLoop in eventLoops:
   
   # Run2 MC
   if isinstance(eventLoop, MC2018Pr):
-    eventLoop.addAlgorithm(AlgRun2Peri())
+    eventLoop.addAlgorithm(AlgRun2MCReco())
 
 
 # execute event loop

@@ -7,6 +7,11 @@ Data::Data(TTree *tree, bool mc) : isMC(mc), m_tree(tree) {
     m_tree->SetBranchAddress("LS", &LS);
   }
 
+  if (isMC) {
+    m_tree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen);
+    m_tree->SetBranchAddress("Gen_weight", &Gen_weight);
+  }
+
   m_tree->SetBranchAddress("eventNb", &eventNb);
   m_tree->SetBranchAddress("Centrality", &Centrality);
   m_tree->SetBranchAddress("zVtx", &zVtx);
@@ -26,7 +31,7 @@ Data::Data(TTree *tree, bool mc) : isMC(mc), m_tree(tree) {
   m_tree->SetBranchAddress("Reco_QQ_ctau3D", Reco_QQ_ctau3D);
   m_tree->SetBranchAddress("Reco_QQ_ctauErr3D", Reco_QQ_ctauErr3D);
   m_tree->SetBranchAddress("Reco_mu_trig", Reco_mu_trig);
-  m_tree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);
+  m_tree->SetBranchAddress("Reco_QQ_trig", Reco_QQ_trig);  
 }
 
 

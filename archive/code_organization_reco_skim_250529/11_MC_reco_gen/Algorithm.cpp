@@ -77,6 +77,7 @@ bool Algorithm::passedSelection(Long64_t irqq) {
   if (cut_vtxProbability && data.Reco_QQ_VtxProb[irqq] < 0.01) return false;
   if (cut_oppositeSign && qq_sign_val != 0) return false;
   if (cut_singleMuonAcc && !passedMuonAcc2018()) return false;
+  if (cut_whichGen && !passewhichGen(irqq)) return false;
 
   // passed all selection
   return true;
@@ -190,6 +191,28 @@ bool Algorithm::passedRecoQQTrigger(Long64_t irqq) {
   Data& data = *m_data;
 
   return ((data.Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigJpsi2018))) == ((ULong64_t)pow(2, kTrigJpsi2018)));
+}
+
+bool passewhichGen(Long64_t irqq) {
+  Data &data = *m_data;
+  
+  Int_t mupl_idx = 0;
+  Int_t mumi_idx = 0;
+
+  if (m_isRun2)
+  {
+    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
+    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
+    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
+  }
+  else
+  {
+    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
+    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
+    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
+  }
+
+  return (data.Reco_mu_whichGen[mupl_idx] != -1 && data.Reco_mu_whichGen[mumi_idx] != -1)
 }
 
 void Algorithm::setBranches() {

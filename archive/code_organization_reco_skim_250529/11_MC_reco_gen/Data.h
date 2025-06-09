@@ -24,6 +24,7 @@ class Data {
     Int_t Centrality;
     ULong64_t HLTriggers;
     Float_t zVtx;
+    Float_t Gen_weight;
     TClonesArray *Reco_QQ_4mom = nullptr;
     TClonesArray *Reco_mu_4mom = nullptr;
     Float_t Reco_QQ_VtxProb[1000];
@@ -36,6 +37,7 @@ class Data {
     Float_t Reco_QQ_ctauErr3D[1000];
     ULong64_t Reco_mu_trig[1000];
     ULong64_t Reco_QQ_trig[1000];
+    Int_t Reco_mu_whichGen[1000];
 
     /**
      * @brief variables to use in algorithm. Not stored in TTree.

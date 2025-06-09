@@ -48,6 +48,7 @@ class Algorithm {
     bool cut_recoQQTrigger = false;
     bool cut_L2L3FilterPbPbJpsi2018 = false;
     bool cut_runNb327123 = false;
+    bool cut_whichGen = false;
 
     /**
      * @brief methods to make the outputs
@@ -76,6 +77,7 @@ class Algorithm {
     bool passedHLTriggerJpsiPbPb2018();
     bool passedRecoQQTrigger(Long64_t irqq);
     bool passedHLFilterJpsiPbPb2018(Long64_t irqq);
+    bool passewhichGen(Long64_t irqq);
 
     /**
      * @brief fill the histograms and TTree
