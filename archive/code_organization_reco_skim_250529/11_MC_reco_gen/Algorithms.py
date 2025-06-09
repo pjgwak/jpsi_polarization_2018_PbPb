@@ -4,6 +4,8 @@ from ROOT import TH1D, TTree
 # ---------------------------------
 class AlgDefault(Algorithm):
   """ Default set of oniaFlowSkim
+  Apply very coarse selection cuts
+  It's good enough for Run3 "Data" samples when consdiering minBias study.
   """
   def __init__(self):
     # call inherited constructor
@@ -78,7 +80,7 @@ class AlgRun2Peri(Algorithm):
     self.alg.m_myTree = TTree('myTree', '')
 # ---------------------------------
 class AlgRun2MCReco(Algorithm):
-  """ Run2 Data Periheral
+  """ Run2 MC Reco
   """
   def __init__(self):
     # call inherited constructor
@@ -94,6 +96,7 @@ class AlgRun2MCReco(Algorithm):
     self.alg.cut_HLTriggerPbPbJpsi2018 = True
     self.alg.cut_recoQQTrigger = True
 
+    self.alg.cut_tnp = True
     self.alg.cut_whichGen = True
 
     # create histograms: fine binning

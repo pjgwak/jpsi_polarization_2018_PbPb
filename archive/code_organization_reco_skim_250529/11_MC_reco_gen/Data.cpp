@@ -16,6 +16,7 @@ Data::Data(TTree *tree, bool mc) : isMC(mc), m_tree(tree) {
   m_tree->SetBranchAddress("Centrality", &Centrality);
   m_tree->SetBranchAddress("zVtx", &zVtx);
   m_tree->SetBranchAddress("HLTriggers", &HLTriggers);
+  m_tree->SetBranchAddress("SumET_HF", &SumET_HF);
 
   // TClonesArray pointers - need "&""
   m_tree->SetBranchAddress("Reco_QQ_4mom", &Reco_QQ_4mom);

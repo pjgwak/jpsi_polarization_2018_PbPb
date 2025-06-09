@@ -48,7 +48,7 @@ class MC2018Pr(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2018Pr', nEvt=100000)
+    EventLoop.__init__(self, name='MC2018Pr', nEvt=-1)
 
     # add the ggH samples into the event loop
     self.eventLoop.useRun2 = True

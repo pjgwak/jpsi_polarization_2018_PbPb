@@ -16,16 +16,16 @@ else:
 
 
 # ===== Data ===== #
-# DataRun2 - Cent + Peri. Applied full reco cuts
-# plotOverlaid(fileName='OniaFlowSkim.Data2018All.AlgRun2Cent.root', baseName = 'DataRun2', formats=['png'])
+# DataRun2 - Cent + Peri were merged manually. Applied full reco cuts
+plotOverlaid(fileName='OniaFlowSkim.Data2018All.AlgRun2.root', baseName = 'DataRun2', formats=['png'], sampleInfo='PbPb Data 2018')
 
 # DataRun3 - No triggers
-# plotOverlaid(fileName='OniaFlowSkim.Data2023.AlgDefault.root', baseName = 'DataRun3', formats=['png'])
+plotOverlaid(fileName='OniaFlowSkim.Data2023.AlgDefault.root', baseName = 'DataRun3', formats=['png'], sampleInfo='PbPb Data 2023')
 
 
 # ===== MC ===== #
 # DataRun2 - Cent + Peri. Applied full reco cuts
-plotOverlaid(fileName='OniaFlowSkim.MC2018Pr.AlgRun2Peri.root', baseName = 'MCRun2PbPbPrompt', formats=['png'])
+# plotOverlaid(fileName='OniaFlowSkim.MC2018Pr.AlgRun2MCReco.root', baseName = 'MCRun2PbPbPrompt', formats=['png'], sampleInfo='PbPb MC 2018 Prompt', isWeight=True)
 
 
 

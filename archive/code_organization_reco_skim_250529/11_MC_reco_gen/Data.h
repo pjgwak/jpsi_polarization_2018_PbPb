@@ -23,8 +23,7 @@ class Data {
     UInt_t runNb, eventNb, LS;
     Int_t Centrality;
     ULong64_t HLTriggers;
-    Float_t zVtx;
-    Float_t Gen_weight;
+    Float_t zVtx, Gen_weight, SumET_HF;
     TClonesArray *Reco_QQ_4mom = nullptr;
     TClonesArray *Reco_mu_4mom = nullptr;
     Float_t Reco_QQ_VtxProb[1000];

@@ -4,9 +4,9 @@ gSystem.Load('Analysis.so')
 # create instance s of the class EventLoop
 from Samples import *
 eventLoops = []
-# eventLoops += [Data2023()]
-# eventLoops += [Data2018Cent()]
-# eventLoops += [Data2018Peri()]
+eventLoops += [Data2023()]
+eventLoops += [Data2018Cent()]
+eventLoops += [Data2018Peri()]
 # eventLoops += [MC2023()]
 eventLoops += [MC2018Pr()] # Jpsi Prompt
 # eventLoops += [MC2023GlbTrk()]
@@ -37,3 +37,6 @@ for eventLoop in eventLoops:
 for eventLoop in eventLoops:
   eventLoop.execute()
   eventLoop.save()
+
+# Merge run2 Data samples
+# hadd OniaFlowSkim.Data2018All.AlgRun2.root OniaFlowSkim.Data2018Cent.AlgRun2Cent.root OniaFlowSkim.Data2018Peri.AlgRun2Peri.root

@@ -1,5 +1,5 @@
 import ROOT
-from ROOT import TCanvas, TFile, gPad, kWhite, kBlue
+from ROOT import TCanvas, TFile, gPad, kWhite, kBlue, TLegend
 
 class Plot1D(object):
   """ 1D plot helper class
@@ -69,15 +69,22 @@ class PlotOverlaid(object):
   Fwd, Mid, AllY
   """
 
-  def __init__(self, canvas, legend):
+  def __init__(self, canvas, legend, sampleInfo='', isWeight=False):
     self.canvas = canvas
     self.legend = legend
     self.plots = [] # tree, var, cut, hist, legEntries, draw_opt
+    self.isWeight = isWeight
     
     # set basic legend style
     self.legend.SetBorderSize(0)
     self.legend.SetFillColorAlpha(ROOT.kWhite, 0)
     self.legend.SetTextSize(0.035)
+
+    self.legSample = TLegend(0.15, 0.83, 0.25, 0.95)
+    self.legSample.SetBorderSize(0)
+    self.legSample.SetFillColorAlpha(ROOT.kWhite, 0)
+    self.legSample.SetTextSize(0.035)
+    self.sampleInfo = sampleInfo
 
   def add(self, tree, var, cut, hist, legEntry, drawOpt='EP'):
     """
@@ -93,6 +100,9 @@ class PlotOverlaid(object):
       'legEntry': legEntry,
       'drawOpt': drawOpt
     })
+  
+  def addLegSample(self, leg):
+    self.legSample = leg
 
   def draw(self):
     self.canvas.cd()
@@ -102,7 +112,11 @@ class PlotOverlaid(object):
     for plot in self.plots:
       hist = plot['hist']
       drawCommand = f"{plot['var']}>>{hist.GetName()}"
-      plot['tree'].Draw(drawCommand, plot['cut'], 'GOFF')
+      
+      if self.isWeight:
+        plot['tree'].Draw(drawCommand, f"{plot['cut']} * weight * TnPweight", 'GOFF')
+      else:
+        plot['tree'].Draw(drawCommand, plot['cut'], 'GOFF')
       hists.append(hist)
 
     # find Y max value
@@ -121,6 +135,7 @@ class PlotOverlaid(object):
     # draw first hist
     firstHist.Draw(firstPlot['drawOpt'])
     self.legend.AddEntry(firstHist, firstPlot['legEntry'], 'ep')
+    self.legSample.AddEntry(self.sampleInfo, self.sampleInfo, '')
     firstHist.GetXaxis().CenterTitle(True)
     firstHist.GetYaxis().CenterTitle(True)
 
@@ -136,13 +151,13 @@ class PlotOverlaid(object):
 
     # draw legend
     self.legend.Draw()
-    
+    self.legSample.Draw()
+
     # update canvas
     self.canvas.Update()
     
     # draw axes
     gPad.RedrawAxis()
-
   
   def save(self, fPath='', formats=('png')):
     for fmt in formats:

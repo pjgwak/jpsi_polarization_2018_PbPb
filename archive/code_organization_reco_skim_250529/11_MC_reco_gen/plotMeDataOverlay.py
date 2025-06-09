@@ -3,7 +3,7 @@ from Plot import PlotOverlaid
 from ROOT import TFile, TCanvas, TLegend, kGreen, kBlack, TCanvas, TH1
 
 
-def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
+def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='', isWeight=False):
     """ draw overlaid plots according to 3 rapidity regions
     """
 
@@ -43,7 +43,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_massAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotMass = PlotOverlaid(canvas, leg)
+    plotMass = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotMass.add(tree=myTree, var='mass', cut=cutBaseFwd, hist=h_massFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -79,7 +79,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_ptAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotPt = PlotOverlaid(canvas, leg)
+    plotPt = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotPt.add(tree=myTree, var='pt', cut=cutBaseFwd, hist=h_ptFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -115,7 +115,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_ptAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotY = PlotOverlaid(canvas, leg)
+    plotY = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotY.add(tree=myTree, var='y', cut=cutBaseFwd, hist=h_ptFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -152,7 +152,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_phiAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotPhi = PlotOverlaid(canvas, leg)
+    plotPhi = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotPhi.add(tree=myTree, var='phi', cut=cutBaseFwd, hist=h_phiFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -186,7 +186,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_phi1AllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotPhi1 = PlotOverlaid(canvas, leg)
+    plotPhi1 = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotPhi1.add(tree=myTree, var='phi1', cut=cutBaseFwd, hist=h_phi1Fwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -222,7 +222,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_phiHXAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotPhiHX = PlotOverlaid(canvas, leg)
+    plotPhiHX = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotPhiHX.add(tree=myTree, var='phiHX', cut=cutBaseFwd, hist=h_phiHXFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -258,7 +258,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_phiCSAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotPhiCS = PlotOverlaid(canvas, leg)
+    plotPhiCS = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotPhiCS.add(tree=myTree, var='phiCS', cut=cutBaseFwd, hist=h_phiCSFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -293,7 +293,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_cosHXAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotCosHX = PlotOverlaid(canvas, leg)
+    plotCosHX = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotCosHX.add(tree=myTree, var='cosHX', cut=cutBaseFwd, hist=h_cosHXFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
@@ -329,7 +329,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png']):
     h_cosCSAllY.SetMarkerStyle(22)
 
     # create PlotOverlaid instance
-    plotCosCS = PlotOverlaid(canvas, leg)
+    plotCosCS = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
 
     # add hists
     plotCosCS.add(tree=myTree, var='cosCS', cut=cutBaseFwd, hist=h_cosCSFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
