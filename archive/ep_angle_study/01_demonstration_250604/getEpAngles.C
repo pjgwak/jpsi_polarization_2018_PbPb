@@ -15,33 +15,43 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TSystem.h> // gSystem
 #include <cstdio> // std::remove
 
 #define MAXCAN 10000
 
+
+
 void getEpAngles(bool is_mc = false)
 {
+  // turn off the warning
+  // eg. Warning in <TChain::CopyAddresses>: Could not find branch named 'Reco_trk_4mom_pt' in tree named 'tempTree'
+  // The reasons is that tempTree doesn't have 3 branches which myChain has. But it was intended so it's not a matter
+  // you can do test run while commenting it out
+  gErrorIgnoreLevel = kError;
+
   // ===== many input files ===== //
   // use this part when you use unmerged root files in lxplus
+  TString base_name = "/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_track_vector_250530/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_track_vector_250530/250530_135847/0000/Oniatree_2023PbPbPromptRecoData_132X_miniAOD";
 
-  // TString base_name = "./onia_files_Run3_2023_10_blocks/Run3_PbPb_2023_Prompt/OniaTree_RawPrime0_Run3_PbPb_aFewBlocks_test_250511/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_aFewBlocks_test_250511/250511_102022/0000/Oniatree_2023PbPbPromptRecoData_132X_miniAOD";
+  TString nameOldTree = "hionia/myTree";
+  TChain myChain(nameOldTree);
 
-  // TString nameOldTree = "hionia/tempTree";
-  // TChain *myChain = new TChain(nameOldTree);
-
-  // // add files into the chain
-  // for (int i = 100; i <= 100; ++i)
-  // {
-  //   TString filename = TString::Format("%s_%d.root", base_name.Data(), i);
-  //   myChain->Add(filename);
-  //   // cout << "Input added: " << filename << endl;
-  // }
-
+  // add files into the chain
+  for (int i = 0; i <= 600; ++i)
+  {
+    TString filename = TString::Format("%s_%d.root", base_name.Data(), i);
+    if (!gSystem->AccessPathName(filename, kFileExists)) {
+      myChain.Add(filename);
+      cout << "Input added: " << filename << endl;
+    }
+      
+  }
 
   // ===== get one input file ===== //
-  TString nameOldTree = "hionia/myTree";
-  TChain *myChain = new TChain(nameOldTree);
-  myChain->Add("Oniatree_2023PbPbPromptRecoData_132X_miniAOD.root");
+  // TString nameOldTree = "hionia/myTree";
+  // TChain myChain(nameOldTree);
+  // myChain.Add("Oniatree_2023PbPbPromptRecoData_132X_miniAOD.root");
 
 
   // ===== branches ===== //
@@ -64,34 +74,34 @@ void getEpAngles(bool is_mc = false)
 
 
   // ===== make output file ===== //
-  TFile *outTemp = TFile::Open("out_beffer_very_long_strange_file_name_never_be_used.root", "RECREATE");
+  TFile *outTemp = TFile::Open("out_buffer_very_long_strange_file_name_never_be_used.root", "RECREATE");
   outTemp->cd();
 
   // ===== set branches from old tree ===== //
-  myChain->SetBranchAddress("Reco_QQ_size", &Reco_QQ_size);
-  myChain->SetBranchAddress("Reco_QQ_sign", Reco_QQ_sign);
-  myChain->SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
-  myChain->SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
-  myChain->SetBranchAddress("Reco_trk_size", &Reco_trk_size);
+  myChain.SetBranchAddress("Reco_QQ_size", &Reco_QQ_size);
+  myChain.SetBranchAddress("Reco_QQ_sign", Reco_QQ_sign);
+  myChain.SetBranchAddress("Reco_QQ_mupl_idx", Reco_QQ_mupl_idx);
+  myChain.SetBranchAddress("Reco_QQ_mumi_idx", Reco_QQ_mumi_idx);
+  myChain.SetBranchAddress("Reco_trk_size", &Reco_trk_size);
 
   // TClonesArray Branches
-  myChain->SetBranchAddress("Reco_QQ_4mom", &Reco_QQ_4mom);
-  myChain->SetBranchAddress("Reco_mu_4mom", &Reco_mu_4mom);
+  myChain.SetBranchAddress("Reco_QQ_4mom", &Reco_QQ_4mom);
+  myChain.SetBranchAddress("Reco_mu_4mom", &Reco_mu_4mom);
 
   // std::vector<float>* Branches
-  myChain->SetBranchAddress("Reco_trk_4mom_pt", &Reco_trk_4mom_pt);
-  myChain->SetBranchAddress("Reco_trk_4mom_eta", &Reco_trk_4mom_eta);
-  myChain->SetBranchAddress("Reco_trk_4mom_phi", &Reco_trk_4mom_phi);
+  myChain.SetBranchAddress("Reco_trk_4mom_pt", &Reco_trk_4mom_pt);
+  myChain.SetBranchAddress("Reco_trk_4mom_eta", &Reco_trk_4mom_eta);
+  myChain.SetBranchAddress("Reco_trk_4mom_phi", &Reco_trk_4mom_phi);
 
   std::set<std::string> dropBranches = {"Reco_trk_4mom_pt", "Reco_trk_4mom_eta", "Reco_trk_4mom_phi"};
   
   // turn off branches before cloning
   for (const std::string &branch : dropBranches)
-    if (myChain->GetBranch(branch.c_str()))
-      myChain->SetBranchStatus(branch.c_str(), 0);
+    if (myChain.GetBranch(branch.c_str()))
+      myChain.SetBranchStatus(branch.c_str(), 0);
 
   // ===== set new TTree ===== //
-  TTree *tempTree = myChain->CloneTree(0);
+  TTree *tempTree = myChain.CloneTree(0);
   tempTree->SetName("tempTree");
 
   tempTree->Branch("Q2x_tree", &Q2x_tree, "Q2x_tree/F");
@@ -100,8 +110,12 @@ void getEpAngles(bool is_mc = false)
 
   // turn on branches to use in the loop
   for (const std::string &branch : dropBranches)
-    if (myChain->GetBranch(branch.c_str()))
-      myChain->SetBranchStatus(branch.c_str(), 1);
+  {
+    if (myChain.GetBranch(branch.c_str()))
+    {
+      myChain.SetBranchStatus(branch.c_str(), 1);
+    }
+  }
 
   // ===== additonal variables ===== //
   TH2F *hQ2xy = new TH2F("hQ2xy", " ", 80, -4.0, 4.0, 80, -4.0, 4.0);
@@ -110,11 +124,16 @@ void getEpAngles(bool is_mc = false)
   float d2Phi[MAXCAN], d2Eta[MAXCAN];
 
   // ===== main loop 1 - Qx, Qy ===== //
-  Long64_t nEvent = myChain->GetEntries();
-  cout << "Total events: " << nEvent << "\n\n ";
+  Long64_t nEvent = myChain.GetEntries();
+  // nEvent = 100000;
+  cout << "Total events: " << nEvent << "\n\n";
+  cout << "Start loop 1\n\n";
   for (Long64_t ievt = 0; ievt < nEvent; ++ievt)
   {
-    myChain->GetEntry(ievt);
+    if (ievt % 100000 == 0 && ievt != 0)
+      std::cout << "Event " << ievt << "\n";
+
+    myChain.GetEntry(ievt);
     tempTree->GetEntry(ievt);
 
     int N = 0;
@@ -218,8 +237,11 @@ void getEpAngles(bool is_mc = false)
     means_cos[i] = new TH1F(Form("means_cos_%d", i), Form("Histogram %d", i), 20, -1, 1);
   }
 
+  cout << "\n\nStart loop 2\n\n";
   for (Int_t i = 0; i < nEvent; i++)
   {
+    if (i % 100000 == 0 && i != 0)
+      std::cout << "Event " << i << "\n";
     tempTree->GetEntry(i);
     recTree->GetEntry(i);
     float ep1 = 0.5 * atan2(Q2y_tree - mean_Q2y, Q2x_tree - mean_Q2x);
@@ -252,6 +274,7 @@ void getEpAngles(bool is_mc = false)
   double mean_sin[N];
   double mean_cos[N];
 
+  cout << "\n\nStart loop 3\n\n";
   for (int i = 0; i < N; i++)
   {
     mean_sin[i] = means_sin[i]->GetMean();
@@ -260,6 +283,9 @@ void getEpAngles(bool is_mc = false)
 
   for (Int_t i = 0; i < nEvent; i++)
   {
+    if (i % 100000 == 0 && i != 0)
+      std::cout << "Event " << i << "\n";
+
     recTree->GetEntry(i);
     // cout << i << endl ;
     float psi = 0; // Start with ep
@@ -279,6 +305,7 @@ void getEpAngles(bool is_mc = false)
     ep_flat = psi;
     myTree->Fill();
   }
+  cout << "loop 3 done" << endl;
 
   // ===== saving and cleaning ===== //
   myTree->Write();
@@ -289,6 +316,6 @@ void getEpAngles(bool is_mc = false)
   outFile->Close();
 
   // remove buffer output file
-  string bufferFileName = "out_beffer_very_long_strange_file_name_never_be_used.root";
+  string bufferFileName = "out_buffer_very_long_strange_file_name_never_be_used.root";
   std::remove(bufferFileName.c_str());
 }

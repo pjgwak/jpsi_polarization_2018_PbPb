@@ -30,7 +30,7 @@ c_ep_group.Divide(3, 1)
 
 # ep_raw
 c_ep_group.cd(1)
-tree.Draw('ep>>h_ep(100, -2, 2)', '', 'HIST')
+tree.Draw('ep>>h_ep(100, -1.5, 1.5)', '', 'EP')
 h_ep = ROOT.gPad.GetPrimitive('h_ep')
 
 latex = ROOT.TLatex()
@@ -44,7 +44,7 @@ if h_ep:
 
     current_max_y = h_ep.GetMaximum()
     if current_max_y > 0: 
-        h_ep.SetMaximum(current_max_y * 1.4)
+        h_ep.SetMaximum(current_max_y * 1.6)
     else:
         h_ep.SetMaximum(1)
 
@@ -54,7 +54,7 @@ else:
 
 # ep_rec
 c_ep_group.cd(2)
-tree.Draw('ep_rec>>h_ep_rec(100, -2, 2)', '', 'HIST')
+tree.Draw('ep_rec>>h_ep_rec(100, -1.5, 1.5)', '', 'EP')
 h_ep_rec = ROOT.gROOT.FindObject('h_ep_rec')
 if h_ep_rec:
     h_ep_rec.GetXaxis().SetTitle('#Psi_{2,trk} (rad)')
@@ -62,7 +62,7 @@ if h_ep_rec:
 
     current_max_y = h_ep_rec.GetMaximum()
     if current_max_y > 0:
-        h_ep_rec.SetMaximum(current_max_y * 1.4)
+        h_ep_rec.SetMaximum(current_max_y * 1.6)
     else:
         h_ep_rec.SetMaximum(1)
 
@@ -72,7 +72,7 @@ else:
 
 # ep_flat
 c_ep_group.cd(3)
-tree.Draw('ep_flat>>h_ep_flat(100, -2, 2)', '', 'HIST')
+tree.Draw('ep_flat>>h_ep_flat(100, -1.5, 1.5)', '', 'EP')
 h_ep_flat = ROOT.gROOT.FindObject('h_ep_flat')
 if h_ep_flat:
     h_ep_flat.GetXaxis().SetTitle('#Psi_{2,trk} (rad)')
@@ -80,7 +80,7 @@ if h_ep_flat:
 
     current_max_y = h_ep_flat.GetMaximum()
     if current_max_y > 0:
-        h_ep_flat.SetMaximum(current_max_y * 1.4)
+        h_ep_flat.SetMaximum(current_max_y * 1.6)
     else:
         h_ep_flat.SetMaximum(1)
 
