@@ -326,12 +326,6 @@ allYCosCS.draw()
 allYCosCS.save(fPath='figs/', isPng=True, isPdf=False)
 
 
-
-# ====================== #
-# ===== Data - Rapidity Overlayed ===== #
-# ====================== #
-
-
 # cleaning
 f.Close()
 

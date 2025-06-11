@@ -202,7 +202,7 @@ bool Algorithm::passRecoQQTrigger(Long64_t irqq) {
 }
 
 bool Algorithm::passewhichGen(Long64_t irqq) {
-  Data &data = *m_data;
+  // Data &data = *m_data;
 
   Int_t mupl_idx = 0;
   Int_t mumi_idx = 0;
@@ -212,15 +212,17 @@ bool Algorithm::passewhichGen(Long64_t irqq) {
     DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
     mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
     mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
+
+    return (dr2->Reco_mu_whichGen[mupl_idx] != -1 && dr2->Reco_mu_whichGen[mumi_idx] != -1);
   }
   else
   {
     DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
     mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
     mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-  }
 
-  return (data.Reco_mu_whichGen[mupl_idx] != -1 && data.Reco_mu_whichGen[mumi_idx] != -1);
+    return (dr3->Reco_mu_whichGen[mupl_idx] != -1 && dr3->Reco_mu_whichGen[mumi_idx] != -1);
+  }
 }
 
 bool Algorithm::passTnpLogic(Long64_t irqq) {
@@ -524,7 +526,7 @@ void Algorithm::MuPlusVector_CollinsSoper(const TLorentzVector &QQLV_Lab) {
 
 void Algorithm::MuPlusVector_EventPlane(const TLorentzVector &QQLV_Lab, const TLorentzVector &MuPlusLV_Lab) {
   Data &data = *m_data;
-  
+
   // ******** Transform variables of muons from the lab frame to the upsilon's rest frame ******** //
   TVector3 QQVector_Lab = QQLV_Lab.Vect();
   TLorentzVector MuPlusLV_QQRestFrame(MuPlusLV_Lab);
@@ -546,7 +548,6 @@ void Algorithm::MuPlusVector_EventPlane(const TLorentzVector &QQLV_Lab, const TL
   // =========================
   uz_ep.Rotate(data.ep_flat, uz_lab); // rotate z axis as EP angles
 
-  
   // calculate cos and phi in EP frame
   TVector3 uy_ep = uz_lab;
 

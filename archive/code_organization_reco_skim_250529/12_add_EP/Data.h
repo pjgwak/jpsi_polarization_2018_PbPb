@@ -27,7 +27,7 @@ class Data {
     Int_t Centrality;
     ULong64_t HLTriggers;
     Float_t zVtx, Gen_weight, SumET_HF;
-    Double_t ep_flat;
+    Float_t ep_flat;
     TClonesArray *Reco_QQ_4mom = nullptr;
     TClonesArray *Reco_mu_4mom = nullptr;
     Float_t Reco_QQ_VtxProb[1000];
@@ -40,7 +40,6 @@ class Data {
     Float_t Reco_QQ_ctauErr3D[1000];
     ULong64_t Reco_mu_trig[1000];
     ULong64_t Reco_QQ_trig[1000];
-    Int_t Reco_mu_whichGen[1000];
 
     /**
      * @brief variables to use in algorithm. Not stored in TTree.
@@ -74,6 +73,7 @@ public:
    * @brief run2 data use Int_t (Run3 uses Short_t)
    */
   Int_t Reco_QQ_size;
+  Int_t Reco_mu_whichGen[1000];
   Int_t Reco_QQ_mupl_idx[1000];
   Int_t Reco_QQ_mumi_idx[1000];
   Int_t Reco_QQ_sign[1000];
@@ -92,6 +92,7 @@ public:
    * @brief run3 data use Short_t
    */
   Short_t Reco_QQ_size;
+  Short_t Reco_mu_whichGen[1000];
   Short_t Reco_QQ_mupl_idx[1000];
   Short_t Reco_QQ_mumi_idx[1000];
   Short_t Reco_QQ_sign[1000];

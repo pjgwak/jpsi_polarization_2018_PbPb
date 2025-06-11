@@ -22,6 +22,15 @@ for eventLoop in eventLoops:
   eventLoop.addAlgorithms(algs)
 
   # special algorithms
+  # Run3 Data
+  if isinstance(eventLoop, Data2023):
+    eventLoop.addAlgorithm(AlgRun2Peri()) # Trigger test
+
+  # Run3 MC
+  if isinstance(eventLoop, MC2023):
+    eventLoop.addAlgorithm(AlgRun3MCReco())
+    eventLoop.addAlgorithm(AlgRun3MCRecoTriggers())
+
   # Run2 Data
   if isinstance(eventLoop, Data2018Cent):
     eventLoop.addAlgorithm(AlgRun2Cent())

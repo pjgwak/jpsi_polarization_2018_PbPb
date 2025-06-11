@@ -159,6 +159,61 @@ class PlotOverlaid(object):
     # draw axes
     gPad.RedrawAxis()
   
+  def drawRun3MC(self):
+    self.canvas.cd()
+
+    # fill the histogram without drawing (GOFF option)
+    hists = []
+    for plot in self.plots:
+      hist = plot['hist']
+      drawCommand = f"{plot['var']}>>{hist.GetName()}"
+      
+      if self.isWeight:
+        plot['tree'].Draw(drawCommand, f"{plot['cut']} * weight", 'GOFF')
+      else:
+        plot['tree'].Draw(drawCommand, plot['cut'], 'GOFF')
+      hists.append(hist)
+
+    # find Y max value
+    maxY = 0
+    for hist in hists:
+      if hist.GetEntries() > 0: # check when a hist is not empty
+        currentMax = hist.GetMaximum()
+        if currentMax > maxY:
+          maxY = currentMax
+    
+    # set Y max
+    firstPlot = self.plots[0]
+    firstHist = firstPlot['hist']
+    firstHist.GetYaxis().SetRangeUser(0, maxY * 1.4 if maxY > 0 else 1)
+
+    # draw first hist
+    firstHist.Draw(firstPlot['drawOpt'])
+    self.legend.AddEntry(firstHist, firstPlot['legEntry'], 'ep')
+    self.legSample.AddEntry(self.sampleInfo, self.sampleInfo, '')
+    firstHist.GetXaxis().CenterTitle(True)
+    firstHist.GetYaxis().CenterTitle(True)
+
+    # draw other hists
+    for idx in range(1, len(self.plots)):
+      plot = self.plots[idx]
+      hist = plot['hist']
+      drawOpt = plot['drawOpt']
+      if 'SAME' not in drawOpt.upper():
+        drawOpt += ' SAME'
+      hist.Draw(drawOpt)
+      self.legend.AddEntry(hist, plot['legEntry'], 'ep')
+
+    # draw legend
+    self.legend.Draw()
+    self.legSample.Draw()
+
+    # update canvas
+    self.canvas.Update()
+    
+    # draw axes
+    gPad.RedrawAxis()
+  
   def save(self, fPath='', formats=('png')):
     for fmt in formats:
       fullPath = f'{fPath}.{fmt}'

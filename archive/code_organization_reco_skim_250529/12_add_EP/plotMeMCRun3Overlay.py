@@ -3,7 +3,7 @@ from Plot import PlotOverlaid
 from ROOT import TFile, TCanvas, TLegend, kGreen, kBlack, TCanvas, TH1
 
 
-def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='', isWeight=False, isEP=False):
+def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='', isWeight=False):
     """ draw overlaid plots according to 3 rapidity regions
     """
 
@@ -51,7 +51,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotMass.add(tree=myTree, var='mass', cut=cutBaseAllY, hist=h_massAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotMass.draw()
+    plotMass.drawRun3MC()
     plotMass.save(f'figs/{baseName}_overlaid/mass', formats=formats)
 
 
@@ -87,7 +87,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotPt.add(tree=myTree, var='pt', cut=cutBaseAllY, hist=h_ptAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotPt.draw()
+    plotPt.drawRun3MC()
     plotPt.save(f'figs/{baseName}_overlaid/pt', formats=formats)
 
 
@@ -123,7 +123,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotY.add(tree=myTree, var='y', cut=cutBaseAllY, hist=h_AllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotY.draw()
+    plotY.drawRun3MC()
     plotY.save(f'figs/{baseName}_overlaid/y', formats=formats)
 
 
@@ -160,7 +160,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotPhi.add(tree=myTree, var='phi', cut=cutBaseAllY, hist=h_phiAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotPhi.draw()
+    plotPhi.drawRun3MC()
     plotPhi.save(f'figs/{baseName}_overlaid/phi', formats=formats)
 
     # ===== phi - mupl ===== #
@@ -194,7 +194,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotPhi1.add(tree=myTree, var='phi1', cut=cutBaseAllY, hist=h_phi1AllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotPhi1.draw()
+    plotPhi1.drawRun3MC()
     plotPhi1.save(f'figs/{baseName}_overlaid/phi1', formats=formats)
 
 
@@ -230,7 +230,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotPhiHX.add(tree=myTree, var='phiHX', cut=cutBaseAllY, hist=h_phiHXAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotPhiHX.draw()
+    plotPhiHX.drawRun3MC()
     plotPhiHX.save(f'figs/{baseName}_overlaid/phiHX', formats=formats)
 
 
@@ -266,7 +266,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotPhiCS.add(tree=myTree, var='phiCS', cut=cutBaseAllY, hist=h_phiCSAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotPhiCS.draw()
+    plotPhiCS.drawRun3MC()
     plotPhiCS.save(f'figs/{baseName}_overlaid/phiCS', formats=formats)
 
 
@@ -301,7 +301,7 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotCosHX.add(tree=myTree, var='cosHX', cut=cutBaseAllY, hist=h_cosHXAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotCosHX.draw()
+    plotCosHX.drawRun3MC()
     plotCosHX.save(f'figs/{baseName}_overlaid/cosHX', formats=formats)
 
 
@@ -337,82 +337,8 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     plotCosCS.add(tree=myTree, var='cosCS', cut=cutBaseAllY, hist=h_cosCSAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
 
     # draw and save
-    plotCosCS.draw()
+    plotCosCS.drawRun3MC()
     plotCosCS.save(f'figs/{baseName}_overlaid/cosCS', formats=formats)
-
-
-    
-    if isEP:
-        # ===== cos EP ===== #
-        canvas = TCanvas('c_cosEPOverlay', '', 800, 600)
-        leg = TLegend(0.65, 0.83, 0.9, 0.95)
-
-        # set histograms
-        h_cosEPFwd = ROOT.TH1D('h_'+baseName+'Fwd_CosEP', ';cos#theta_{EP};# of dimuon', 30, -1, 1)
-        h_cosEPFwd.SetLineColor(ROOT.kBlue)
-        h_cosEPFwd.SetLineWidth(2)
-        h_cosEPFwd.SetMarkerColor(ROOT.kBlue)
-        h_cosEPFwd.SetMarkerStyle(20)
-
-        h_cosEPMid = ROOT.TH1D('h_'+baseName+'Mid_CosEP', '', 30, -1, 1)
-        h_cosEPMid.SetLineColor(ROOT.kRed)
-        h_cosEPMid.SetLineWidth(2)
-        h_cosEPMid.SetMarkerColor(ROOT.kRed)
-        h_cosEPMid.SetMarkerStyle(21)
-
-        h_cosEPAllY = ROOT.TH1D('h_'+baseName+'AllY_CosEP', '', 30, -1, 1)
-        h_cosEPAllY.SetLineColor(ROOT.kGreen + 2)
-        h_cosEPAllY.SetLineWidth(2)
-        h_cosEPAllY.SetMarkerColor(ROOT.kGreen + 2)
-        h_cosEPAllY.SetMarkerStyle(22)
-
-        # create PlotOverlaid instance
-        plotCosEP = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
-
-        # add hists
-        plotCosEP.add(tree=myTree, var='cosEP', cut=cutBaseFwd, hist=h_cosEPFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
-        plotCosEP.add(tree=myTree, var='cosEP', cut=cutBaseMid, hist=h_cosEPMid, legEntry='|y|<1.6, 6.5<#it{p}_{T}<50', drawOpt='ep')
-        plotCosEP.add(tree=myTree, var='cosEP', cut=cutBaseAllY, hist=h_cosEPAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
-
-        # draw and save
-        plotCosEP.draw()
-        plotCosEP.save(f'figs/{baseName}_overlaid/cosEP', formats=formats)
-
-        # ===== phi EP ===== #
-        canvas = TCanvas('c_phiEPOverlay', '', 800, 600)
-        leg = TLegend(0.65, 0.83, 0.9, 0.95)
-
-        # set histograms
-        h_phiEPFwd = ROOT.TH1D('h_'+baseName+'Fwd_phiEP', ';#phi_{EP};# of dimuon', 30, -1, 1)
-        h_phiEPFwd.SetLineColor(ROOT.kBlue)
-        h_phiEPFwd.SetLineWidth(2)
-        h_phiEPFwd.SetMarkerColor(ROOT.kBlue)
-        h_phiEPFwd.SetMarkerStyle(20)
-
-        h_phiEPMid = ROOT.TH1D('h_'+baseName+'Mid_phiEP', '', 30, -1, 1)
-        h_phiEPMid.SetLineColor(ROOT.kRed)
-        h_phiEPMid.SetLineWidth(2)
-        h_phiEPMid.SetMarkerColor(ROOT.kRed)
-        h_phiEPMid.SetMarkerStyle(21)
-
-        h_phiEPAllY = ROOT.TH1D('h_'+baseName+'AllY_phiEP', '', 30, -1, 1)
-        h_phiEPAllY.SetLineColor(ROOT.kGreen + 2)
-        h_phiEPAllY.SetLineWidth(2)
-        h_phiEPAllY.SetMarkerColor(ROOT.kGreen + 2)
-        h_phiEPAllY.SetMarkerStyle(22)
-
-        # create PlotOverlaid instance
-        plotPhiEP = PlotOverlaid(canvas, leg, sampleInfo=sampleInfo, isWeight=isWeight)
-
-        # add hists
-        plotPhiEP.add(tree=myTree, var='phiEP', cut=cutBaseFwd, hist=h_phiEPFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
-        plotPhiEP.add(tree=myTree, var='phiEP', cut=cutBaseMid, hist=h_phiEPMid, legEntry='|y|<1.6, 6.5<#it{p}_{T}<50', drawOpt='ep')
-        plotPhiEP.add(tree=myTree, var='phiEP', cut=cutBaseAllY, hist=h_phiEPAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
-
-        # draw and save
-        plotPhiEP.draw()
-        plotPhiEP.save(f'figs/{baseName}_overlaid/phiEP', formats=formats)
-
 
     # cleaning
     f.Close()

@@ -11,14 +11,11 @@ class Data2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2023', nEvt=10000)
+    EventLoop.__init__(self, name='Data2023', nEvt=-1)
 
     # push samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
-    # self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_track_vector_250530/Oniatree_MC0_PbPb_2023_EP_angles_250610.root') # inlcudes EP angles
-    
-    self.eventLoop.inputFiles.push_back('PbPb_ep_angle.root')
-    
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_track_vector_250530/Oniatree_MC0_PbPb_2023_EP_angles_250610.root') # inlcudes EP angles  
     # self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_no_track_250520/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_no_track_250520/250520_121505/Oniatree_MC0_PbPb_2023.root') # no EP branches
 
     # set sample flags
@@ -75,12 +72,12 @@ class MC2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2023', nEvt=-1)
+    EventLoop.__init__(self, name='MC2023', nEvt=1000000)
 
     # add the ggH samples into the event loop
     self.eventLoop.isMC = True
     self.eventLoop.treeName = 'hionia/myTree'
-    self.eventLoop.inputFiles.push_back('/work/pjgwak/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_no_track_250519/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_no_track_250519/250519_112255/0000/OniaTree_MC1_Run3_PbPb2023_250520.root')
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_no_track_250519/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_no_track_250519/250519_112255/0000/OniaTree_MC1_Run3_PbPb2023_250520.root')
 # ---------------------------------
 class MC2023GlbTrk(EventLoop): # Not used
   """ event loop over the vector boson fusion sample

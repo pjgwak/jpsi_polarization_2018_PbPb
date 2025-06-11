@@ -8,7 +8,7 @@ Data::Data(TTree *tree, bool mc, bool isEP) : isMC(mc), isEP(isEP), m_tree(tree)
   }
 
   if (isMC) {
-    m_tree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen);
+    // m_tree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen);
     m_tree->SetBranchAddress("Gen_weight", &Gen_weight);
   }
 
@@ -42,9 +42,13 @@ Data::Data(TTree *tree, bool mc, bool isEP) : isMC(mc), isEP(isEP), m_tree(tree)
 // ====== Childern classes ===== //
 DataRun2::DataRun2(TTree *tree, bool isMC, bool isEP) : Data(tree, isMC, isEP) {
   m_tree->SetBranchAddress("Reco_QQ_size", &this->Reco_QQ_size);
+  m_tree->SetBranchAddress("Reco_QQ_size", &this->Reco_QQ_size);
   m_tree->SetBranchAddress("Reco_QQ_mupl_idx", this->Reco_QQ_mupl_idx);
   m_tree->SetBranchAddress("Reco_QQ_mumi_idx", this->Reco_QQ_mumi_idx);
   m_tree->SetBranchAddress("Reco_QQ_sign", this->Reco_QQ_sign);
+
+  if (isMC) 
+    m_tree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen);
 }
 
 DataRun3::DataRun3(TTree *tree, bool isMC, bool isEP) : Data(tree, isMC, isEP) {
@@ -52,4 +56,7 @@ DataRun3::DataRun3(TTree *tree, bool isMC, bool isEP) : Data(tree, isMC, isEP) {
   m_tree->SetBranchAddress("Reco_QQ_mupl_idx", this->Reco_QQ_mupl_idx);
   m_tree->SetBranchAddress("Reco_QQ_mumi_idx", this->Reco_QQ_mumi_idx);
   m_tree->SetBranchAddress("Reco_QQ_sign", this->Reco_QQ_sign);
+  
+  if (isMC)
+    m_tree->SetBranchAddress("Reco_mu_whichGen", Reco_mu_whichGen);
 }

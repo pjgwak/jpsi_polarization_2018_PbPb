@@ -98,7 +98,7 @@ namespace ROOT {
       ::DataRun2 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::DataRun2));
       static ::ROOT::TGenericClassInfo 
-         instance("DataRun2", "Data.h", 64,
+         instance("DataRun2", "Data.h", 63,
                   typeid(::DataRun2), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &DataRun2_Dictionary, isa_proxy, 4,
                   sizeof(::DataRun2) );
