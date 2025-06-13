@@ -11,15 +11,11 @@ class Data2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2023', nEvt=-1)
+    EventLoop.__init__(self, name='Data2023', nEvt=10000, isEP=True)
 
     # push samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
-    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_track_vector_250530/Oniatree_MC0_PbPb_2023_EP_angles_250610.root') # inlcudes EP angles  
-    # self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_no_track_250520/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_no_track_250520/250520_121505/Oniatree_MC0_PbPb_2023.root') # no EP branches
-
-    # set sample flags
-    self.eventLoop.isEP = True
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/Oniatree_MC0_PbPb_2023_EP_angles.root')
 # --------------------------------
 class Data2018Cent(EventLoop):
   """ event loop over 2018 PbPb Data
@@ -27,12 +23,10 @@ class Data2018Cent(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2018Cent', nEvt=-1)
+    EventLoop.__init__(self, name='Data2018Cent', nEvt=10000, isRun2=True)
 
-    # add the ggH samples into the event loop
-    self.eventLoop.useRun2 = True
     self.eventLoop.treeName = 'myTree'
-    
+
     for i in range(1, 6):
       self.eventLoop.inputFiles.push_back(f'/disk1/Oniatree/polarization/run2_oniatree_PbPb_data_AOD/DM/ReReco_Oniatree_addvn_part{i}.root')
 # --------------------------------
@@ -42,10 +36,9 @@ class Data2018Peri(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2018Peri', nEvt=-1)
+    EventLoop.__init__(self, name='Data2018Peri', nEvt=-1, isRun2=True)
 
     # add the ggH samples into the event loop
-    self.eventLoop.useRun2 = True
     self.eventLoop.treeName = 'myTree'
     
     for i in range(1, 4):
@@ -72,12 +65,9 @@ class MC2018GenOnly(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2018GenOnly', nEvt=10000)
+    EventLoop.__init__(self, name='MC2018GenOnly', nEvt=10000, isMC=True, isRun2=True, isGenOnly=True)
 
     # add the ggH samples into the event loop
-    self.eventLoop.isMC = True
-    self.eventLoop.useRun2 = True
-    self.eventLoop.isGenOnly = True
     self.eventLoop.treeName = 'hionia/myTree'
     
     self.eventLoop.inputFiles.push_back('/disk1/Oniatree/Jpsi/OniaTree_JpsiMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root')
@@ -88,12 +78,9 @@ class MC2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2023', nEvt=-1)
+    EventLoop.__init__(self, name='MC2023', nEvt=10000, isMC=True, isEP=True)
 
     # add the ggH samples into the event loop
-    self.eventLoop.isMC = True
     self.eventLoop.treeName = 'hionia/myTree'
     self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/Oniatree_MC1_miniAOD_PbPb_2023.root')
-
-    self.eventLoop.isEP = True
 # ---------------------------------

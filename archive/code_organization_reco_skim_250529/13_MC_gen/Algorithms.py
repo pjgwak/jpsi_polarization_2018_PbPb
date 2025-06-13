@@ -174,7 +174,7 @@ class AlgRun2MCGenNum(Algorithm):
   """
   def __init__(self):
     # call inherited constructor
-    Algorithm.__init__(self, 'AlgRun2MCGenNum', isGen=True)
+    Algorithm.__init__(self, 'AlgRun2MCGenNum', isGen=True, isGenOnly=True)
 
     self.alg.cut_centrality0_180 = False
     self.alg.cut_jpsiMass = False # 2.6 - 3.5
@@ -193,7 +193,7 @@ class AlgRun2MCGenDen(Algorithm):
   """
   def __init__(self):
     # call inherited constructor
-    Algorithm.__init__(self, 'AlgRun2MCGenDen', isGen=True)
+    Algorithm.__init__(self, 'AlgRun2MCGenDen', isGen=True, isGenOnly=True)
 
     self.alg.cut_centrality0_180 = False
     self.alg.cut_jpsiMass = False # 2.6 - 3.5

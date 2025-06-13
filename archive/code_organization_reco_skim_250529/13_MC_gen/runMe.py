@@ -1,19 +1,21 @@
 from ROOT import gSystem
 gSystem.Load('Analysis.so')
 
-# create instance s of the class EventLoop
+
 from Samples import *
+from Algorithms import * 
+
+# create instance s of the class EventLoop
 eventLoops = []
-# eventLoops += [Data2023()]
-# eventLoops += [Data2018Cent()]
+eventLoops += [Data2023()]
+eventLoops += [Data2018Cent()]
 # eventLoops += [Data2018Peri()]
 eventLoops += [MC2023()]
-# eventLoops += [MC2018Pr()] # Jpsi Prompt
+eventLoops += [MC2018Pr()] # Jpsi Prompt
 # eventLoops += [MC2023GlbTrk()]
 
 
 # add the algorithm into the event loop
-from Algorithms import * 
 for eventLoop in eventLoops:
   # common algorithms
   algs = []
@@ -22,10 +24,6 @@ for eventLoop in eventLoops:
   eventLoop.addAlgorithms(algs)
 
   # special algorithms
-  # Run3 Data
-  if isinstance(eventLoop, Data2023):
-    eventLoop.addAlgorithm(AlgRun2Peri()) # Trigger test
-
   # Run3 MC
   if isinstance(eventLoop, MC2023):
     eventLoop.addAlgorithm(AlgRun3MCReco())

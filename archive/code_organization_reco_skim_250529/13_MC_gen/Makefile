@@ -4,10 +4,14 @@ PROGRAM = Analysis
 
 HDRS = EventLoop.h\
 			 Data.h\
+			 DataRun2.h\
+			 DataRun3.h\
 			 Algorithm.h\
 
 OBJS = EventLoop.o\
 			 Data.o\
+			 DataRun2.o\
+			 DataRun3.o\
 			 Algorithm.o\
 			 dict_$(PROGRAM).o # need for ROOT and pyroot
 

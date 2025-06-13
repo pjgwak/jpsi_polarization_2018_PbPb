@@ -37,6 +37,8 @@
 // Header files passed as explicit arguments
 #include "EventLoop.h"
 #include "Data.h"
+#include "DataRun2.h"
+#include "DataRun3.h"
 #include "Algorithm.h"
 
 // Header files passed via #pragma extra_include
@@ -57,7 +59,7 @@ namespace ROOT {
       ::Data *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::Data));
       static ::ROOT::TGenericClassInfo 
-         instance("Data", "Data.h", 7,
+         instance("Data", "Data.h", 8,
                   typeid(::Data), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &Data_Dictionary, isa_proxy, 4,
                   sizeof(::Data) );
@@ -98,7 +100,7 @@ namespace ROOT {
       ::DataRun2 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::DataRun2));
       static ::ROOT::TGenericClassInfo 
-         instance("DataRun2", "Data.h", 81,
+         instance("DataRun2", "DataRun2.h", 4,
                   typeid(::DataRun2), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &DataRun2_Dictionary, isa_proxy, 4,
                   sizeof(::DataRun2) );
@@ -139,7 +141,7 @@ namespace ROOT {
       ::DataRun3 *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::DataRun3));
       static ::ROOT::TGenericClassInfo 
-         instance("DataRun3", "Data.h", 100,
+         instance("DataRun3", "DataRun3.h", 4,
                   typeid(::DataRun3), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &DataRun3_Dictionary, isa_proxy, 4,
                   sizeof(::DataRun3) );
@@ -223,7 +225,7 @@ namespace ROOT {
       ::EventLoop *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::EventLoop));
       static ::ROOT::TGenericClassInfo 
-         instance("EventLoop", "EventLoop.h", 9,
+         instance("EventLoop", "EventLoop.h", 11,
                   typeid(::EventLoop), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &EventLoop_Dictionary, isa_proxy, 4,
                   sizeof(::EventLoop) );
@@ -465,6 +467,8 @@ namespace {
     static const char* headers[] = {
 "EventLoop.h",
 "Data.h",
+"DataRun2.h",
+"DataRun3.h",
 "Algorithm.h",
 nullptr
     };
@@ -480,8 +484,8 @@ nullptr
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern int __Cling_AutoLoading_Map;
 class __attribute__((annotate("$clingAutoload$Data.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  Data;
-class __attribute__((annotate("$clingAutoload$Data.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  DataRun2;
-class __attribute__((annotate("$clingAutoload$Data.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  DataRun3;
+class __attribute__((annotate("$clingAutoload$DataRun2.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  DataRun2;
+class __attribute__((annotate("$clingAutoload$DataRun3.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  DataRun3;
 class __attribute__((annotate("$clingAutoload$Algorithm.h")))  __attribute__((annotate("$clingAutoload$EventLoop.h")))  Algorithm;
 class __attribute__((annotate("$clingAutoload$EventLoop.h")))  EventLoop;
 )DICTFWDDCLS";
@@ -493,6 +497,8 @@ class __attribute__((annotate("$clingAutoload$EventLoop.h")))  EventLoop;
 // Inline headers
 #include "EventLoop.h"
 #include "Data.h"
+#include "DataRun2.h"
+#include "DataRun3.h"
 #include "Algorithm.h"
 
 #undef  _BACKWARD_BACKWARD_WARNING_H

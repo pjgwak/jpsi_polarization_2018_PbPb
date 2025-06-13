@@ -20,25 +20,14 @@ class Algorithm {
      */
     void initialize(Data* data, bool isRun2);
 
-    /**
-     * @brief execute logics
-     */
+    // excute main logics
     void execute(Long64_t irqq);
     void executeGen(Long64_t igqq);
 
-    /**
-     * @brief pointer to the TH1D class instance
-     */
-    TH1D* h_runNb_m = nullptr;
-
-    /**
-     * @brief pointer to the output TTree class
-     */
+    TH1D* h_runNb_m = nullptr; // for test
     TTree* m_myTree = nullptr;
 
-    /**
-     * @brief turn on(off) selection cuts
-     */
+    // turn on(off) selection cuts
     bool cut_centrality0_180 = false;
     bool cut_jpsiMass = false;
     bool cut_jpsiRapidity = false;
@@ -51,7 +40,7 @@ class Algorithm {
     bool cut_L2L3FilterPbPbJpsi2018 = false;
     bool cut_runNb327123 = false;
     bool cut_whichGen = false;
-    bool cut_tnp = false; // it check L2, L3 filters
+    bool cut_tnp = false; // check L2 and L3 filters
     bool cut_muChargeGen = false;
 
     /**
@@ -198,33 +187,3 @@ class Algorithm {
     double tnp_weight_trk_pbpb(double eta, int idx = 0);
     double tnp_weight_trg_pbpb(double pt, double eta, int filterId = 0, int idx = 0, bool getRawDen = false);
 };
-
-
-// // ====== Childern classes ===== //
-// class AlgorithmRun2 {
-// 	public:
-// 		AlgorithmRun2();
-// 		~AlgorithmRun2() override = default;
-
-// 		/**
-// 		 * @brief initialize the event loop
-// 		 */
-// 		void initialize()override;
-// 		void execute() override;
-
-// 		/**
-// 		 * @brief instance of the Data class
-// 		 */
-// 		DataRun2 *m_data = nullptr;
-// };
-
-// class AlgorithmRun3 {
-// 	public:
-// 		AlgorithmRun3();
-// 		~AlgorithmRun3() override = default;
-
-// 		void initialize() override;
-// 		void execute() override;
-
-// 		DataRun3 *m_data = nullptr;
-// };

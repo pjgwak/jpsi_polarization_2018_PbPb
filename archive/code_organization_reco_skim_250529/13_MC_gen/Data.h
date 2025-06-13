@@ -3,6 +3,7 @@
 #include "TTree.h"
 #include "TClonesArray.h"
 #include "TLorentzVector.h"
+#include <iostream>
 
 class Data {
   public:
@@ -12,19 +13,13 @@ class Data {
     Data(TTree *tree, bool isMC, bool isGenOnly, bool isEP, bool isRun2);
     virtual ~Data() = default;
 
-    /**
-     * @brief flags
-     * is sample MC?
-     * calculate Ep angles?
-     */
-    bool isMC;
-    bool isGenOnly;
-    bool isEP;
-    bool isRun2;
+    // common flags
+    bool isMC_flag;
+    bool isGenOnly_flag;
+    bool isEP_flag;
+    bool isRun2_flag;
 
-    /**
-     * @brief tree variables
-     */
+    // Reco common branches - All samples have it.
     UInt_t runNb, eventNb, LS;
     Int_t Centrality;
     ULong64_t HLTriggers;
@@ -43,18 +38,15 @@ class Data {
     ULong64_t Reco_mu_trig[1000];
     ULong64_t Reco_QQ_trig[1000];
 
-    // Gen variables
-    Int_t Gen_QQ_size;
+    // Gen common variables
     TClonesArray *Gen_QQ_4mom = nullptr;
     TClonesArray *Gen_mu_4mom = nullptr;
-    Int_t Gen_QQ_mupl_idx[1000];
-    Int_t Gen_QQ_mumi_idx[1000];
-    Int_t Gen_mu_charge[1000];
     Float_t Gen_QQ_ctau3D[1000];
 
-    // Run2 Gen only variables
+    // Run2GenOnly branches
     TClonesArray *Gen_QQ_mupl_4mom = nullptr;
     TClonesArray *Gen_QQ_mumi_4mom = nullptr;
+    Float_t Gen_QQ_ctau[1000];
 
     /**
      * @brief variables to use in algorithm. Not stored in TTree.
@@ -68,50 +60,20 @@ class Data {
     TLorentzVector *mupl_Gen = nullptr;
     TLorentzVector *mumi_Gen = nullptr;
 
+    // virtual getter functions - Samples have different branch types
+    // = 0 is also the grammer.
+    virtual Long64_t getGenQQSize() const = 0;
+    virtual Int_t getGenQQMuplIdx(Long64_t idx) const = 0;
+    virtual Int_t getGenQQMumiIdx(Long64_t idx) const = 0;
+    virtual Int_t getGenMuCharge(Long64_t idx) const = 0;
+    
+    virtual Long64_t getRecoQQSize() const = 0;
+    virtual Int_t getRecoQQSign(Long64_t idx) const = 0;
+    virtual Int_t getRecoQQMuplIdx(Long64_t idx) const = 0;
+    virtual Int_t getRecoQQMumiIdx(Long64_t idx) const = 0;
+    virtual Int_t getRecoMuWhichGen(Long64_t idx) const = 0;
+
   protected:
-    /**
-     * @brief pointer to the TTree (or TChain) class
-     */
+    // TTree (or TChain) class
     TTree* m_tree = nullptr;
-};
-
-
-// ====== Childern classes ===== //
-// I wrote them here due to their small sizes
-class DataRun2 : public Data
-{
-public:
-  /**
-   * @brief constructor and destructor
-   */
-  DataRun2(TTree *tree, bool isMC, bool isGenOnly, bool isEP, bool isRun2);
-  ~DataRun2() override = default;
-
-  /**
-   * @brief run2 data use Int_t (Run3 uses Short_t)
-   */
-  Int_t Reco_QQ_size;
-  Int_t Reco_mu_whichGen[1000];
-  Int_t Reco_QQ_mupl_idx[1000];
-  Int_t Reco_QQ_mumi_idx[1000];
-  Int_t Reco_QQ_sign[1000];
-};
-
-class DataRun3 : public Data
-{
-public:
-  /**
-   * @brief constructor and destructor
-   */
-  DataRun3(TTree *tree, bool isMC, bool isGenOnly, bool isEP, bool isRun2);
-  ~DataRun3() override = default;
-
-  /**
-   * @brief run3 data use Short_t
-   */
-  Short_t Reco_QQ_size;
-  Short_t Reco_mu_whichGen[1000];
-  Short_t Reco_QQ_mupl_idx[1000];
-  Short_t Reco_QQ_mumi_idx[1000];
-  Short_t Reco_QQ_sign[1000];
 };

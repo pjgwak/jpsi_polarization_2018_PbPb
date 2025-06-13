@@ -1,12 +1,12 @@
 #include "Algorithm.h"
-#include "Data.h"
+#include <iostream> // std::cerr
 
 Algorithm::Algorithm(bool isGen, bool isGenOnly) : m_isGen(isGen), m_isGenOnly(isGenOnly) {
 }
 
-void Algorithm::initialize(Data* data, bool isRun2) {
+void Algorithm::initialize(Data* data, bool isRun2_flag) {
   m_data = data;
-  m_isRun2 = isRun2;
+  m_isRun2 = isRun2_flag;
 
   std::cout << "Algorithm::initialize: Attempting to set branches.\n";
   if (m_myTree && m_isGen==false)
@@ -18,37 +18,25 @@ void Algorithm::initialize(Data* data, bool isRun2) {
 }
 
 void Algorithm::execute(Long64_t irqq) {
-  Data& data = *m_data; // local reference
-
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
-    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
-  } 
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-  }
+  // for the Reco
+  Int_t mupl_idx = m_data->getRecoQQMuplIdx(irqq);
+  Int_t mumi_idx = m_data->getRecoQQMumiIdx(irqq);
 
   // set 4-vectors
-  data.JP_Reco = static_cast<TLorentzVector*>(data.Reco_QQ_4mom->At(irqq));
-  data.mupl_Reco = static_cast<TLorentzVector *>(data.Reco_mu_4mom->At(mupl_idx));
-  data.mumi_Reco = static_cast<TLorentzVector*>(data.Reco_mu_4mom->At(mumi_idx));
+  m_data->JP_Reco = static_cast<TLorentzVector*>(m_data->Reco_QQ_4mom->At(irqq));
+  m_data->mupl_Reco = static_cast<TLorentzVector*>(m_data->Reco_mu_4mom->At(mupl_idx));
+  m_data->mumi_Reco = static_cast<TLorentzVector*>(m_data->Reco_mu_4mom->At(mumi_idx));
 
   // apply selections
   if(!passSelection(irqq)) return;
 
   // HX, CS transformation
-  MuPlusVector_Helicity(*data.JP_Reco, *data.mupl_Reco); // Call HX before CS
-  MuPlusVector_CollinsSoper(*data.JP_Reco);
+  MuPlusVector_Helicity(*m_data->JP_Reco, *m_data->mupl_Reco); // Call HX before CS
+  MuPlusVector_CollinsSoper(*m_data->JP_Reco);
 
   // EP tranformation
-  if (data.isEP) {
-    MuPlusVector_EventPlane(*data.JP_Reco, *data.mupl_Reco);
+  if (m_data->isEP_flag) {
+    MuPlusVector_EventPlane(*m_data->JP_Reco, *m_data->mupl_Reco);
   }
 
   // fill the histograms
@@ -61,124 +49,79 @@ void Algorithm::execute(Long64_t irqq) {
 }
 
 void Algorithm::executeGen(Long64_t igqq) {
-  Data& data = *m_data; // local reference
+  // Generator part
+  Int_t mupl_idx = m_data->getGenQQMuplIdx(igqq);
+  Int_t mumi_idx = m_data->getGenQQMumiIdx(igqq);
 
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Gen_QQ_mupl_idx[igqq];
-    mumi_idx = dr2->Gen_QQ_mumi_idx[igqq];
-  } 
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Gen_QQ_mupl_idx[igqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Gen_QQ_mumi_idx[igqq]);
-  }
-
-  // set 4-vectors
-  if (data.isGenOnly && data.isRun2) {
-    data.JP_Gen = static_cast<TLorentzVector *>(data.Gen_QQ_4mom->At(igqq));
-    data.mupl_Gen = static_cast<TLorentzVector *>(data.Gen_QQ_mupl_4mom->At(igqq));
-    data.mumi_Gen = static_cast<TLorentzVector *>(data.Gen_QQ_mumi_4mom->At(igqq));
+  // set 4-vectors (Run2 Gen only vs Run2 RecoGen)
+  if (m_data->isGenOnly_flag && m_data->isRun2_flag) {
+    m_data->JP_Gen = static_cast<TLorentzVector *>(m_data->Gen_QQ_4mom->At(igqq));
+    m_data->mupl_Gen = static_cast<TLorentzVector *>(m_data->Gen_QQ_mupl_4mom->At(igqq));
+    m_data->mumi_Gen = static_cast<TLorentzVector *>(m_data->Gen_QQ_mumi_4mom->At(igqq));
   } else {
-    data.JP_Gen = static_cast<TLorentzVector*>(data.Gen_QQ_4mom->At(igqq));
-    data.mupl_Gen = static_cast<TLorentzVector *>(data.Gen_mu_4mom->At(mupl_idx));
-    data.mumi_Gen = static_cast<TLorentzVector*>(data.Gen_mu_4mom->At(mumi_idx));
+    m_data->JP_Gen = static_cast<TLorentzVector *>(m_data->Gen_QQ_4mom->At(igqq));
+    m_data->mupl_Gen = static_cast<TLorentzVector *>(m_data->Gen_mu_4mom->At(mupl_idx));
+    m_data->mumi_Gen = static_cast<TLorentzVector *>(m_data->Gen_mu_4mom->At(mumi_idx));
   }
 
   // apply selections
   if(!passSelectionGen(igqq)) return;
 
   // HX, CS transformation
-  MuPlusVector_Helicity(*data.JP_Gen, *data.mupl_Gen); // Call HX before CS
-  MuPlusVector_CollinsSoper(*data.JP_Gen);
+  MuPlusVector_Helicity(*m_data->JP_Gen, *m_data->mupl_Gen); // Call HX before CS
+  MuPlusVector_CollinsSoper(*m_data->JP_Gen);
 
   // EP tranformation
-  if (data.isEP) {
-    MuPlusVector_EventPlane(*data.JP_Gen, *data.mupl_Gen);
-  }
+  if (m_data->isEP_flag)
+    MuPlusVector_EventPlane(*m_data->JP_Gen, *m_data->mupl_Gen);
 
-  // fill the histograms
   standByFillingGen(igqq);
-
-  // count up nDimu
-  // must be increased later than standByFilling()
   ++nDimu;
-  // fillHists();
 }
 
 bool Algorithm::passSelection(Long64_t irqq) {
   // It is executed in the recoQQ loop
-
-  Data& data = *m_data;
-
-  Int_t qq_sign_val = 0;
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    qq_sign_val = dr2->Reco_QQ_sign[irqq];
-  }
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    qq_sign_val = static_cast<Int_t>(dr3->Reco_QQ_sign[irqq]);
-  }
+  Int_t qq_sign_val = m_data->getRecoQQSign(irqq);
 
   // apply selection
-  if (cut_centrality0_180 && !(data.Centrality > 0 && data.Centrality < 180)) return false;
-  if (cut_jpsiMass && !(data.JP_Reco->M() > 2.6 && data.JP_Reco->M() < 3.5)) return false;
+  if (cut_centrality0_180 && !(m_data->Centrality > 0 && m_data->Centrality < 180)) return false;
+  if (cut_jpsiMass && !(m_data->JP_Reco->M() > 2.6 && m_data->JP_Reco->M() < 3.5)) return false;
   if (cut_runNb327123 && !passRunNb327123()) return false;
   if (cut_HLTriggerPbPbJpsi2018 && !passHLTriggerJpsiPbPb2018()) return false;
   if (cut_recoQQTrigger && !passRecoQQTrigger(irqq)) return false;
   if (cut_L2L3FilterPbPbJpsi2018 && !passHLFilterJpsiPbPb2018(irqq)) return false;
   if (cut_softMuons && !passSoftMuonCut(irqq)) return false;
-  if (cut_vtxProbability && data.Reco_QQ_VtxProb[irqq] < 0.01) return false;
+  if (cut_vtxProbability && m_data->Reco_QQ_VtxProb[irqq] < 0.01) return false;
   if (cut_oppositeSign && qq_sign_val != 0) return false;
   if (cut_singleMuonAcc && !passMuonAcc2018()) return false;
   if (cut_whichGen && !passewhichGen(irqq)) return false;
   if (cut_tnp && !passTnpLogic(irqq)) return false;
 
-  // pass all selection
   return true;
 }
 
 bool Algorithm::passSelectionGen(Long64_t igqq) {
   // It is executed in the recoQQ loop
 
-  Data& data = *m_data;
-
   // apply selection
-  if (cut_centrality0_180 && !(data.Centrality > 0 && data.Centrality < 180)) return false;
-  if (cut_jpsiMass && !(data.JP_Gen->M() > 2.6 && data.JP_Gen->M() < 3.5)) return false;
-  if (cut_jpsiRapidity && !std::fabs(data.JP_Gen->Rapidity() < 2.4)) return false;
+  if (cut_centrality0_180 && !(m_data->Centrality > 0 && m_data->Centrality < 180)) return false;
+  if (cut_jpsiMass && !(m_data->JP_Gen->M() > 2.6 && m_data->JP_Gen->M() < 3.5)) return false;
+  if (cut_jpsiRapidity && !std::fabs(m_data->JP_Gen->Rapidity() < 2.4)) return false;
   if (cut_singleMuonAcc && !passMuonAcc2018Gen()) return false;
   if (cut_muChargeGen && !passMuChargeGen(igqq)) return false;
 
-  // pass all selection
   return true;
 }
 
 bool Algorithm::passMuChargeGen(Long64_t igqq) {
-  Data &data = *m_data;
-  return data.Gen_mu_charge[data.Gen_QQ_mupl_idx[igqq]] * data.Gen_mu_charge[data.Gen_QQ_mumi_idx[igqq]] <= 0;
+  return m_data->getGenMuCharge(m_data->getGenQQMuplIdx(igqq)) * m_data->getGenMuCharge(m_data->getGenQQMumiIdx(igqq)) <= 0;
 }
 
 bool Algorithm::passSoftMuonCut(Long64_t irqq) {
   Data& data = *m_data;
 
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
-    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
-  }
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-  }
+  Int_t mupl_idx = m_data->getRecoQQMuplIdx(irqq);
+  Int_t mumi_idx = m_data->getRecoQQMumiIdx(irqq);
 
   bool passMuonTypePl = true;
   passMuonTypePl = passMuonTypePl && (data.Reco_mu_SelectionType[mupl_idx] & (1 << 1));
@@ -208,19 +151,15 @@ bool Algorithm::passSoftMuonCut(Long64_t irqq) {
 }
 
 bool Algorithm::passMuonAcc2018() {
-  Data& data = *m_data;
-
-  bool muplAccCut = checkMuonAcc2018(data.mupl_Reco->Pt(), data.mupl_Reco->Eta());
-  bool mumiAccCut = checkMuonAcc2018(data.mumi_Reco->Pt(), data.mumi_Reco->Eta());
+  bool muplAccCut = checkMuonAcc2018(m_data->mupl_Reco->Pt(), m_data->mupl_Reco->Eta());
+  bool mumiAccCut = checkMuonAcc2018(m_data->mumi_Reco->Pt(), m_data->mumi_Reco->Eta());
 
   return (muplAccCut && mumiAccCut);
 }
 
 bool Algorithm::passMuonAcc2018Gen() {
-  Data& data = *m_data;
-
-  bool muplAccCut = checkMuonAcc2018(data.mupl_Gen->Pt(), data.mupl_Gen->Eta());
-  bool mumiAccCut = checkMuonAcc2018(data.mumi_Gen->Pt(), data.mumi_Gen->Eta());
+  bool muplAccCut = checkMuonAcc2018(m_data->mupl_Gen->Pt(), m_data->mupl_Gen->Eta());
+  bool mumiAccCut = checkMuonAcc2018(m_data->mumi_Gen->Pt(), m_data->mumi_Gen->Eta());
 
   return (muplAccCut && mumiAccCut);
 }
@@ -236,9 +175,8 @@ bool Algorithm::passRunNb327123() {
   // this is event level cut
   // it will be executed in the Reco loop
   // to manange all cuts in the Algorithm()
-  Data& data = *m_data;
   
-  if (data.runNb < 327123)
+  if (m_data->runNb < 327123)
     return true;
   else
     return false;
@@ -250,19 +188,8 @@ bool Algorithm::passHLFilterJpsiPbPb2018(Long64_t irqq) {
   // to manange all cuts in the Algorithm()
   Data& data = *m_data;
 
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
-    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
-  } 
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-  }
+  Int_t mupl_idx = m_data->getRecoQQMuplIdx(irqq);
+  Int_t mumi_idx = m_data->getRecoQQMumiIdx(irqq);
 
   return ((data.Reco_mu_trig[mupl_idx] & ((ULong64_t)pow(2, kL2filterJpsi2018))) == ((ULong64_t)pow(2, kL2filterJpsi2018)) && (data.Reco_mu_trig[mumi_idx] & ((ULong64_t)pow(2, kL2filterJpsi2018))) == ((ULong64_t)pow(2, kL2filterJpsi2018)));
 }
@@ -271,39 +198,18 @@ bool Algorithm::passHLTriggerJpsiPbPb2018() {
   // this is event level cut
   // it will be executed in the Reco loop
   // to manange all cuts in the Algorithm()
-  Data& data = *m_data;
-
-  return ((data.HLTriggers & ((ULong64_t)pow(2, kTrigJpsi2018))) == ((ULong64_t)pow(2, kTrigJpsi2018)));
+  return ((m_data->HLTriggers & ((ULong64_t)pow(2, kTrigJpsi2018))) == ((ULong64_t)pow(2, kTrigJpsi2018)));
 }
 
 bool Algorithm::passRecoQQTrigger(Long64_t irqq) {
-  Data& data = *m_data;
-
-  return ((data.Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigJpsi2018))) == ((ULong64_t)pow(2, kTrigJpsi2018)));
+  return ((m_data->Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigJpsi2018))) == ((ULong64_t)pow(2, kTrigJpsi2018)));
 }
 
 bool Algorithm::passewhichGen(Long64_t irqq) {
-  // Data &data = *m_data;
+  Int_t mupl_idx = m_data->getRecoQQMuplIdx(irqq);
+  Int_t mumi_idx = m_data->getRecoQQMumiIdx(irqq);
 
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2)
-  {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
-    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
-
-    return (dr2->Reco_mu_whichGen[mupl_idx] != -1 && dr2->Reco_mu_whichGen[mumi_idx] != -1);
-  }
-  else
-  {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-
-    return (dr3->Reco_mu_whichGen[mupl_idx] != -1 && dr3->Reco_mu_whichGen[mumi_idx] != -1);
-  }
+  return (m_data->getRecoMuWhichGen(mupl_idx) != -1 && m_data->getRecoMuWhichGen(mumi_idx) != -1);
 }
 
 bool Algorithm::passTnpLogic(Long64_t irqq) {
@@ -312,21 +218,8 @@ bool Algorithm::passTnpLogic(Long64_t irqq) {
 
   Data &data = *m_data;
 
-  Int_t mupl_idx = 0;
-  Int_t mumi_idx = 0;
-
-  if (m_isRun2)
-  {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    mupl_idx = dr2->Reco_QQ_mupl_idx[irqq];
-    mumi_idx = dr2->Reco_QQ_mumi_idx[irqq];
-  }
-  else
-  {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    mupl_idx = static_cast<Int_t>(dr3->Reco_QQ_mupl_idx[irqq]);
-    mumi_idx = static_cast<Int_t>(dr3->Reco_QQ_mumi_idx[irqq]);
-  }
+  Int_t mupl_idx = data.getRecoQQMuplIdx(irqq);
+  Int_t mumi_idx = data.getRecoQQMumiIdx(irqq);
 
   m_tnpWeight = 1;
   double tnp_trig_weight_mupl = -1;
@@ -402,8 +295,7 @@ bool Algorithm::passTnpLogic(Long64_t irqq) {
 }
 
 void Algorithm::setBranches() {
-  Data &data = *m_data;
-  if (!data.isMC) {
+  if (!m_data->isMC_flag) {
     m_myTree->Branch("runN", &runN, "runN/I");
     m_myTree->Branch("lumi", &lumi, "lumi/I");
   }
@@ -436,15 +328,13 @@ void Algorithm::setBranches() {
   m_myTree->Branch("cosCS", cosCS, "cosCS[nDimu]/F");
   m_myTree->Branch("phiCS", phiCS, "phiCS[nDimu]/F");
 
-  if (data.isEP) {
+  if (m_data->isEP_flag) {
     m_myTree->Branch("cosEP", cosEP, "cosEP[nDimu]/F");
     m_myTree->Branch("phiEP", phiEP, "phiEP[nDimu]/F");
   }
 }
 
 void Algorithm::setBranchesGen() {
-  Data &data = *m_data;
-
   if (!m_isGenOnly)
     m_myTree->Branch("cBin", &cBin, "cBin/I");
 
@@ -469,7 +359,7 @@ void Algorithm::setBranchesGen() {
   m_myTree->Branch("cosCS", cosCS, "cosCS[nDimu]/F");
   m_myTree->Branch("phiCS", phiCS, "phiCS[nDimu]/F");
 
-  if (data.isEP) {
+  if (m_data->isEP_flag) {
     m_myTree->Branch("cosEP", cosEP, "cosEP[nDimu]/F");
     m_myTree->Branch("phiEP", phiEP, "phiEP[nDimu]/F");
   }
@@ -478,17 +368,9 @@ void Algorithm::setBranchesGen() {
 void Algorithm::standByFilling(Long64_t irqq) {
   Data &data = *m_data;
 
-  Int_t current_qq_sign_val = 0;
-  if (m_isRun2) {
-    DataRun2 *dr2 = dynamic_cast<DataRun2 *>(m_data);
-    current_qq_sign_val = dr2->Reco_QQ_sign[irqq];
-  }
-  else {
-    DataRun3 *dr3 = dynamic_cast<DataRun3 *>(m_data);
-    current_qq_sign_val = static_cast<Int_t>(dr3->Reco_QQ_sign[irqq]);
-  }
+  Int_t current_qq_sign_val = m_data->getRecoQQSign(irqq);
 
-  if (!data.isMC) {
+  if (!data.isMC_flag) {
     runN = data.runNb;
     lumi = data.LS;
   }
@@ -497,7 +379,7 @@ void Algorithm::standByFilling(Long64_t irqq) {
   cBin = getHiBinFromhiHF(data.SumET_HF);
   vz = data.zVtx;
 
-  if (data.isMC) {
+  if (data.isMC_flag) {
     weight = findNcoll(data.Centrality) * data.Gen_weight;
     TnPweight[nDimu] = m_tnpWeight;
   }
@@ -525,7 +407,7 @@ void Algorithm::standByFilling(Long64_t irqq) {
   cosCS[nDimu] = muplCS.CosTheta();
   phiCS[nDimu] = muplCS.Phi();
 
-  if (data.isEP) {
+  if (data.isEP_flag) {
     cosEP[nDimu] = m_cosEP;
     phiEP[nDimu] = m_phiEP;
   }
@@ -538,7 +420,7 @@ void Algorithm::standByFillingGen(Long64_t igqq) {
   cBin = getHiBinFromhiHF(data.SumET_HF);
   vz = data.zVtx;
 
-  if (data.isMC) {
+  if (data.isMC_flag) {
     weight = findNcoll(data.Centrality) * data.Gen_weight;
     TnPweight[nDimu] = m_tnpWeight;
   }
@@ -563,7 +445,7 @@ void Algorithm::standByFillingGen(Long64_t igqq) {
   cosCS[nDimu] = muplCS.CosTheta();
   phiCS[nDimu] = muplCS.Phi();
 
-  if (data.isEP) {
+  if (data.isEP_flag) {
     cosEP[nDimu] = m_cosEP;
     phiEP[nDimu] = m_phiEP;
   }

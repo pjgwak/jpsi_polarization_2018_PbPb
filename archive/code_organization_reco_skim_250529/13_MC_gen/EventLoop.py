@@ -3,7 +3,8 @@ from ROOT import EventLoop as EventLoopCpp
 class EventLoop(object):
   """ wrapper around the cpp class event loop
   """
-  def __init__(self, name, nEvt=-1):
+  def __init__(self, name, nEvt=-1, isMC=False, isGenOnly=False,
+    isEP=False, isRun2=False):
     # set the event loop name
     self.name = name
 
@@ -15,6 +16,12 @@ class EventLoop(object):
 
     # set a number of events
     self.eventLoop.nEvent = nEvt
+
+    # set the flags
+    self.eventLoop.isMC = isMC
+    self.eventLoop.isGenOnly = isGenOnly
+    self.eventLoop.isEP = isEP
+    self.eventLoop.useRun2 = isRun2
 
     # keep the list of python Algorithm class instances
     self.algs = []
