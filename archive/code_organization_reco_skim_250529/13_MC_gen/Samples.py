@@ -56,7 +56,7 @@ class MC2018Pr(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2018Pr', nEvt=-1)
+    EventLoop.__init__(self, name='MC2018Pr', nEvt=10000)
 
     # add the ggH samples into the event loop
     self.eventLoop.useRun2 = True
@@ -65,6 +65,22 @@ class MC2018Pr(EventLoop):
     
     for i in range(1, 3):
       self.eventLoop.inputFiles.push_back(f'/disk1/Oniatree/Jpsi/OniatreeMC_JPsi_pThat2_TunedCP5_HydjetDrumMB_5p02TeV_Pythia8_part{i}.root')
+      # --------------------------------
+class MC2018GenOnly(EventLoop):
+  """ event loop over 2018 MC - Gen only
+  It's used for acceptance study
+  """
+  def __init__(self):
+    # call the inherited constructor
+    EventLoop.__init__(self, name='MC2018GenOnly', nEvt=10000)
+
+    # add the ggH samples into the event loop
+    self.eventLoop.isMC = True
+    self.eventLoop.useRun2 = True
+    self.eventLoop.isGenOnly = True
+    self.eventLoop.treeName = 'hionia/myTree'
+    
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/Jpsi/OniaTree_JpsiMM_5p02TeV_TuneCUETP8M1_nofilter_pp502Fall15-MCRUN2_71_V1-v1_GENONLY.root')
 # --------------------------------
 class MC2023(EventLoop):
   """ event loop over 2023 PbPb MC
@@ -72,10 +88,12 @@ class MC2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2023', nEvt=1000000)
+    EventLoop.__init__(self, name='MC2023', nEvt=-1)
 
     # add the ggH samples into the event loop
     self.eventLoop.isMC = True
     self.eventLoop.treeName = 'hionia/myTree'
-    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_no_track_250519/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_no_track_250519/250519_112255/0000/OniaTree_MC1_Run3_PbPb2023_250520.root')
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/Oniatree_MC1_miniAOD_PbPb_2023.root')
+
+    self.eventLoop.isEP = True
 # ---------------------------------
