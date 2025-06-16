@@ -52,7 +52,7 @@ void Algorithm::executeGen(Long64_t igqq) {
   // Generator part
   Int_t mupl_idx = m_data->getGenQQMuplIdx(igqq);
   Int_t mumi_idx = m_data->getGenQQMumiIdx(igqq);
-
+  
   // set 4-vectors (Run2 Gen only vs Run2 RecoGen)
   if (m_data->isGenOnly_flag && m_data->isRun2_flag) {
     m_data->JP_Gen = static_cast<TLorentzVector *>(m_data->Gen_QQ_4mom->At(igqq));
@@ -63,7 +63,7 @@ void Algorithm::executeGen(Long64_t igqq) {
     m_data->mupl_Gen = static_cast<TLorentzVector *>(m_data->Gen_mu_4mom->At(mupl_idx));
     m_data->mumi_Gen = static_cast<TLorentzVector *>(m_data->Gen_mu_4mom->At(mumi_idx));
   }
-
+  
   // apply selections
   if(!passSelectionGen(igqq)) return;
 

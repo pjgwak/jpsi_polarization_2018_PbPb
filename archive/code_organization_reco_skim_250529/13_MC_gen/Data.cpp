@@ -41,9 +41,9 @@ Data::Data(TTree *tree, bool isMC, bool isGenOnly, bool isEP, bool isRun2)
 
     // GenOnly branches
     if (isGenOnly_flag) {
-      if (m_tree->GetBranch("Gen_QQ_mupl_4mom")) m_tree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
-      if (m_tree->GetBranch("Gen_QQ_mumi_4mom")) m_tree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom);
       if (m_tree->GetBranch("Gen_QQ_ctau")) m_tree->SetBranchAddress("Gen_QQ_ctau", Gen_QQ_ctau);
+      if (m_tree->GetBranch("Gen_QQ_mupl_4mom")) m_tree->SetBranchAddress("Gen_QQ_mupl_4mom", &Gen_QQ_mupl_4mom);
+      if (m_tree->GetBranch("Gen_QQ_mumi_4mom")) m_tree->SetBranchAddress("Gen_QQ_mumi_4mom", &Gen_QQ_mumi_4mom); 
     }
   }
 
