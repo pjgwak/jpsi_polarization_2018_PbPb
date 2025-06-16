@@ -17,7 +17,7 @@ else:
 
 
 # get inputs
-input_file_name = 'PbPb_ep_angle.root'
+input_file_name = '/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/Oniatree_MC0_PbPb_2023_EP_angles.root'
 tree_name = 'hionia/myTree'
 output_prefix = 'plots_' 
 

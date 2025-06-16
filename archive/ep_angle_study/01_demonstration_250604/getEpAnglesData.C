@@ -22,7 +22,7 @@
 
 
 
-void getEpAngles(bool isMC = true)
+void getEpAnglesData(bool isMC = false)
 {
 
   // ===== many input files ===== //
@@ -32,13 +32,13 @@ void getEpAngles(bool isMC = true)
   // you can do test run while commenting it out
   gErrorIgnoreLevel = kError;
 
-  TString base_name = "/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_track_vector_250611/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_track_vector_250611/250611_050618/0000/Oniatree_MC_miniAOD"; // MC
+  TString base_name = "/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_track_vector_250611/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_track_vector_250611/250611_050540/0000/Oniatree_2023PbPbPromptRecoData_132X_miniAOD"; // MC
 
   TString nameOldTree = "hionia/myTree";
   TChain myChain(nameOldTree);
 
   // add files into the chain
-  for (int i = 0; i <= 300; ++i)
+  for (int i = 0; i <= 1100; ++i)
   {
     TString filename = TString::Format("%s_%d.root", base_name.Data(), i);
     if (!gSystem->AccessPathName(filename, kFileExists)) {
@@ -73,7 +73,7 @@ void getEpAngles(bool isMC = true)
 
 
   // ===== make output file ===== //
-  TFile *outTemp = TFile::Open("out_buffer_very_long_strange_file_name_never_be_used_MC.root", "RECREATE");
+  TFile *outTemp = TFile::Open("out_buffer_very_long_strange_file_name_never_be_used.root", "RECREATE");
   outTemp->cd();
 
   // ===== set branches from old tree ===== //
@@ -336,6 +336,6 @@ void getEpAngles(bool isMC = true)
   outFile->Close();
 
   // remove buffer output file
-  string bufferFileName = "out_buffer_very_long_strange_file_name_never_be_used_MC.root";
+  string bufferFileName = "out_buffer_very_long_strange_file_name_never_be_used.root";
   std::remove(bufferFileName.c_str());
 }
