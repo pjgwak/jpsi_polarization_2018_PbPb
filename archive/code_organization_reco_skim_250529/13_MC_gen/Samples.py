@@ -11,7 +11,7 @@ class Data2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2023', nEvt=10000, isEP=True)
+    EventLoop.__init__(self, name='Data2023', nEvt=-1, isEP=True)
 
     # push samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
@@ -23,7 +23,7 @@ class Data2018Cent(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='Data2018Cent', nEvt=10000, isRun2=True)
+    EventLoop.__init__(self, name='Data2018Cent', nEvt=-1, isRun2=True)
 
     self.eventLoop.treeName = 'myTree'
 
@@ -49,11 +49,9 @@ class MC2018Pr(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2018Pr', nEvt=10000)
+    EventLoop.__init__(self, name='MC2018Pr', nEvt=-1, isMC=True, isRun2=True)
 
     # add the ggH samples into the event loop
-    self.eventLoop.useRun2 = True
-    self.eventLoop.isMC = True
     self.eventLoop.treeName = 'myTree'
     
     for i in range(1, 3):
@@ -65,7 +63,7 @@ class MC2018GenOnly(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2018GenOnly', nEvt=10000, isMC=True, isRun2=True, isGenOnly=True)
+    EventLoop.__init__(self, name='MC2018GenOnly', nEvt=-1, isMC=True, isRun2=True, isGenOnly=True)
 
     # add the ggH samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
@@ -78,9 +76,35 @@ class MC2023(EventLoop):
   """
   def __init__(self):
     # call the inherited constructor
-    EventLoop.__init__(self, name='MC2023', nEvt=10000, isMC=True, isEP=True)
+    EventLoop.__init__(self, name='MC2023', nEvt=-1, isMC=True, isEP=True)
 
     # add the ggH samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
     self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/Oniatree_MC1_miniAOD_PbPb_2023.root')
+# ---------------------------------
+# --------------------------------
+class MC2023GenOnly(EventLoop):
+  """ I think it's not an official MC, isn't it?
+  As usually, pythia was used to proudce this sample
+  """
+  def __init__(self):
+    # call the inherited constructor
+    EventLoop.__init__(self, name='MC2023GenOnly', nEvt=-1, isMC=True, isGenOnly=True)
+
+    # add the ggH samples into the event loop
+    self.eventLoop.treeName = 'hionia/myTree'
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_GenOnly/Oniatree_PromptJpsi_5p36TeV_GenOnly.root')
+# ---------------------------------
+# --------------------------------
+class MC2023GenOnlyShower(EventLoop):
+  """ I think it's not an official MC, isn't it?
+  New functionality, shower mode, of pythia was used.
+  """
+  def __init__(self):
+    # call the inherited constructor
+    EventLoop.__init__(self, name='MC2023GenOnlyShower', nEvt=-1, isMC=True, isGenOnly=True)
+
+    # add the ggH samples into the event loop
+    self.eventLoop.treeName = 'hionia/myTree'
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_GenOnly/Oniatree_ShowerJpsi_pTHatMin10_5p36TeV_GenOnly.root')
 # ---------------------------------

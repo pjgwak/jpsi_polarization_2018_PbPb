@@ -134,32 +134,32 @@ class Algorithm {
     int cBin;
     int nDimu;
     float vz;
-    float mass[1000];
-    float pt[1000];
-    float pt1[1000];
-    float pt2[1000];
-    float y[1000];
-    float phi[1000];
-    float phi1[1000];
-    float phi2[1000];
-    float eta[1000];
-    float eta1[1000];
-    float eta2[1000];
-    float weight0[1000];
-    float weight1[1000];
-    int recoQQsign[1000];
-    float ctau3D[1000];
-    float ctau3DErr[1000];
-    float ctau3DTrue[1000];
-    float ctau3DRes[1000];
-    float cosHX[1000];
-    float phiHX[1000];
-    float cosCS[1000];
-    float phiCS[1000];
-    float cosEP[1000];
-    float phiEP[1000];
+    float mass[1500];
+    float pt[1500];
+    float pt1[1500];
+    float pt2[1500];
+    float y[1500];
+    float phi[1500];
+    float phi1[1500];
+    float phi2[1500];
+    float eta[1500];
+    float eta1[1500];
+    float eta2[1500];
+    float weight0[1500];
+    float weight1[1500];
+    int recoQQsign[1500];
+    float ctau3D[1500];
+    float ctau3DErr[1500];
+    float ctau3DTrue[1500];
+    float ctau3DRes[1500];
+    float cosHX[1500];
+    float phiHX[1500];
+    float cosCS[1500];
+    float phiCS[1500];
+    float cosEP[1500];
+    float phiEP[1500];
     double weight = 1; // HI NColl x Gen weight
-    double TnPweight[1000] = {1.}; // HI NColl x Gen weight x TnP 
+    double TnPweight[1500] = {1.}; // HI NColl x Gen weight x TnP 
 
     /**
      * @brief memober variables to store TnP weights

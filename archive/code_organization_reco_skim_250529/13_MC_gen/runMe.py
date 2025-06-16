@@ -7,12 +7,16 @@ from Algorithms import *
 
 # create instance s of the class EventLoop
 eventLoops = []
+
+# Run3
 eventLoops += [Data2023()]
-eventLoops += [Data2018Cent()]
-# eventLoops += [Data2018Peri()]
 eventLoops += [MC2023()]
+
+# Run2
+eventLoops += [Data2018Cent()]
+eventLoops += [Data2018Peri()]
 eventLoops += [MC2018Pr()] # Jpsi Prompt
-# eventLoops += [MC2023GlbTrk()]
+
 
 
 # add the algorithm into the event loop
@@ -34,13 +38,10 @@ for eventLoop in eventLoops:
     eventLoop.addAlgorithm(AlgRun2Cent())
   if isinstance(eventLoop, Data2018Peri):
     eventLoop.addAlgorithm(AlgRun2Peri())
-  
-  # Run2 MC
+    # Run2 MC
   if isinstance(eventLoop, MC2018Pr):
-    eventLoop.addAlgorithm(AlgRun2MCGenNum())
-    eventLoop.addAlgorithm(AlgRun2MCGenDen())
-
-
+    eventLoop.addAlgorithm(AlgRun2MCReco())
+    
 # execute event loop
 for eventLoop in eventLoops:
   eventLoop.execute()

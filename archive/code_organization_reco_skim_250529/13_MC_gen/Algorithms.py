@@ -180,7 +180,7 @@ class AlgRun2MCGenNum(Algorithm):
     self.alg.cut_jpsiMass = False # 2.6 - 3.5
     
     self.alg.cut_jpsiRapidity = True
-    self.alg.cut_muChargeGen = True
+    # self.alg.cut_muChargeGen = True
     self.alg.cut_singleMuonAcc = True
 
     # create histograms: fine binning
@@ -194,6 +194,61 @@ class AlgRun2MCGenDen(Algorithm):
   def __init__(self):
     # call inherited constructor
     Algorithm.__init__(self, 'AlgRun2MCGenDen', isGen=True, isGenOnly=True)
+
+    self.alg.cut_centrality0_180 = False
+    self.alg.cut_jpsiMass = False # 2.6 - 3.5
+    self.alg.cut_muChargeGen = False
+    self.alg.cut_singleMuonAcc = False
+
+    self.alg.cut_jpsiRapidity = True # |y| < 2.4
+
+    # create histograms: fine binning
+    # self.alg.h_runNb_m = TH1D('h_runNb', 'run number', 40000, 360000, 400000)
+    self.alg.m_myTree = TTree('myTree', '')
+# ---------------------------------
+class AlgRun3MCRecoGen(Algorithm):
+  """ Run2 MC Reco
+  """
+  def __init__(self):
+    # call inherited constructor
+    Algorithm.__init__(self, 'AlgRun3MCRecoGen', isGen=True, isGenOnly=False)
+
+    self.alg.cut_centrality0_180 = False
+    self.alg.cut_jpsiMass = False # 2.6 - 3.5
+    self.alg.cut_jpsiRapidity = True # 2.6 - 3.5
+    self.alg.cut_muChargeGen = True
+    self.alg.cut_singleMuonAcc = True
+
+    # create histograms: fine binning
+    # self.alg.h_runNb_m = TH1D('h_runNb', 'run number', 40000, 360000, 400000)
+    self.alg.m_myTree = TTree('myTree', '')
+# ---------------------------------
+class AlgRun3MCGenNum(Algorithm):
+  """ Run3 Gen-Only
+  Acceptance numerator
+  """
+  def __init__(self):
+    # call inherited constructor
+    Algorithm.__init__(self, 'AlgRun3MCGenNum', isGen=True, isGenOnly=True)
+
+    self.alg.cut_centrality0_180 = False
+    self.alg.cut_jpsiMass = False # 2.6 - 3.5
+    
+    self.alg.cut_jpsiRapidity = True
+    # self.alg.cut_muChargeGen = True
+    self.alg.cut_singleMuonAcc = True
+
+    # create histograms: fine binning
+    # self.alg.h_runNb_m = TH1D('h_runNb', 'run number', 40000, 360000, 400000)
+    self.alg.m_myTree = TTree('myTree', '')
+# ---------------------------------
+class AlgRun3MCGenDen(Algorithm):
+  """ Run3 Gen-Only
+  Acceptance denominator
+  """
+  def __init__(self):
+    # call inherited constructor
+    Algorithm.__init__(self, 'AlgRun3MCGenDen', isGen=True, isGenOnly=True)
 
     self.alg.cut_centrality0_180 = False
     self.alg.cut_jpsiMass = False # 2.6 - 3.5

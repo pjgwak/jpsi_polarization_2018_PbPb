@@ -9,15 +9,15 @@ public:
 
   // run3 specific branches
   Short_t Gen_QQ_size_run3;
-  Short_t Gen_QQ_mupl_idx_run3[1000];
-  Short_t Gen_QQ_mumi_idx_run3[1000];
-  Short_t Gen_mu_charge_run3[1000];
+  Short_t Gen_QQ_mupl_idx_run3[1500];
+  Short_t Gen_QQ_mumi_idx_run3[1500];
+  Short_t Gen_mu_charge_run3[1500];
 
   Short_t Reco_QQ_size_run3;
-  Short_t Reco_mu_whichGen_run3[1000];
-  Short_t Reco_QQ_mupl_idx_run3[1000];
-  Short_t Reco_QQ_mumi_idx_run3[1000];
-  Short_t Reco_QQ_sign_run3[1000];
+  Short_t Reco_mu_whichGen_run3[1500];
+  Short_t Reco_QQ_mupl_idx_run3[1500];
+  Short_t Reco_QQ_mumi_idx_run3[1500];
+  Short_t Reco_QQ_sign_run3[1500];
 
   // override getters - explict type casting from Short_t to Int_t
   Long64_t getGenQQSize() const override { return Gen_QQ_size_run3; }

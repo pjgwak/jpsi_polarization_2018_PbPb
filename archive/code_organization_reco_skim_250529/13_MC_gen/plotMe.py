@@ -21,7 +21,7 @@ else:
 # plotOverlaid(fileName='OniaFlowSkim.Data2018All.AlgRun2.root', baseName = 'DataRun2', formats=['png'], sampleInfo='PbPb Data 2018')
 
 # DataRun3 - No triggers
-plotOverlaid(fileName='OniaFlowSkim.Data2023.AlgDefault.root', baseName = 'DataRun3', formats=['png'], sampleInfo='PbPb Data 2023', isEP=True)
+# plotOverlaid(fileName='OniaFlowSkim.Data2023.AlgDefault.root', baseName = 'DataRun3', formats=['png'], sampleInfo='PbPb Data 2023', isEP=True)
 # plotOverlaid(fileName='OniaFlowSkim.Data2023.AlgRun2Peri.root', baseName = 'DataRun3Triggers', formats=['png'], sampleInfo='PbPb Data 2023 (J/#Psi Trigger)', isEP=True) # test
 
 

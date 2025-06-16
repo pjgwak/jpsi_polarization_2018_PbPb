@@ -27,26 +27,26 @@ class Data {
     Float_t ep_flat;
     TClonesArray *Reco_QQ_4mom = nullptr;
     TClonesArray *Reco_mu_4mom = nullptr;
-    Float_t Reco_QQ_VtxProb[1000];
-    Float_t Reco_mu_dxy[1000];
-    Float_t Reco_mu_dz[1000];
-    Int_t Reco_mu_nTrkWMea[1000];
-    Int_t Reco_mu_nPixWMea[1000];
-    Int_t Reco_mu_SelectionType[1000];
-    Float_t Reco_QQ_ctau3D[1000];
-    Float_t Reco_QQ_ctauErr3D[1000];
-    ULong64_t Reco_mu_trig[1000];
-    ULong64_t Reco_QQ_trig[1000];
+    Float_t Reco_QQ_VtxProb[1500];
+    Float_t Reco_mu_dxy[1500];
+    Float_t Reco_mu_dz[1500];
+    Int_t Reco_mu_nTrkWMea[1500];
+    Int_t Reco_mu_nPixWMea[1500];
+    Int_t Reco_mu_SelectionType[1500];
+    Float_t Reco_QQ_ctau3D[1500];
+    Float_t Reco_QQ_ctauErr3D[1500];
+    ULong64_t Reco_mu_trig[1500];
+    ULong64_t Reco_QQ_trig[1500];
 
     // Gen common variables
     TClonesArray *Gen_QQ_4mom = nullptr;
     TClonesArray *Gen_mu_4mom = nullptr;
-    Float_t Gen_QQ_ctau3D[1000];
+    Float_t Gen_QQ_ctau3D[1500];
 
     // Run2GenOnly branches
     TClonesArray *Gen_QQ_mupl_4mom = nullptr;
     TClonesArray *Gen_QQ_mumi_4mom = nullptr;
-    Float_t Gen_QQ_ctau[1000];
+    Float_t Gen_QQ_ctau[1500];
 
     /**
      * @brief variables to use in algorithm. Not stored in TTree.

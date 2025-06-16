@@ -9,15 +9,15 @@ public:
 
   // Run2 Reco specific variables - they're named: orignal_branch_name + _run2
   Int_t Gen_QQ_size_run2;
-  Int_t Gen_QQ_mupl_idx_run2[1000];
-  Int_t Gen_QQ_mumi_idx_run2[1000];
-  Int_t Gen_mu_charge_run2[1000];
+  Int_t Gen_QQ_mupl_idx_run2[1500];
+  Int_t Gen_QQ_mumi_idx_run2[1500];
+  Int_t Gen_mu_charge_run2[1500];
   
   Int_t Reco_QQ_size_run2;
-  Int_t Reco_mu_whichGen_run2[1000];
-  Int_t Reco_QQ_mupl_idx_run2[1000];
-  Int_t Reco_QQ_mumi_idx_run2[1000];
-  Int_t Reco_QQ_sign_run2[1000];
+  Int_t Reco_mu_whichGen_run2[1500];
+  Int_t Reco_QQ_mupl_idx_run2[1500];
+  Int_t Reco_QQ_mumi_idx_run2[1500];
+  Int_t Reco_QQ_sign_run2[1500];
 
   // override getters
   // be careful - we never return the whole array or its pointer, instead we return the value!
