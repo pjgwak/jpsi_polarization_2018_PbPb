@@ -26,13 +26,13 @@ void getEpAngles(bool isMC = true)
 {
 
   // ===== many input files ===== //
-  // turn off the warning
-  // eg. Warning in <TChain::CopyAddresses>: Could not find branch named 'Reco_trk_4mom_pt' in tree named 'tempTree'
-  // The reasons is that tempTree doesn't have 3 branches which myChain has. But it was intended so it's not a matter
+  // yurn off the warning
+  // eg. Warning in <TChain::CopyAddresses>: Could not find branch named 'Reco_trk_4mom_pt' in a 'tempTree'
+  // The reasons is that tempTree doesn't have 3 branches which myChain has. These branches are dopped to save the storage.
   // you can do test run while commenting it out
   gErrorIgnoreLevel = kError;
 
-  TString base_name = "/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_track_vector_250611/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_track_vector_250611/250611_050618/0000/Oniatree_MC_miniAOD"; // MC
+  TString base_name = "/disk1/Oniatree/polarization/oniatree_5p36/2023_MC/OniaTree_MC1_Run3_PbPb_track_vector_250611/PromptJPsiToMuMu_Pthat2_TuneCP5_HydjetDrumMB_5p36TeV_pythia8/OniaTree_MC1_Run3_PbPb_track_vector_250611/250611_050618/0000/Oniatree_MC_miniAOD";
 
   TString nameOldTree = "hionia/myTree";
   TChain myChain(nameOldTree);
