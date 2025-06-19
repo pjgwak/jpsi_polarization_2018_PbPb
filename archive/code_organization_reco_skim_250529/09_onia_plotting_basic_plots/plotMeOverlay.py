@@ -105,6 +105,46 @@ plotPt.draw()
 plotPt.save('figs/overlaid/pt', formats=formats)
 
 
+# ===== y ===== #
+baseName = f'Data2023'
+canvas = TCanvas('c_YOverlay', '', 800, 600)
+leg = TLegend(0.65, 0.83, 0.9, 0.95)
+cutBaseFwd = 'pt > 3 && pt < 50 && fabs(y) > 1.6 && fabs(y) < 2.4'
+cutBaseMid = 'pt > 6.5 && pt < 50 && fabs(y) > 0 && fabs(y) < 1.6'
+cutBaseAllY = 'pt > 6.5 && pt < 50 && fabs(y) > 0 && fabs(y) < 2.4'
+
+# set histograms
+h_ptFwd = ROOT.TH1D('h_'+baseName+'Fwd_Y', ';#it{p}_{T} (GeV/c);# of dimuon', 48, -2.4, 2.4)
+h_ptFwd.SetLineColor(ROOT.kBlue)
+h_ptFwd.SetLineWidth(2)
+h_ptFwd.SetMarkerColor(ROOT.kBlue)
+h_ptFwd.SetMarkerStyle(20)
+
+h_ptMid = ROOT.TH1D('h_'+baseName+'Mid_Y', '', 48, -2.4, 2.4)
+h_ptMid.SetLineColor(ROOT.kRed)
+h_ptMid.SetLineWidth(2)
+h_ptMid.SetMarkerColor(ROOT.kRed)
+h_ptMid.SetMarkerStyle(21)
+
+h_ptAllY = ROOT.TH1D('h_'+baseName+'AllY_Y', '', 48, -2.4, 2.4)
+h_ptAllY.SetLineColor(ROOT.kGreen + 2)
+h_ptAllY.SetLineWidth(2)
+h_ptAllY.SetMarkerColor(ROOT.kGreen + 2)
+h_ptAllY.SetMarkerStyle(22)
+
+# create PlotOverlaid instance
+plotY = PlotOverlaid(canvas, leg)
+
+# add hists
+plotY.add(tree=myTree, var='y', cut=cutBaseFwd, hist=h_ptFwd, legEntry='1.6<|y|<2.4, 3<#it{p}_{T}<50', drawOpt='ep')
+plotY.add(tree=myTree, var='y', cut=cutBaseMid, hist=h_ptMid, legEntry='|y|<1.6, 6.5<#it{p}_{T}<50', drawOpt='ep')
+plotY.add(tree=myTree, var='y', cut=cutBaseAllY, hist=h_ptAllY, legEntry='|y|<2.4, 6.5<#it{p}_{T}<50', drawOpt='ep')
+
+# draw and save
+plotY.draw()
+plotY.save('figs/overlaid/y', formats=formats)
+
+
 # ===== phi ===== #
 baseName = f'Data2023'
 canvas = TCanvas('c_phiOverlay', '', 800, 600)

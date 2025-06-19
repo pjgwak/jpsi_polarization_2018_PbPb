@@ -11,7 +11,7 @@ class Data2023(EventLoop):
 
     # add the ggH samples into the event loop
     self.eventLoop.treeName = 'hionia/myTree'
-    self.eventLoop.inputFiles.push_back('/work/pjgwak/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_no_track_250520/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_no_track_250520/250520_121505/Oniatree_MC0_PbPb_2023.root')
+    self.eventLoop.inputFiles.push_back('/disk1/Oniatree/polarization/oniatree_5p36/2023_PbPb/OniaTree_RawPrime0_Run3_PbPb_no_track_250520/HIPhysicsRawPrime0/crab_OniaTree_RawPrime0_Run3_PbPb_no_track_250520/250520_121505/Oniatree_MC0_PbPb_2023.root')
 # --------------------------------
 class MC2023(EventLoop):
   """ event loop over 2023 PbPb MC

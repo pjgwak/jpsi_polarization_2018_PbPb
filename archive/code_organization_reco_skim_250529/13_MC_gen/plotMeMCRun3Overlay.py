@@ -16,9 +16,9 @@ def plotOverlaid(fileName='', baseName='Data2023', formats=['png'], sampleInfo='
     myTree = f.Get('myTree')
 
     cutSignalMass = '&& (mass > 2.9 && mass < 3.3)'
-    cutBaseFwd = 'pt > 3 && pt < 50 && fabs(y) > 1.6 && fabs(y) < 2.4' + cutSignalMass
-    cutBaseMid = 'pt > 6.5 && pt < 50 && fabs(y) > 0 && fabs(y) < 1.6'  + cutSignalMass
-    cutBaseAllY = 'pt > 6.5 && pt < 50 && fabs(y) > 0 && fabs(y) < 2.4' + cutSignalMass
+    cutBaseFwd = 'pt > 3 && pt < 50 && fabs(y) > 1.6 && fabs(y) < 2.4' #+ cutSignalMass
+    cutBaseMid = 'pt > 6.5 && pt < 50 && (fabs(y) > 0 && fabs(y) < 1.6)'  #+ cutSignalMass
+    cutBaseAllY = 'pt > 6.5 && pt < 50 && (fabs(y) > 0 && fabs(y) < 2.4)' #+ cutSignalMass
 
     # ===== mass ===== #    
     canvas = TCanvas('c_massOverlay', '', 800, 600)

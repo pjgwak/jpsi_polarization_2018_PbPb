@@ -1,0 +1,25 @@
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+TH1D::Sumw2:0: RuntimeWarning: Sum of squares of weights structure already created
+Add file: ../../ggH.root
+Event: 0
+Event: 1000
+Event: 2000
+Event: 3000
+Event: 4000
+Event: 5000
+Event: 6000
+Event: 7000
+Event: 8000
+Event: 9000
+Event: 10000
+Histograms saved into file: histograms.ggH.AlgDefault.root
+Histograms saved into file: histograms.ggH.AlgDefault.root
+Histograms saved into file: histograms.ggH.AlgSF.root
+Histograms saved into file: histograms.ggH.AlgDefault.root
+Histograms saved into file: histograms.ggH.AlgSF.root
+Histograms saved into file: histograms.ggH.AlgDF.root
+all ok

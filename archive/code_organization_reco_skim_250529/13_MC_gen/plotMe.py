@@ -26,12 +26,18 @@ else:
 
 
 # ===== MC ===== #
-# DataRun2 - Applied full reco cuts
-# plotOverlaid(fileName='OniaFlowSkim.MC2018Pr.AlgRun2MCReco.root', baseName = 'MCRun2PbPbPrompt', formats=['png'], sampleInfo='PbPb MC 2018 Prompt', isWeight=True)
+# Run2 - Applied full reco cuts
+plotOverlaid(fileName='OniaFlowSkim.MC2018Pr.AlgRun2MCReco.root', baseName = 'MCRun2PbPbPrompt', formats=['png'], sampleInfo='PbPb MC 2018 Prompt', isWeight=True)
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2018Pr.AlgRun2MCRecoGen.root', baseName = 'MCRun2PbPbRecoGen', formats=['png'], sampleInfo='PbPb MC 2018 RecoGen', isWeight=True) # Use the function plotMeMCRun3Overlay() for Gen plots
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2018GenOnly.AlgRun2MCGenDen.root', baseName = 'MCRun2GenOnlyDen', formats=['png'], sampleInfo='PbPb MC 2018 GenOnly Den', isWeight=True)
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2018GenOnly.AlgRun2MCGenNum.root', baseName = 'MCRun2GenOnlyNum', formats=['png'], sampleInfo='PbPb MC 2018 GenOnly Num', isWeight=True)
 
 
-# DataRun3 - only Gen weight
+# # Run3 - only Gen weight
 plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2023.AlgRun3MCReco.root', baseName = 'MCRun3PbPb', formats=['png'], sampleInfo='PbPb MC 2023', isEP=True, isWeight=True)
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2023.AlgRun3MCRecoGen.root', baseName = 'MCRun3PbPbRecoGen', formats=['png'], sampleInfo='PbPb MC 2023 RecoGen', isEP=False, isWeight=True)
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2023GenOnly.AlgRun3MCGenDen.root', baseName = 'MCRun3GenOnlyDen', formats=['png'], sampleInfo='PbPb MC 2023 GenOnly Den', isEP=False, isWeight=True)
+plotMeMCRun3Overlay.plotOverlaid(fileName='OniaFlowSkim.MC2023GenOnly.AlgRun3MCGenNum.root', baseName = 'MCRun3GenOnlyNum', formats=['png'], sampleInfo='PbPb MC 2023 GenOnly Num', isEP=False, isWeight=True)
 
 
 
