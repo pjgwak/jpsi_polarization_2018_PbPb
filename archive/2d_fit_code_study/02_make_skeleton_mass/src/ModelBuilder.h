@@ -12,6 +12,7 @@ public:
   // set fitting models
   void buildMassSignal();
   void buildMassBkg();
+  void buildMassModel();
   // void combineModels();
 
 private:

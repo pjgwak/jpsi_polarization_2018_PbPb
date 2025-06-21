@@ -1,19 +1,14 @@
-#-------------------------------------------------------------
+PROGRAM = JpsiFitter
 
-PROGRAM = Analysis
+SRCDIR    = src
+OBJDIR    = obj
 
-HDRS = EventLoop.h\
-			#  Data.h\
-			#  DataRun2.h\
-			#  DataRun3.h\
-			#  Algorithm.h\
+HDRS = $(SRCDIR)/ModelBuilder.h\
+			 $(SRCDIR)/JpsiFitter.h\
 
-OBJS = EventLoop.o\
-			#  Data.o\
-			#  DataRun2.o\
-			#  DataRun3.o\
-			#  Algorithm.o\
-			 dict_$(PROGRAM).o # need for ROOT and pyroot
+OBJS = $(OBJDIR)/ModelBuilder.o\
+			 $(OBJDIR)/JpsiFitter.o\
+       $(OBJDIR)/dict_$(PROGRAM).o # need for ROOT and pyroot
 
 #-------------------------------------------------------------
 
@@ -34,17 +29,17 @@ HEADRDIR = .
 # no exceptions: -fno-exceptions
 
 CXX = g++
-CXXFLAGS = -O3 -Wall -fPIC -g -std=c++17
+CXXFLAGS = -O2 -Wall -fPIC -g -std=c++17
 LD = g++
-LDFLAGS = -O3 -Wall -g
+LDFLAGS = -O2 -Wall -g
 SOFLAGS = -shared
-ARCHFLAGS = 
+ARCHFLAGS =
 
 CXXFLAGS += $(ROOTCFLAGS) -I$(HEADRDIR)
 LIBS = $(ROOTLIBS)
 GLIBS = $(ROOTGLIBS)
 
-%/%.o: %.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) -c $(CXXFLAGS) $< $(OutPutOpt) $@
 
 $(PROGRAM).so: $(OBJS)
@@ -52,13 +47,17 @@ $(PROGRAM).so: $(OBJS)
 	$(LD) $(ARCHFLAGS) $(LDFLAGS) $(SOFLAGS) $(OBJS) $(ROOTLIBS) -o$(PROGRAM).so
 	@echo "linking done"
 
-dict_$(PROGRAM).o: dict_$(PROGRAM).cpp
+$(OBJDIR)/dict_$(PROGRAM).o: $(OBJDIR)/dict_$(PROGRAM).cpp | $(OBJDIR)
+	$(CXX) -c $(CXXFLAGS) $< $(OutPutOpt) $@
 
-dict_$(PROGRAM).cpp: $(HDRS)
+$(OBJDIR)/dict_$(PROGRAM).cpp: $(HDRS) | $(OBJDIR)
 	@echo "Generating dictionary..."
-	rootcint -f dict_$(PROGRAM).cpp -c -p -I$(HEADRDIR) $(HDRS) Linkdef.h
+	rootcling -f $(OBJDIR)/dict_$(PROGRAM).cpp -c -p -I$(HEADRDIR) $(HDRS) Linkdef.h
+	@cp $(OBJDIR)/dict_$(PROGRAM)_rdict.pcm .
+
+# make an obj folder if it doesn't exist
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
 
 clean:
-	@rm -f $(OBJS) $(PROGRAM).so dict_*
-
-#-------------------------------------------------------------
+	@rm -f $(OBJS) $(PROGRAM).so $(OBJDIR)/dict_$(PROGRAM).cpp dict_$(PROGRAM)_rdict.pcm
