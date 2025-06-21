@@ -14,13 +14,14 @@
 JpsiFitter::JpsiFitter(RooWorkspace &ws) : m_ws(ws) {}
 JpsiFitter::~JpsiFitter() {}
 
-void JpsiFitter::processTree(const std::string &filePath, const std::string &treeName, const std::string &obs, const std::string &cut){
-  auto f_pr_mc = std::unique_ptr<TFile>(TFile::Open("/work/pjgwak/pol24/files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root"));
-  f_pr_mc->SetName("f_pr_mc");
-  // f_pr_mc.Print("V");
-  RooDataSet *ds_mc_temp = (RooDataSet *)f_pr_mc->Get("dataset");
-  ds_mc_temp->SetName("ds_mc_temp");
-  m_ws.import(*ds_mc_temp);
+void JpsiFitter::processTree(const std::string &filePath, const std::string &dsname, const std::string &obs, const std::string &cut){
+  auto inputFile = std::unique_ptr<TFile>(TFile::Open(filePath.c_str()));
+  inputFile->SetName("inputFile");
+  // inputFile.Print("V");
+
+  RooDataSet *ds_temp = (RooDataSet *)inputFile->Get("dataset");
+  ds_temp->SetName(dsname.c_str());
+  m_ws.import(*ds_temp);
 }
 
 void JpsiFitter::print()

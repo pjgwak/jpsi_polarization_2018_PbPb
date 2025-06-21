@@ -1,4 +1,4 @@
-PROGRAM = JpsiFitter
+PROGRAM = Analysis
 
 SRCDIR    = src
 OBJDIR    = obj
