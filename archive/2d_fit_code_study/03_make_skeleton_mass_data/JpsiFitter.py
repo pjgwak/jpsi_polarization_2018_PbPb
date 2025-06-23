@@ -46,7 +46,7 @@ class JpsiFitter(object):
     
     if not cuts_config:
       print('Warning: no kinematic cuts are applied')
-      selection_cut = io_config.get('selection_cut', '') # no cut
+      selection_cut = io_config.get('selection_cut', '') # no cut -> true
     else:
       kine_vars = cuts_config.get('kinematic', {})
       kine_cut = ("pt>{ptLow} && pt<{ptHigh} && abs(y)>{yLow} && abs(y)<{yHigh} && "
@@ -192,6 +192,50 @@ class JpsiFitter(object):
     self._save_to_buffer()
     self._save_workspace_to_rootfile()
     print('analysis finished')
+
+  def build_cut_string(self):
+    cuts_config = self.config.get('cuts', {})
+    if not cuts_config:
+      return "true" # pass all events
+    
+    # kinematic cuts
+    kine_vars = cuts_config.get('kinematic', {})
+    kine_cut = ("pt>{ptLow} && pt<{ptHigh} && abs(y)>{yLow} && abs(y)<{yHigh} && "
+                "mass>{massLow} && mass<{massHigh} && cBin>={cLow} && cBin<{cHigh}").format(**kine_vars)
+                
+    acc_cut = cuts_config.get('acceptance', '1')
+    os_cut = cuts_config.get('opposite_sign', '1')
+
+    all_cuts = [cut for cut in [os_cut, acc_cut, kine_cut] if cut !='1']
+    return ' && '.join(all_cuts)
   
-  # def run_splot_analysis(self):
-  #   self.
+  def run_splot_analysis(self):
+    print('===== start SPlot process =====')
+    # get mass fit results
+    mass_fit_file = self.config.get('mass_fit_rootfile')
+    if not mass_fit_file:
+      print('Error: mass_fit_rootfile is not found in config')
+    self.fitter.loadMassResult(mass_fit_file)
+
+    # get original dataset path and cuts
+    splot_inputs = self.config.get('inputs', {})
+    input_file = splot_inputs.get('input_file')
+    cut_string = self.build_cut_string()
+    if not input_file:
+      print('Error: inputs:input_file is not found in config')
+      return
+    self.fitter.doSplot(input_file, cut_string)
+
+    # make PDFs
+    hist_config = self.config.get('hist_config', {})
+    use_forced_max = hist_config.get('use_forced_range', False)
+    forced_max_val = hist_config.get('forced_ctauErrMax', 10)
+    self.fitter.makeSplotPdfs(use_forced_max, forced_max_val)
+
+    # draw plot
+    output_config = self.config.get('output', {})
+    plot_path = output_config.get('plot', 'figs/splot_default.png')
+    self.fitter.drawSplot(plot_path)
+
+    print('===== finish SPlot process =====')
+

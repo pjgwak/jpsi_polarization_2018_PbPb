@@ -97,7 +97,7 @@ namespace ROOT {
       ::JpsiFitter *ptr = nullptr;
       static ::TVirtualIsAProxy* isa_proxy = new ::TIsAProxy(typeid(::JpsiFitter));
       static ::ROOT::TGenericClassInfo 
-         instance("JpsiFitter", "src/JpsiFitter.h", 14,
+         instance("JpsiFitter", "src/JpsiFitter.h", 16,
                   typeid(::JpsiFitter), ::ROOT::Internal::DefineBehavior(ptr, ptr),
                   &JpsiFitter_Dictionary, isa_proxy, 4,
                   sizeof(::JpsiFitter) );
