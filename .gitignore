@@ -8,6 +8,8 @@
 **/*.so
 **/*.o
 
+**/*.png
+
 # txt files: Be careful not to upload experiments datasets
 #*.txt
 #*.csv
