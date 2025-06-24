@@ -29,13 +29,12 @@ const float ctauLow = -4.;
 const float ctauHigh = 7.;
 
 // void setConfig();
-void setupWorkspace(RooWorkspace *ws, const std::string &mass_path, const std::string &err_path);
+void setupWorkspace(RooWorkspace *ws, const std::string &mass_path, const std::string &err_path, const std::string &res_path);
 std::pair<double, double> processDataset(RooWorkspace *ws, bool isForceMin);
-// void buildBkgModel(RooWorkspace *ws, int nGauss);
+void buildBkgModel(RooWorkspace *ws, int nGauss, int nExp);
 // RooFitResult *perfromBkgFit(RooWorkspace *ws);
 // void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGauss, const std::string &outpath); // Todo: use outPath
 // void saveOutput(RooWorkspace *ws, const std::string &outpath);
-
 
 //
 //
@@ -44,45 +43,36 @@ std::pair<double, double> processDataset(RooWorkspace *ws, bool isForceMin);
 using namespace std;
 using namespace RooFit;
 
-std::pair<double, double> processDataset(RooWorkspace *ws, bool isForceMin)
+void perfromBkgFit(RooWorkspace *ws)
 {
-  std::cout << "===== Start processDataset() =====\n";
-  
-  // ===== set ctau3DErr range =====
-  double ctauErrMin, ctauErrMax;
-  ws->data("ds_errBkg")->getRange(*ws->var("ctau3DErr"), ctauErrMin, ctauErrMax);
-  ws->var("ctau3D")->setRange(ctauLow, ctauHigh);
-  ws->var("ctau3D")->setRange("ctauRange", ctauLow, ctauHigh);
-  ws->var("ctau3DErr")->setRange(ctauErrMin, ctauErrMax);
-  ws->var("ctau3DErr")->setRange("ctauErrRange", ctauErrMin, ctauErrMax);
-  // ws->var("ctau3D")->Print();
-  // ws->var("ctau3DErr")->Print();
+  // // ===== fit here ===== //
+  // // buld dataset for fit
 
-  // ===== et ctau3D range =====
-  TH1D *h_tmp = (TH1D *)ws->data("ds_errBkg")->createHistogram(("h_tmp"), *ws->var("ctau3D"), Binning(nCtauBins, ctauLow, ctauHigh));
-  double ctauMin = h_tmp->GetBinLowEdge(h_tmp->FindFirstBinAbove(1, 1));
-  double ctauMax = h_tmp->GetBinLowEdge(h_tmp->FindLastBinAbove(2, 1)) + h_tmp->GetBinWidth(h_tmp->FindLastBinAbove(2, 1));
+  // ws->pdf("ctauBkgModel")->setNormRange("ctauWindow"); // originalName ctauBkgModel
 
-  if (isForceMin) {
-    // ctauLow, High: default, ctauMin, Max -> user custom
-    // skip: user custom ctauMin - make later
-    // if (cLow == 80 && cHigh == 100)
-    //     ctauMin = -1.0;
-    // else if (cLow == 100 && cHigh == 180)
-    //     ctauMin = -0.6;
-    ctauMin = -1.0;
-  }
-  ws->var("ctau3D")->setRange("ctauFitRange", ctauLow, ctauHigh);
+  // // to avoid ternimal breaking due to too long Tracing Error message
+  // // It's okay as long as minimizer find good fitting point
+  // // Always check fit results.
+  // RooMsgService::instance().getStream(0).removeTopic(Tracing);
 
-  // choose one of them
-  RooDataSet* dataToFit = (RooDataSet*)ds_errBkg->reduce(Form("ctau3D>=%.f&&ctau3D<=%.f",ctauMin, ctauMax))->Clone("ds_errBkg");
-  // RooDataSet *dataToFit = (RooDataSet *)ds_errBkg->reduce(Form("ctau3D>=%.f&&ctau3D<=%.f", ctauLow, ctauHigh))->Clone("dataToFit");
-  ws->import(*dataToFit);
+  // bool isWeighted = ws->data("ds_errBkg")->isWeighted();
 
-  std::cout << "===== Finish processDataset() =====\n";
+  // RooFitResult *fit_bkg = ws->pdf("ctauBkgModel")->fitTo(*ds_bkg, Save(), Extended(1), NumCPU(12), SumW2Error // originalName ctauBkgModel(isWeighted), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1), PrintLevel(0));
+
+  // ws->import(*fit_bkg, "fit_bkg");
+
+  // // fis parameters
+  // ws->var("b_Bkg")->setConstant(kTRUE);
+  // ws->var("fDFSS")->setConstant(kTRUE);
+  // ws->var("fDLIV")->setConstant(kTRUE);
+  // ws->var("lambdaDDS_Bkg")->setConstant(kTRUE);
+  // ws->var("lambdaDF_Bkg")->setConstant(kTRUE);
+  // ws->var("lambdaDF_Bkg2")->setConstant(kTRUE);
+  // ws->var("lambdaDSS_Bkg")->setConstant(kTRUE);
+  // ws->var("lambdaDSS_Bkg2")->setConstant(kTRUE);
+  // ws->var("fSS")->setConstant(kTRUE);
+  // ws->var("fFF")->setConstant(kTRUE);
 }
-
-
 
 void ref_bkg()
 {
@@ -103,13 +93,17 @@ void ref_bkg()
   setupWorkspace(ws_bkg, "roots/mass.root", "roots/splot.root", "roots/res.root");
 
   // process dataset
-  processDataset(ws_bkg, false);
+  std::pair<double, double> ctauRange = processDataset(ws_bkg, false);
 
   // build ctauBkg model
-  // void buildBkgModel(RooWorkspace *ws, int nGauss);
+  int nGauss = 3;
+  int nExp = 3;
+  buildBkgModel(ws_bkg, nGauss, nExp);
+
+  ws_bkg->Print("V");
 
   // do fit
-  // RooFitResult *perfromBkgFit(RooWorkspace *ws);
+  RooFitResult *perfromBkgFit(RooWorkspace *ws);
 
   // draw plots
   // void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGauss, const std::string &outpath);
@@ -140,8 +134,6 @@ void setupWorkspace(RooWorkspace *ws, const std::string &mass_path, const std::s
     return;
   }
 
-  // 하나씩 import 테스트하기!
-
   // import mass dataset and model
   RooWorkspace *ws_mass = (RooWorkspace *)f_mass->Get("wsMy");
   RooDataSet *ds_mass = (RooDataSet *)ws_mass->data("ds_mass");
@@ -158,6 +150,8 @@ void setupWorkspace(RooWorkspace *ws, const std::string &mass_path, const std::s
 
   // import ctauRes fit model
   RooWorkspace *ws_res = (RooWorkspace *)f_res->Get("ws_res");
+  // const RooArgSet &res_vars = ws_res->allVars();
+  // ws->import(res_vars);
   RooAddPdf *gaus_res_model = (RooAddPdf *)ws_res->pdf("gaus_res_model");
   ws->import(*gaus_res_model);
 
@@ -165,181 +159,171 @@ void setupWorkspace(RooWorkspace *ws, const std::string &mass_path, const std::s
   std::cout << "===== finish setupWorkspace() =====\n";
 }
 
-void setConfig()
+std::pair<double, double> processDataset(RooWorkspace *ws, bool isForceMin)
 {
-    // // input parameters
-    // float cos_low = 0.0, cos_high = 0.1;
-    // float ptLow = 3;
-    // float ptHigh = 6.5;
-    // float yLow = 1.6;
-    // float yHigh = 2.4;
-    // int cLow = 60;
-    // int cHigh = 180;
+  std::cout << "===== Start processDataset() =====\n";
 
-    // // Usually not used
-    // int PR = 0; // 0=PR, 1=NP, 2=Inc.
-    // int PRw = 1;
-    // bool fEffW = false;
-    // bool fAccW = false;
-    // bool isPtW = false;
-    // bool isTnP = false;
-    // double massLow = 2.6;
-    // double massHigh = 3.5; // Jpsi mass range
+  // ===== make new nBkg =====
+  auto nBkgCtau = (RooRealVar *)ws->var("nBkg")->Clone("nBkgCtau");
+  ws->import(*nBkgCtau);
 
-    // // be quiet please
-    // // RooMsgService::instance().getStream(0).removeTopic(Caching); // in RooFit::
-    // // RooMsgService::instance().getStream(1).removeTopic(Caching);
-    // RooMsgService::instance().getStream(0).removeTopic(Plotting);
-    // RooMsgService::instance().getStream(1).removeTopic(Plotting);
-    // // RooMsgService::instance().getStream(0).removeTopic(Integration);
-    // // RooMsgService::instance().getStream(1).removeTopic(Integration);
-    // // RooMsgService::instance().getStream(0).removeTopic(InputArguments);
-    // // RooMsgService::instance().getStream(1).removeTopic(InputArguments);
-    // // RooMsgService::instance().getStream(0).removeTopic(NumIntegration);
-    // // RooMsgService::instance().getStream(1).removeTopic(NumIntegration);
-    // // RooMsgService::instance().getStream(0).removeTopic(Minimization);
-    // // RooMsgService::instance().getStream(1).removeTopic(Minimization);
-    // RooMsgService::instance().setGlobalKillBelow(WARNING);
+  // ===== set ctau3DErr range =====
+  double ctauErrMin, ctauErrMax;
+  ws->data("ds_errBkg")->getRange(*ws->var("ctau3DErr"), ctauErrMin, ctauErrMax);
+  ws->var("ctau3DErr")->setRange(ctauErrMin, ctauErrMax);
+  ws->var("ctau3DErr")->setRange("ctauErrRange", ctauErrMin, ctauErrMax);
 
-    // // ===== labeling ===== //
-    // std::ostringstream out_file_path;
-    // out_file_path << "bkg/bkg_pt" << ptLow << "-" << ptHigh
-    //               << "_cent" << cLow << "-" << cHigh << "_absY" << yLow << "-" << yHigh
-    //               << "_cos" << cos_low << "_" << cos_high;
-    // string out_ss = out_file_path.str();
+  // ===== et ctau3D range =====
+  TH1D *h_tmp = (TH1D *)ws->data("ds_errBkg")->createHistogram(("h_tmp"), *ws->var("ctau3D"), Binning(nCtauBins, ctauLow, ctauHigh));
+  double ctauMin = h_tmp->GetBinLowEdge(h_tmp->FindFirstBinAbove(1, 1));
+  double ctauMax = h_tmp->GetBinLowEdge(h_tmp->FindLastBinAbove(2, 1)) + h_tmp->GetBinWidth(h_tmp->FindLastBinAbove(2, 1));
+  if (isForceMin)
+  {
+    // ctauLow, High: default, ctauMin, Max -> user custom
+    // skip: user custom ctauMin - make later
+    // if (cLow == 80 && cHigh == 100)
+    //     ctauMin = -1.0;
+    // else if (cLow == 100 && cHigh == 180)
+    //     ctauMin = -0.6;
+    ctauMin = -1.0;
+  }
+  delete h_tmp;
 
-    // std::ostringstream input_file;
-    // input_file << "pt" << ptLow << "-" << ptHigh
-    //            << "_cent" << cLow << "-" << cHigh << "_absY" << yLow << "-" << yHigh
-    //            << "_cos" << cos_low << "_" << cos_high
-    //            << ".root";
-    // string in_ss = input_file.str();
+  ws->var("ctau3D")->setRange(ctauLow, ctauHigh);
+  ws->var("ctau3D")->setRange("ctauRange", ctauLow, ctauHigh);
+  ws->var("ctau3D")->setRange("ctauFitRange", ctauMin, ctauMax);
 
-    // // ===== make output folders ===== //
-    // gSystem->mkdir(Form("roots/bkg/"), kTRUE);
-    // gSystem->mkdir(Form("figs/bkg"), kTRUE);
+  // ===== make ctauBkg dataset =====
+  RooDataSet *ds_bkg = (RooDataSet *)ws->data("ds_errBkg")->reduce(Form("ctau3D>=%.f&&ctau3D<=%.f", ctauMin, ctauMax));
+  ds_bkg->SetName("ds_bkg");
+  ws->import(*ds_bkg);
 
-    // // ===== kinematic cut ===== //
-    // // cut is applied in f_err dataset
+  // ws->var("ctau3D")->Print();
+  // ws->var("ctau3DErr")->Print();
+
+  std::cout << "===== Finish processDataset() =====\n";
+  return {ctauMin, ctauMax};
+}
+
+void buildBkgModel(RooWorkspace *ws, int nGauss, int nExp)
+{
+  std::cout << "===== Start buildBkgModel() =====\n";
+  // ===== build ctauRes model =====
+  ws->factory("One[1.0]");
+  ws->factory("GaussModel::ctauBkg_res1(ctau3D, ctauRes_mean, s1_CtauRes, One, ctau3DErr)");
+  ws->factory("GaussModel::ctauBkg_res2(ctau3D, ctauRes_mean, s2_CtauRes, One, ctau3DErr)");
+  if (nGauss >= 3)
+    ws->factory("GaussModel::ctauBkg_res3(ctau3D, ctauRes_mean, s3_CtauRes, One, ctau3DErr)");
+  if (nGauss >= 4)
+    ws->factory("GaussModel::ctauBkg_res4(ctau3D, ctauRes_mean, s4_CtauRes, One, ctau3DErr)");
+
+  if (nGauss == 2)
+  {
+    // original name: pdfCTAURES. To avoid name conflict
+    ws->factory("AddModel::pdfBkgRes({ctauBkg_res1, ctauBkg_res2}, {f_CtauRes})");
+  }
+  else if (nGauss == 3)
+  {
+    ws->factory("AddModel::GaussModel23_bkg_res({ctauBkg_res2, ctauBkg_res3}, {f2_CtauRes})");
+    ws->factory("AddModel::pdfBkgRes({ctauBkg_res1, GaussModel23_bkg_res}, {f_CtauRes})");
+  }
+  else if (nGauss == 4)
+  {
+    ws->factory("AddModel::GaussModel43_bkg_res({ctauBkg_res3, ctauBkg_res4}, {f3_CtauRes})");
+    ws->factory("AddModel::GaussModel23_bkg_res({ctauBkg_res2, GaussModel43_bkg_res}, {f2_CtauRes})");
+    ws->factory("AddModel::pdfBkgRes({ctauBkg_res1, GaussModel23_bkg_res}, {f_CtauRes})");
+  }
+  else
+  {
+    std::cerr << "ERROR: nGauss for Resolution Model should be 2, 3, or 4.\n";
+    return;
+  }
+
+  // ===== buld bkg decay model ===== //
+  ws->factory("b_Bkg[0.1, 1e-3, 1]"); // NP fraction for bkg - Not final b fraciton
+  ws->factory("fDFSS[0.5, 0., 1.]");  // fraction: flipped and singleSided
+  ws->factory("fDLIV[0.5, 0., 1.]");  // fraction: doubleSided and (Flipped+SingleSided)
+
+  // decay lengths
+  ws->factory("lambdaDDS_Bkg[0.5, 0, 10]");
+  ws->factory("lambdaDF_Bkg1[ 0.5, 0, 10]");
+  ws->factory("lambdaDSS_Bkg1[0.5, 0, 10]");
+  if (nExp >= 2)
+  {
+    ws->factory("lambdaDSS_Bkg2[0.2, 0, 10]");
+    ws->factory("lambdaDF_Bkg2[0.5, 0, 10]");
+    ws->factory("fDSS12[0.5, 0., 1.]"); // fraction of single sided 1, 2
+    ws->factory("fDF12[0.5, 0., 1.]");  // fraction of flipped 1, 2
+  }
+  if (nExp >= 3)
+  {
+    ws->factory("lambdaDSS_Bkg3[0.1, 0, 10]");
+    ws->factory("lambdaDF_Bkg3[0.1, 0, 10]");
+    ws->factory("fDSS23[0.5, 0., 1.]");
+    ws->factory("fDF23[0.5, 0., 1.]");
+  }
+
+  // singleSided (ctau3D < 0 region)
+  ws->factory("Decay::pdfCTAUDSS1(ctau3D, lambdaDSS_Bkg1, pdfBkgRes, RooDecay::SingleSided)");
+  if (nExp >= 2)
+    ws->factory("Decay::pdfCTAUDSS2(ctau3D, lambdaDSS_Bkg2, pdfBkgRes, RooDecay::SingleSided)");
+  if (nExp >= 3)
+    ws->factory("Decay::pdfCTAUDSS3(ctau3D, lambdaDSS_Bkg3, pdfBkgRes, RooDecay::SingleSided)");
+
+  if (nExp == 1)
+    ws->factory("SUM::pdfCTAUDSS(pdfCTAUDSS1)");
+  else if (nExp == 2)
+    ws->factory("SUM::pdfCTAUDSS(fDSS12*pdfCTAUDSS1, pdfCTAUDSS2)");
+  else if (nExp == 3)
+  {
+    ws->factory("SUM::pdfCTAUDSS23(fDSS23*pdfCTAUDSS2, pdfCTAUDSS3)");
+    ws->factory("SUM::pdfCTAUDSS(fDSS12*pdfCTAUDSS1, pdfCTAUDSS23)");
+  }
+
+  // flipped (ctau3D > 0 region)
+  ws->factory("Decay::pdfCTAUDF1(ctau3D, lambdaDF_Bkg1, pdfBkgRes, RooDecay::Flipped)");
+  if (nExp >= 2)
+    ws->factory("Decay::pdfCTAUDF2(ctau3D, lambdaDF_Bkg2, pdfBkgRes, RooDecay::Flipped)");
+  if (nExp >= 3)
+    ws->factory("Decay::pdfCTAUDF3(ctau3D, lambdaDF_Bkg3, pdfBkgRes, RooDecay::Flipped)");
+
+  if (nExp == 1)
+    ws->factory("SUM::pdfCTAUDF(pdfCTAUDF1)");
+  else if (nExp == 2)
+    ws->factory("SUM::pdfCTAUDF(fDF12*pdfCTAUDF1, pdfCTAUDF2)");
+  else if (nExp == 3)
+  {
+    ws->factory("SUM::pdfCTAUDF23(fDF23*pdfCTAUDF2, pdfCTAUDF3)");
+    ws->factory("SUM::pdfCTAUDF(fDF12*pdfCTAUDF1, pdfCTAUDF23)");
+  }
+
+  // double sided
+  ws->factory("Decay::pdfCTAUDDS(ctau3D, lambdaDDS_Bkg, pdfBkgRes, RooDecay::DoubleSided)");
+  // legacy codes - there is no reason to use more than one double sided exp.
+  // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::DoubleSided)", "pdfCTAUDDS2", "ctau3D", "lambdaDDS_Bkg2[0.1,0.01,1]", "pdfBkgRes"));
+  // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUDDS", "fDDS[0.5,0.01,1]", "pdfCTAUDDS1", "pdfCTAUDDS2"));
+
+  // combine exp
+  ws->factory("SUM::pdfCTAU1(fDFSS*pdfCTAUDSS, pdfCTAUDF)");
+  ws->factory("SUM::pdfCTAUCOND_BkgNoPR(fDLIV*pdfCTAU1, pdfCTAUDDS)");               // NP
+  ws->factory("SUM::pdfCTAUCOND_BkgPR(pdfBkgRes)");                                  // PR - just Res function
+  ws->factory("SUM::pdfCTAUCOND_Bkg(b_Bkg*pdfCTAUCOND_BkgNoPR, pdfCTAUCOND_BkgPR)"); // NP + PR
+
+  // make conditional PDFs
+  RooProdPdf pdfPR("pdfCTAU_BkgPR", "", *ws->pdf("errBkgModel"), Conditional(*ws->pdf("pdfCTAUCOND_BkgPR"), RooArgList(*ws->var("ctau3D"))));
+  ws->import(pdfPR);
+  RooProdPdf pdfNoPR("pdfCTAU_BkgNoPR", "", *ws->pdf("errBkgModel"), Conditional(*ws->pdf("pdfCTAUCOND_BkgNoPR"), RooArgList(*ws->var("ctau3D"))));
+  ws->import(pdfNoPR);
+  ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU_Bkg", "b_Bkg", "pdfCTAU_BkgNoPR", "pdfCTAU_BkgPR"));
+
+  // this is special trick. Don't edit.
+  RooAbsPdf *ctauBkgModel = new RooAddPdf("ctauBkgModel", "", RooArgList(*ws->pdf("pdfCTAU_Bkg")), RooArgList(*ws->var("nBkgCtau")));
+  ws->import(*ctauBkgModel);
+
+  std::cout << "===== Finish buildBkgModel() =====\n";
 }
 
 
-
-void buildBkgModel(RooWorkspace *ws, int nGauss)
-{
-    // // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-    // // *-* Build model *-*//
-    // // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-
-    // // ===== make res model ===== //
-    // cout << "\nn_bkg: " << ws->var("n_bkg")->getVal() << "+/-" << ws->var("n_bkg")->getError() << endl;
-
-    // auto n_bkg_ctau = (RooRealVar *)ws->var("n_bkg")->Clone("n_bkg_ctau");
-    // ws->import(*n_bkg_ctau);
-
-    // cout << "Bias of gaus1: " << ws->var("ctau1_CtauRes")->getVal() << endl;
-    // cout << "Fraction of gaus1: " << ws->var("f_CtauRes")->getVal() << "+/-" << ws->var("f_CtauRes")->getError() << endl;
-    // cout << "Sigma of gaus1: " << ws->var("s1_CtauRes")->getVal() << endl;
-
-    // ws->factory("zeroMean[0.0]");
-    // ws->factory(Form("GaussModel::%s(%s, %s, %s, %s, %s)", "ctauRes1", "ctau3D",
-    //                      "ctau1_CtauRes", //"ctau1_CtauRes",
-    //                      "s1_CtauRes",
-    //                      "One",
-    //                      "ctau3DErr"));
-    // ws->factory(Form("GaussModel::%s(%s, %s, %s, %s, %s)", "ctauRes2", "ctau3D",
-    //                      "ctau2_CtauRes", //"ctau2_CtauRes",
-    //                      "s2_CtauRes",
-    //                      "One",
-    //                      "ctau3DErr"));
-    // // ws->factory(Form("GaussModel::%s(%s, %s, %s, %s, %s)", "ctauRes3", "ctau3D",
-    // //       "ctau3_CtauRes", //"ctau3_CtauRes",
-    // //       "s3_CtauRes",
-    // //       "zeroMean",
-    // //       "ctau3DErr"
-    // //       ));
-    // // ws->factory(Form("AddModel::%s({%s, %s}, {%s})", "ctauRes32", "ctauRes3", "ctauRes2", "f2_CtauRes"));
-    // ws->factory(Form("AddModel::%s({%s, %s}, {%s})", "pdfCTAURES", "ctauRes1", "ctauRes2", "f_CtauRes"));
-
-    // // ===== buld bkg decay model ===== //
-    // ws->factory("b_Bkg[0.1, 1e-3, 1]"); // NP fraction for bkg - Not final b fraciton
-    // ws->factory("fDFSS[0.1, 1e-3, 1.]");
-    // ws->factory("fDLIV[0.1, 1e-3, 1.]");
-    // ws->factory("lambdaDDS_Bkg[0.5, 0, 10]");
-    // ws->factory("lambdaDF_Bkg[ 0.5, 0, 10]");
-    // // ws->factory("lambdaDF_Bkg2[ 0.5, 0, 10]");
-    // ws->factory("lambdaDSS_Bkg[0.5, 0, 10]");
-    // // ws->factory("lambdaDSS_Bkg2[0.5, 0, 10]");
-    // // ws->factory("fSS[0.1, 1e-3, 1.]");
-    // // ws->factory("fFF[0.1, 1e-3, 1.]");
-
-    // // make 3 exp
-    // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::SingleSided)", "pdfCTAUDSS1", "ctau3D", "lambdaDSS_Bkg", "pdfCTAURES"));
-    // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::SingleSided)", "pdfCTAUDSS2", "ctau3D", "lambdaDSS_Bkg2[0.1,0.01,1]", "pdfCTAURES"));
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUDSS", "fSS[0.5,0.01,1]", "pdfCTAUDSS1", "pdfCTAUDSS2"));
-
-    // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::Flipped)", "pdfCTAUDF1", "ctau3D", "lambdaDF_Bkg", "pdfCTAURES"));
-    // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::Flipped)", "pdfCTAUDF2", "ctau3D", "lambdaDF_Bkg2[0.1,0.01,1]", "pdfCTAURES"));
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUDF", "fFF[0.5,0.01,1]", "pdfCTAUDF1", "pdfCTAUDF2"));
-    // // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::Flipped)", "pdfCTAUDF1", "ctau3D", "lambdaDF_Bkg2[0.1,0.01,1]", "pdfCTAURES"));
-    // // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUDF", "fFS[0.5,0.01,1]", "pdfCTAUDF1", "pdfCTAUDF1"));
-
-    // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::DoubleSided)", "pdfCTAUDDS", "ctau3D", "lambdaDDS_Bkg", "pdfCTAURES"));
-    // // ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::DoubleSided)", "pdfCTAUDDS2", "ctau3D", "lambdaDDS_Bkg2[0.1,0.01,1]", "pdfCTAURES"));
-    // // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUDDS", "fDDS[0.5,0.01,1]", "pdfCTAUDDS1", "pdfCTAUDDS2"));
-
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU1", "fDFSS", "pdfCTAUDSS", "pdfCTAUDF"));
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUCOND_BkgNoPR", "fDLIV", "pdfCTAU1", "pdfCTAUDDS")); // NP
-
-    // // ctauBkgPR
-    // ws->factory(Form("SUM::%s(%s)", "pdfCTAUCOND_BkgPR", "pdfCTAURES"));
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUCOND_Bkg", "b_Bkg", "pdfCTAUCOND_BkgNoPR", "pdfCTAUCOND_BkgPR"));
-
-    // // total
-    // ws->factory(Form("RooExtendPdf::%s(%s,%s)", "pdfTot_Bkg", "pdfCTAUCOND_Bkg", "n_bkg_ctau")); // n_bkg_ctau is number of bkg from ds_errBkg
-
-    // RooProdPdf pdfPR("pdfCTAU_BkgPR", "", *ws->pdf("errBkgModel"), Conditional(*ws->pdf("pdfCTAUCOND_BkgPR"), RooArgList(*ws->var("ctau3D"))));
-    // ws->import(pdfPR);
-    // RooProdPdf pdfNoPR("pdfCTAU_BkgNoPR", "", *ws->pdf("errBkgModel"), Conditional(*ws->pdf("pdfCTAUCOND_BkgNoPR"), RooArgList(*ws->var("ctau3D"))));
-    // ws->import(pdfNoPR);
-    // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU_Bkg", "b_Bkg", "pdfCTAU_BkgNoPR", "pdfCTAU_BkgPR"));
-    // RooAbsPdf *ctauBkgModel = new RooAddPdf("ctauBkgModel", "ctauBkgModel", RooArgList(*ws->pdf("pdfCTAU_Bkg")),  // originalName bkg_fit_pdfRooArgList(*ws->var("n_bkg_ctau")));
-    // ws->import(*ctauBkgModel); // originalName bkg_fit_pdf
-    // // RooAbsPdf* ctauBkgModel = ctauBkgModel = new RooAddPdf("pdfTot_Bkg","pdfTot_Bkg",*ws->pdf("pdfCTAUCOND_Bkg"), *ws->var("n_bkg_ctau"));
-    // // ws->import(*pdfCTAUCOND_Bkg);
-}
-
-void perfromBkgFit(RooWorkspace *ws)
-{
-    // // ===== fit here ===== //
-    // // buld dataset for fit
-
-    // ws->pdf("ctauBkgModel")->setNormRange("ctauWindow"); // originalName bkg_fit_pdf
-
-    // // to avoid ternimal breaking due to too long Tracing Error message
-    // // It's okay as long as minimizer find good fitting point
-    // // Always check fit results.
-    // RooMsgService::instance().getStream(0).removeTopic(Tracing);
-
-    // bool isWeighted = ws->data("ds_errBkg")->isWeighted();
-    // // RooFitResult* fit_bkg = ws->pdf("ctauBkgModel")->fitTo(*ds_errBkg, Save(), Range("ctauRange"), Extended(kTRUE),  // originalName bkg_fit_pdfNumCPU(12));
-
-    // RooFitResult *fit_bkg = ws->pdf("ctauBkgModel")->fitTo(*dataToFit, Save(), Extended(1), NumCPU(12), SumW2Error // originalName bkg_fit_pdf(isWeighted), Strategy(2), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1), PrintLevel(0));
-
-    // ws->import(*fit_bkg, "fit_bkg");
-
-    // // fis parameters
-    // ws->var("b_Bkg")->setConstant(kTRUE);
-    // ws->var("fDFSS")->setConstant(kTRUE);
-    // ws->var("fDLIV")->setConstant(kTRUE);
-    // ws->var("lambdaDDS_Bkg")->setConstant(kTRUE);
-    // ws->var("lambdaDF_Bkg")->setConstant(kTRUE);
-    // ws->var("lambdaDF_Bkg2")->setConstant(kTRUE);
-    // ws->var("lambdaDSS_Bkg")->setConstant(kTRUE);
-    // ws->var("lambdaDSS_Bkg2")->setConstant(kTRUE);
-    // ws->var("fSS")->setConstant(kTRUE);
-    // ws->var("fFF")->setConstant(kTRUE);
-}
 
 void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGauss, const std::string &outpath)
 {
@@ -348,14 +332,14 @@ void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGa
   // // *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
   // normalization
   // double normDSTot = 1.0;
-  // if (ws->data("dataToFit"))
+  // if (ws->data("ds_bkg"))
   // {
-  //   normDSTot = ws->data("dataToFit")->sumEntries() / ws->data("dataToFit")->sumEntries();
+  //   normDSTot = ws->data("ds_bkg")->sumEntries() / ws->data("ds_bkg")->sumEntries();
   // }
   // double normBkg = 1.0;
   // if (ws->data("ds_errBkg"))
   // {
-  //   normBkg = ws->data("dataToFit")->sumEntries() * normDSTot / ws->data("ds_errBkg")->sumEntries();
+  //   normBkg = ws->data("ds_bkg")->sumEntries() * normDSTot / ws->data("ds_errBkg")->sumEntries();
   // }
 
     // TCanvas *c_bkg = new TCanvas("c_bkg", "My plots", 800, 800);
@@ -375,29 +359,29 @@ void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGa
 
     // // ws->data("ds_errBkg")->plotOn(ctau_frame2, Name("data_ctauBkg"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.7)); // to show full ranges
 
-    // RooDataSet *expDataY = (RooDataSet *)dataToFit->reduce(*ws->var("ctau3DErr"));
+    // RooDataSet *expDataY = (RooDataSet *)ds_bkg->reduce(*ws->var("ctau3DErr"));
     // RooAbsData *binnedDataY = expDataY->binnedClone();
 
     // // draw data point to provide normalization info to PDFs
-    // ws->data("dataToFit")->plotOn(ctau_frame2, Name("data_ctauBkg"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.7)); // data points inside range
+    // ws->data("ds_bkg")->plotOn(ctau_frame2, Name("data_ctauBkg"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.7)); // data points inside range
 
-    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, ProjWData(*binnedDataY), LineColor(kCyan), LineStyle(kDotted)); // originalName bkg_fit_pdf
-    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, LineColor(kCyan), LineStyle(kDotted)); // originalName bkg_fit_pdf
-    // // ws->pdf("ctauBkgModel")->forceNumInt(kTRUE); // originalName bkg_fit_pdf
-    // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("ctauBkg_Tot"), NumCPU(12), LineColor(kBlack)); // originalName bkg_fit_pdf
+    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, ProjWData(*binnedDataY), LineColor(kCyan), LineStyle(kDotted)); // originalName ctauBkgModel
+    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, LineColor(kCyan), LineStyle(kDotted)); // originalName ctauBkgModel
+    // // ws->pdf("ctauBkgModel")->forceNumInt(kTRUE); // originalName ctauBkgModel
+    // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("ctauBkg_Tot"), NumCPU(12), LineColor(kBlack)); // originalName ctauBkgModel
 
     // // draw data point again - to bring point forward
-    // // ws->data("dataToFit")->plotOn(ctau_frame2, Name("data_ctauBkg"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.7)); // data points inside range
+    // // ws->data("ds_bkg")->plotOn(ctau_frame2, Name("data_ctauBkg"), DataError(RooAbsData::SumW2), XErrorSize(0), MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.7)); // data points inside range
 
     // if (ws->pdf("pdfCTAU_BkgPR"))
     // {
-    //     ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("BKGPR"), Components(RooArgSet(*ws->pdf("pdfCTAU_BkgPR"))),  // originalName bkg_fit_pdfLineColor(44), NumCPU(12), Range("ctauRange"), LineStyle(kDashed), LineWidth(2));
+    //     ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("BKGPR"), Components(RooArgSet(*ws->pdf("pdfCTAU_BkgPR"))),  // originalName ctauBkgModelLineColor(44), NumCPU(12), Range("ctauFitRange"), LineStyle(kDashed), LineWidth(2));
     // }
     // if (ws->pdf("pdfCTAU_BkgNoPR"))
     // {
-    //     ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("BKGNoPR"), Components(RooArgSet(*ws->pdf // originalName bkg_fit_pdf("pdfCTAU_BkgNoPR"))), LineColor(8), NumCPU(12), Range("ctauRange"), LineStyle(kDashed), LineWidth(2));
+    //     ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("BKGNoPR"), Components(RooArgSet(*ws->pdf // originalName ctauBkgModel("pdfCTAU_BkgNoPR"))), LineColor(8), NumCPU(12), Range("ctauFitRange"), LineStyle(kDashed), LineWidth(2));
     // }
-    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("PDF"), , LineColor(kBlack), Precision(1e-4), Range // originalName bkg_fit_pdf("ctauRange"));
+    // // ws->pdf("ctauBkgModel")->plotOn(ctau_frame2, Name("PDF"), , LineColor(kBlack), Precision(1e-4), Range // originalName ctauBkgModel("ctauFitRange"));
     // // Normalization(normBkg, RooAbsReal::NumEvent), NumCPU(12), ProjWData(RooArgSet(*ws->var("ctau3DErr")), *ws->data("ds_errBkg"), kTRUE)
 
     // // set proper y range
@@ -450,7 +434,7 @@ void drawBkgPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, int nGa
     // else if (yLow != 0)
     //     drawText(Form("%.1f < |y^{#mu#mu}| < %.1f", yLow, yHigh), text_x, text_y - y_diff, text_color, text_size);
     // drawText(Form("Cent. %d - %d%s", cLow / 2, cHigh / 2, "%"), text_x, text_y - y_diff * 2, text_color, text_size);
-    // drawText(Form("N_{Bkg} = %.f #pm %.f", ws->var("n_bkg")->getVal(), ws->var("n_bkg")->getError()), text_x + 0.5, text_y, text_color, text_size);
+    // drawText(Form("N_{Bkg} = %.f #pm %.f", ws->var("nBkg")->getVal(), ws->var("nBkg")->getError()), text_x + 0.5, text_y, text_color, text_size);
     // drawText(Form("b_{Bkg} = %.4f #pm %.4f", ws->var("b_Bkg")->getVal(), ws->var("b_Bkg")->getError()), text_x + 0.5, text_y - y_diff * 1, text_color, text_size);
     // drawText(Form("fDFSS = %.4f #pm %.4f", ws->var("fDFSS")->getVal(), ws->var("fDFSS")->getError()), text_x + 0.5, text_y - y_diff * 2, text_color, text_size);
     // drawText(Form("fDLIV = %.4f #pm %.4f", ws->var("fDLIV")->getVal(), ws->var("fDLIV")->getError()), text_x + 0.5, text_y - y_diff * 3, text_color, text_size);
@@ -555,10 +539,10 @@ void drawBkgRatioPlot(RooWorkspace *ws, double ctauResMin, double ctauResMax, in
     // // ===== ratio test cnavas ===== //
     // auto c = new TCanvas();
     // c->cd();
-    // TH1 *h2 = dataToFit->createHistogram("h2", *ws->var("ctau3D"), Binning(ctau_frame1->GetNbinsX(), ctau_frame1->GetXaxis()->GetXmin(), ctau_frame1->GetXaxis()->GetXmax()));
+    // TH1 *h2 = ds_bkg->createHistogram("h2", *ws->var("ctau3D"), Binning(ctau_frame1->GetNbinsX(), ctau_frame1->GetXaxis()->GetXmin(), ctau_frame1->GetXaxis()->GetXmax()));
     // // auto h1 = data->createHistogram("x");
 
-    // auto f1 = ws->pdf("ctauBkgModel")->asTF(*ws->var("ctau3D"), RooArgSet(), *ws->var("ctau3D")); // originalName bkg_fit_pdf
+    // auto f1 = ws->pdf("ctauBkgModel")->asTF(*ws->var("ctau3D"), RooArgSet(), *ws->var("ctau3D")); // originalName ctauBkgModel
     // auto fcor = new TF1("fcor", [&](double *x, double *p)
     //                     { return f1->EvalPar(x, p) * h2->GetSumOfWeights() * h2->GetBinWidth(1); }, ctau_frame1->GetXaxis()->GetXmin(), ctau_frame1->GetXaxis()->GetXmax(), 0);
     // auto f2 = (TF1 *)fcor->Clone("f2"); // for drawing
@@ -597,4 +581,62 @@ void saveOutput(RooWorkspace *ws, const std::string &outpath)
     // out_file->Close();
 
     // fit_bkg->Print("V");
+}
+
+void setConfig()
+{
+  // // input parameters
+  // float cos_low = 0.0, cos_high = 0.1;
+  // float ptLow = 3;
+  // float ptHigh = 6.5;
+  // float yLow = 1.6;
+  // float yHigh = 2.4;
+  // int cLow = 60;
+  // int cHigh = 180;
+
+  // // Usually not used
+  // int PR = 0; // 0=PR, 1=NP, 2=Inc.
+  // int PRw = 1;
+  // bool fEffW = false;
+  // bool fAccW = false;
+  // bool isPtW = false;
+  // bool isTnP = false;
+  // double massLow = 2.6;
+  // double massHigh = 3.5; // Jpsi mass range
+
+  // // be quiet please
+  // // RooMsgService::instance().getStream(0).removeTopic(Caching); // in RooFit::
+  // // RooMsgService::instance().getStream(1).removeTopic(Caching);
+  // RooMsgService::instance().getStream(0).removeTopic(Plotting);
+  // RooMsgService::instance().getStream(1).removeTopic(Plotting);
+  // // RooMsgService::instance().getStream(0).removeTopic(Integration);
+  // // RooMsgService::instance().getStream(1).removeTopic(Integration);
+  // // RooMsgService::instance().getStream(0).removeTopic(InputArguments);
+  // // RooMsgService::instance().getStream(1).removeTopic(InputArguments);
+  // // RooMsgService::instance().getStream(0).removeTopic(NumIntegration);
+  // // RooMsgService::instance().getStream(1).removeTopic(NumIntegration);
+  // // RooMsgService::instance().getStream(0).removeTopic(Minimization);
+  // // RooMsgService::instance().getStream(1).removeTopic(Minimization);
+  // RooMsgService::instance().setGlobalKillBelow(WARNING);
+
+  // // ===== labeling ===== //
+  // std::ostringstream out_file_path;
+  // out_file_path << "bkg/bkg_pt" << ptLow << "-" << ptHigh
+  //               << "_cent" << cLow << "-" << cHigh << "_absY" << yLow << "-" << yHigh
+  //               << "_cos" << cos_low << "_" << cos_high;
+  // string out_ss = out_file_path.str();
+
+  // std::ostringstream input_file;
+  // input_file << "pt" << ptLow << "-" << ptHigh
+  //            << "_cent" << cLow << "-" << cHigh << "_absY" << yLow << "-" << yHigh
+  //            << "_cos" << cos_low << "_" << cos_high
+  //            << ".root";
+  // string in_ss = input_file.str();
+
+  // // ===== make output folders ===== //
+  // gSystem->mkdir(Form("roots/bkg/"), kTRUE);
+  // gSystem->mkdir(Form("figs/bkg"), kTRUE);
+
+  // // ===== kinematic cut ===== //
+  // // cut is applied in f_err dataset
 }
