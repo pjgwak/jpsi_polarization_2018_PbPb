@@ -35,6 +35,55 @@ const int nCtauTrueBins = 50;
 using namespace std;
 using namespace RooFit;
 
+void setupWorkspace(RooWorkspace *ws, const std::string &gen_path, const std::string &cut);
+void processDataset(RooWorkspace *ws);
+void buildTrueModel(RooWorkspace *ws, int nExp);
+RooFitResult *perfromTrueFit(RooWorkspace *ws);
+void drawTruePlot(RooWorkspace *ws, int nExp, const std::string &outpath);
+void saveOutput(RooWorkspace *ws, RooFitResult *fitRes, const std::string &outpath);
+
+void ref_true()
+{
+  /**
+   * @brief import RecoGen RooDataset, use ctau3DTrue (ctau3D from Gen) to make NP decay model
+   */
+  std::cout << "===== Start ref_true.C =====\n";
+  TStopwatch *t = new TStopwatch;
+  t->Start();
+
+  // make a cut -> member function and variables
+  float ptLow = 9, ptHigh = 12;
+  float yLow = 0, yHigh = 1.6;
+  double massLow = 2.6, massHigh = 3.5;
+  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f", ptLow, ptHigh, yLow, yHigh, massLow, massHigh);
+  TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2) && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1) && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) ) &&"; // 2018 acceptance cut
+  TString final_cut = accCut + kineCut; // Gen: no opposite sign cut.
+
+  // setup workspace
+  RooWorkspace *ws_true = new RooWorkspace("ws_true", "");
+  setupWorkspace(ws_true, "../../../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_GenOnly_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250307.root", final_cut.Data());
+
+  // process dataset
+  processDataset(ws_true);
+
+  // build ctautrue model;
+  int nExp = 2;
+  buildTrueModel(ws_true, nExp);
+
+  // do fit
+  RooFitResult *fit_result = perfromTrueFit(ws_true);
+  // fit_result->correlationMatrix().Print();
+
+  // draw plots
+  drawTruePlot(ws_true, nExp, "figs/true.png");
+
+  // save output
+  saveOutput(ws_true, fit_result, "roots/true.root");
+
+  t->Stop();
+  printf("RealTime=%f seconds, CpuTime=%f seconds\n", t->RealTime(), t->CpuTime());
+  std::cout << "===== Start ref_true.C =====\n";
+}
 
 void setupWorkspace(RooWorkspace *ws, const std::string &gen_path, const std::string &cut)
 {
@@ -345,53 +394,6 @@ void saveOutput(RooWorkspace *ws, RooFitResult *fitRes, const std::string &outpa
 
   std::cout << "output saved to: " << outpath << "\n";
   std::cout << "===== finish saveOutput() =====\n";
-}
-
-//
-//
-//
-
-void ref_true()
-{
-  /**
-   * @brief import RecoGen RooDataset, use ctau3DTrue (ctau3D from Gen) to make NP decay model
-   */
-  std::cout << "===== Start ref_true.C =====\n";
-  TStopwatch *t = new TStopwatch;
-  t->Start();
-
-  // make a cut -> member function and variables
-  float ptLow = 9, ptHigh = 12;
-  float yLow = 0, yHigh = 1.6;
-  double massLow = 2.6, massHigh = 3.5;
-  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f", ptLow, ptHigh, yLow, yHigh, massLow, massHigh);
-  TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2) && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1) && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) ) &&"; // 2018 acceptance cut
-  TString final_cut = accCut + kineCut; // Gen: no opposite sign cut.
-
-  // setup workspace
-  RooWorkspace *ws_true = new RooWorkspace("ws_true", "");
-  setupWorkspace(ws_true, "../../../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_GenOnly_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250307.root", final_cut.Data());
-
-  // process dataset
-  processDataset(ws_true);
-
-  // build ctautrue model;
-  int nExp = 2;
-  buildTrueModel(ws_true, nExp);
-
-  // do fit
-  RooFitResult *fit_result = perfromTrueFit(ws_true);
-  // fit_result->correlationMatrix().Print();
-
-  // draw plots
-  drawTruePlot(ws_true, nExp, "figs/true.png");
-
-  // save output
-  saveOutput(ws_true, fit_result, "roots/true.root");
-
-  t->Stop();
-  printf("RealTime=%f seconds, CpuTime=%f seconds\n", t->RealTime(), t->CpuTime());
-  std::cout << "===== Start ref_true.C =====\n";
 }
 
 // void setConfig() {
