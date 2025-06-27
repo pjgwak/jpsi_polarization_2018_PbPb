@@ -1,6 +1,5 @@
 #include "SPlotter.h"
 
-// 필요한 모든 헤더
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -404,13 +403,13 @@ void SPlotter::saveResults()
 {
   TFile *outFile = new TFile(("roots/" + outputPath_ + ".root").c_str(), "RECREATE");
 
-  // ds_bkg_err->Write();
+  ws_err_->Write();
+  // ds_bkg_err->Write(); // inside ws_err
   // ds_sig_err->Write();
   // err_tot_pdf->Write();
   // err_bkg_pdf->Write();
   // err_sig_pdf->Write();
 
-  ws_err_->Write();
   outFile->Close();
   delete outFile;
 }
