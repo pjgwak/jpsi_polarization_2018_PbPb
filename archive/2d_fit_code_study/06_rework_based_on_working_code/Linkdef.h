@@ -6,7 +6,7 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class McMassFit+;
-// #pragma link C++ class MassFitter+;
+#pragma link C++ class MassFit+;
 // #pragma link C++ class SPlotter+;
 // #pragma link C++ class ResolutionFitter+;
 // #pragma link C++ class BkgFitter+;

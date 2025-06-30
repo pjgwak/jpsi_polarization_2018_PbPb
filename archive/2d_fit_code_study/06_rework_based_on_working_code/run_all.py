@@ -2,15 +2,15 @@ from ROOT import gROOT, gSystem
 gROOT.SetBatch(True)
 gSystem.Load('./Analysis.so')
 
-from ROOT import McMassFit
+from ROOT import McMassFit, MassFit
 
 
 # from ROOT import McMassFitter, MassFitter, SPlotter, ResolutionFitter, BkgFitter, TrueFitter
 # from ROOT import FinalFitter
 
 
-is_mc_mass = True
-is_mass = False
+is_mc_mass = False
+is_mass = True
 is_err = False
 is_res = False
 is_bkg = False
@@ -36,14 +36,14 @@ if is_mc_mass:
   print('===== Start MC Fitter =====')
   mc_fitter = McMassFit(ptLow, ptHigh, yLow, yHigh, cLow, cHigh, cos_low, cos_high, PR, PRw, fEffW, fAccW, isPtW, True)
   mc_fitter.run()
-  # mc_fitter.allInOne(ptLow, ptHigh, yLow, yHigh, cLow, cHigh, cos_low, cos_high, PR, PRw, fEffW, fAccW, isPtW, True)
-  print('===== Finish MC Fitter =====')
+  print('===== Finish MC Fitter =====\n\n\n')
 
-# if is_mass:
-#   print('===== Start Mass Fitter =====')
-#   mass_fitter = MassFitter(ptLow, ptHigh, yLow, yHigh, cLow, cHigh, cos_low, cos_high)
-#   mass_fitter.run()
-#   print('===== Finish Mass Fitter =====')
+if is_mass:
+  print('===== Start Mass Fitter =====')
+  mass_fitter = MassFit(ptLow, ptHigh, yLow, yHigh, cLow, cHigh, cos_low, cos_high, PR, PRw, fEffW, fAccW, isPtW, True)
+  mass_fitter.run()
+  # mass_fitter.allInOne()
+  print('===== Finish Mass Fitter =====\n\n\n')
 
 # if is_err:
 #   print('===== Start ctau3DErr Fitter =====')

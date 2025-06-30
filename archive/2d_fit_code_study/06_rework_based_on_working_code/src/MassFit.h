@@ -11,21 +11,24 @@ class RooFitResult;
 class RooAbsArg; // RooFit container
 class RooFitResult;
 
-class McMassFit
+class MassFit
 {
 public:
-  McMassFit(
+  MassFit(
       float ptLow = 3, float ptHigh = 6.5,
       float yLow = 1.6, float yHigh = 2.4,
       int cLow = 60, int cHigh = 180,
       float cosLow = 0, float cosHigh = 0.1,
       int PR = 0,
       int PRw = 1, bool fEffW = false, bool fAccW = false, bool isPtW = false, bool isTnP = false);
-  ~McMassFit();
+  ~MassFit();
 
   void run();
+  void allInOne();
 
 private:
+  
+  
   void setLabels();
   void reduceDataset();
   void buildModel();
@@ -46,15 +49,13 @@ private:
   // std::string PrTag; // Prompt, nonprompt
 
   // // paths
-  TString DATE = "basic";
-  TString fname = "basic";
+  TString DATE;
+  TString fname;
+  TString kineLabel;
 
   // // RooFit instances
   RooWorkspace *ws = nullptr;
   RooFitResult *fitMass = nullptr;
 
-  // double massFitMin = 2.6;
-  double fit_limit = 3.25;
-  
   std::map<std::string, std::unique_ptr<RooAbsArg>> components;
 };

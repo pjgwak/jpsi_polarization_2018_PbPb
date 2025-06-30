@@ -42,20 +42,13 @@ McMassFit::McMassFit(float ptLow, float ptHigh,
 
   // ignore import success
   RooMsgService::instance().getStream(1).removeTopic(RooFit::ObjectHandling);
-  // RooMsgService::instance().getStream(1).removeTopic(RooFit::InputArguments);
-
-  // ignore data handling
-  // RooMsgService::instance().getStream(1).removeTopic(RooFit::DataHandling);
-
-  // ignore empty bin warning of residual pull. - comment them out when you want to test the codes.
-  // RooMsgService::instance().getStream(0).removeTopic(Plotting);
-  // RooMsgService::instance().getStream(1).removeTopic(Plotting);
 }
 
 McMassFit::~McMassFit()
 {
   RooMsgService::instance().getStream(1).addTopic(RooFit::ObjectHandling);
   delete ws;
+  delete fitMass;
 }
 
 void McMassFit::run()
@@ -64,6 +57,7 @@ void McMassFit::run()
   setLabels();
   reduceDataset();
   buildModel();
+  fitModel();
   drawResult();
   saveResult();
 }
@@ -83,7 +77,6 @@ void McMassFit::setLabels()
   else if (PR == 2)
     bCont = "Inclusive";
 
-  TString fname;
   if (PRw == 1)
     fname = "PR";
   else if (PRw == 2)
@@ -120,13 +113,17 @@ void McMassFit::reduceDataset()
   ws->var("mass")->setRange(massLow, massHigh);
   ws->var("mass")->setRange("fitRange", massLow, fit_limit);
   ws->var("mass")->Print();
+
+  delete dsAB;
+  delete datasetW;
+  delete f1;
 }
 
 void McMassFit::buildModel()
 {
   std::cout << "===== Start buildModel() =====\n";
   // basic parameters
-  components["mean"] = std::make_unique<RooRealVar>("m_{J/#Psi}", "mean...", 3.096, 3.086, 3.106);
+  components["mean"] = std::make_unique<RooRealVar>("m_{J/#Psi}", "mean...", pdgMass.JPsi, pdgMass.JPsi-0.01, pdgMass.JPsi+0.01);
   components["sigma_1_A"] = std::make_unique<RooRealVar>("sigma_1_A", "width...", 0.01, 0.001, 1);
   components["x_A"] = std::make_unique<RooRealVar>("x_A", "sigma ratio", 0.1, 0.03, 5);
   components["alpha_1_A"] = std::make_unique<RooRealVar>("alpha_1_A", "tail shift", 2, 0.1, 5);
@@ -168,6 +165,27 @@ void McMassFit::buildModel()
   ws->import(*components["pdfMASS_Tot"].get());
 }
 
+void McMassFit::fitModel()
+{
+  std::cout << "===== Start fitModel() =====\n";
+  bool isWeighted = ws->data("dsAB")->isWeighted();
+  fitMass = ws->pdf("pdfMASS_Tot")->fitTo(*ws->data("dsAB"), Save(), Hesse(kTRUE), Range(massLow, fit_limit), Timer(kTRUE), Extended(kTRUE), SumW2Error(isWeighted), NumCPU(24), Strategy(2));
+  fitMass->Print("V");
+
+  // fix parameters for next steps
+  std::cout << "fixing floating parameters to constant (after fitting)\n";
+  const RooArgList &floatted_params = fitMass->floatParsFinal();
+  for (auto arg : floatted_params)
+  {
+    RooRealVar *param = dynamic_cast<RooRealVar *>(arg);
+    if (param)
+    {
+      std::cout << "Fixing parameter: " << param->GetName() << "\n";
+      ws->var(param->GetName())->setConstant(kTRUE);
+    }
+  }
+}
+
 void McMassFit::drawResult()
 {
   std::cout << "===== Start drawResult() =====\n";
@@ -190,27 +208,6 @@ void McMassFit::drawResult()
   }
   RooPlot *myPlot2_A = (RooPlot *)myPlot_A->Clone();
   ws->data("dsAB")->plotOn(myPlot2_A, Name("dataOS"), MarkerSize(.8));
-  // bool isWeighted = ws->data("dsAB")->isWeighted();
-  bool isWeighted = false;
-  cout << endl
-       << "********* Starting Mass Dist. Fit **************" << endl
-       << endl;
-  fitMass = ws->pdf("pdfMASS_Tot")->fitTo(*ws->data("dsAB"), Save(), Hesse(kTRUE), Range(massLow, fit_limit), Timer(kTRUE), Extended(kTRUE), SumW2Error(isWeighted), NumCPU(24), Strategy(2));
-  cout << endl
-       << "********* Finished Mass Dist. Fit **************" << endl
-       << endl;
-  fitMass->Print("V");
-
-  // Check and get fitted parameters
-  // cout << fitN_Jpsi.getVal() << endl;
-
-  /*
-  for ( int i = 0; i < fitParams.getSize(); ++i)
-  {
-    auto & fitPar = (RooRealVar &) fitParams[i];
-    std::cout << fitPar.GetName() << " " << fitPar.getVal() << " +- " << fitPar.getError() << std::endl;
-  }
-  */
 
   // double f_factor = (double)fitFraction.getVal();
   ws->pdf("pdfMASS_Tot")->plotOn(myPlot2_A, Name("pdfMASS_tot"), LineColor(kBlack), Range(2.6, fit_limit), NormRange("fitRange"));
@@ -328,6 +325,17 @@ void McMassFit::drawResult()
   c_A->Update();
   TString kineLabel = getKineLabel(ptLow, ptHigh, yLow, yHigh, 0.0, cLow, cHigh);
   c_A->SaveAs(Form("figs/%s/mc_Mass/mc_Mass_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.Data(), kineLabel.Data(), fname.Data(), fEffW, fAccW, isPtW, isTnP));
+
+  delete outh;
+  delete l1;
+  delete pullFrame_A;
+  delete frameTMP;
+  delete pad_A_2;
+  delete pad_A_1;
+  delete h;
+  delete myPlot2_A;
+  delete myPlot_A;
+  delete c_A;
 }
 
 void McMassFit::saveResult()
@@ -338,15 +346,16 @@ void McMassFit::saveResult()
   outfile = new TFile(Form("roots/%s/mc_Mass/mc_MassFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.Data(), kineLabel.Data(), fname.Data(), fEffW, fAccW, isPtW, isTnP), "recreate");
  
   // add fit result
-  fitMass->Print("v");
+  fitMass->Write("fitMass");
 
   // add new workspace
   ws->SetName("old_ws_true");
 
-  RooWorkspace newWs("ws_mass", "");
+  RooWorkspace newWs("ws_mc", "");
   newWs.import(*ws->pdf("pdfMASS_Tot"));
-  newWs.import(*ws->data("dsAB"), Rename("ds_mass"));
+  newWs.import(*ws->data("dsAB"), Rename("ds_mc"));
   newWs.Write();
 
   outfile->Close();
+  delete outfile;
 }
