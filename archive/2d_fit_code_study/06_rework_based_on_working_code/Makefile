@@ -5,8 +5,8 @@ OBJDIR    = obj
 
 HDRS = $(SRCDIR)/McMassFit.h \
 			 $(SRCDIR)/MassFit.h \
-			#  $(SRCDIR)/SPlotter.h \
-			#  $(SRCDIR)/ResolutionFitter.h \
+			 $(SRCDIR)/CtauErrFit.h \
+			 $(SRCDIR)/CtauResFit.h \
 			#  $(SRCDIR)/BkgFitter.h \
 			#  $(SRCDIR)/TrueFitter.h \
 			#  $(SRCDIR)/FinalFitter.h \
@@ -15,8 +15,8 @@ OBJS = $(OBJDIR)/McMassFit.o \
 		   $(OBJDIR)/polarizationUtilities.o \
 			 $(OBJDIR)/dict_$(PROGRAM).o \
 			 $(OBJDIR)/MassFit.o \
-			#  $(OBJDIR)/SPlotter.o \
-			#  $(OBJDIR)/ResolutionFitter.o \
+			 $(OBJDIR)/CtauErrFit.o \
+			 $(OBJDIR)/CtauResFit.o \
 			#  $(OBJDIR)/BkgFitter.o \
 			#  $(OBJDIR)/TrueFitter.o \
 			#  $(OBJDIR)/FinalFitter.o \

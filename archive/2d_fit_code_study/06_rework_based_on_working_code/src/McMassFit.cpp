@@ -349,7 +349,7 @@ void McMassFit::saveResult()
   fitMass->Write("fitMass");
 
   // add new workspace
-  ws->SetName("old_ws_true");
+  ws->SetName("old_ws");
 
   RooWorkspace newWs("ws_mc", "");
   newWs.import(*ws->pdf("pdfMASS_Tot"));
