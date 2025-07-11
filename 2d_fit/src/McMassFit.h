@@ -1,43 +1,66 @@
 #pragma once
 #include <string>
+#include <vector>
+#include <map>
+#include"../headers/json.hpp"
 
 class TFile;
 class RooWorkspace;
 class RooFitResult;
+class RooPlot;
+
+using json = nlohmann::json;
 
 class McMassFit
 {
 public:
-  McMassFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
-            float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP);
+  McMassFit(const std::string &global_config_path, const std::string &local_config_path);
   ~McMassFit();
 
   void run();
 
 private:
-  void setLabels();
-  void openInputFile();
+  void loadConfiguration(const std::string &global_path, const std::string &local_path);
+  
   void setupWorkspaceAndData();
   void setVariableRanges();
   void defineModel();
   void performFit();
   void makePlot();
+  void drawPlotInfo(RooPlot *frame);
   void saveResults();
 
+  TFile *fInputData = nullptr;
+  RooWorkspace *ws = nullptr;
+  RooFitResult *fitResult = nullptr;
+
+  json global_config;
+  json local_config;
+  std::string full_input_path;
+  std::string output_root_path;
+  std::string output_fig_path;
+  std::string output_base_name;
+  // int nCPU;
+  
+  // kinematics and flags
   float ptLow, ptHigh, yLow, yHigh;
   int cLow, cHigh;
   float cosLow, cosHigh;
   int PR, PRw;
   bool fEffW, fAccW, isPtW, isTnP;
+  std::string fname; // PR, NP
 
-  std::string kineLabel;
-  std::string fname;
-  std::string DATE;
-  double massMin = 2.6;
-  double massMax = 3.22;
+  // model info
+  json yields;
+  std::string signal_model_type;
+  json signal_model_params;
+  std::vector<std::string> signal_component_names;
+  std::vector<std::string> bkg_component_names;
 
-  // 핵심 객체 포인터 (nullptr로 초기화)
-  TFile *fInputData = nullptr;
-  RooWorkspace *ws = nullptr;
-  RooFitResult *fitResult = nullptr;
+  // plotting info
+  std::vector<std::string> params_to_plot;
+  json plotting_style;
+  int nMassBin;
+  double massPlotMin, massPlotMax;
+  double massFitMin, massFitMax;
 };

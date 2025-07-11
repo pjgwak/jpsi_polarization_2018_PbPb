@@ -1,44 +1,64 @@
 #pragma once
 #include <string>
+#include <vector>
+#include <map>
+#include "../headers/json.hpp"
 
 class TFile;
 class RooWorkspace;
 class RooFitResult;
+class RooPlot;
 
-class MassFit 
+using json = nlohmann::json;
+
+class MassFit
 {
 public:
-  MassFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
-          float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP);
-
+  MassFit(const std::string &global_config_path, const std::string &local_config_path);
   ~MassFit();
   void run();
 
 private:
-  void setLabels();
-  void openInputFile();
+  void loadConfiguration(const std::string &global_path, const std::string &local_path);
   void setupWorkspaceAndData();
   void setVariableRanges();
-  void initializeParameters(); // get MC result
+  void initializeParameters();
   void defineModel();
   void performFit();
   void makePlot();
   void saveResults();
 
+  RooWorkspace *ws = nullptr;
+  RooFitResult *fitResult = nullptr;
+  TFile *fInputData = nullptr;
+  TFile *fMcParams = nullptr;
+
+  // --- parameters from MC fit ---
+  double mc_alpha;
+  double mc_n;
+  double mc_sigma;
+  double mc_x;
+  double mc_f;
+
+  json global_config;
+  json local_config;
+  json massfit_config;
+
+  std::string full_input_path;
+  std::string output_root_path;
+  std::string output_fig_path;
+  std::string output_base_name;
+
   float ptLow, ptHigh, yLow, yHigh;
   int cLow, cHigh;
   float cosLow, cosHigh;
   int PR, PRw;
-  bool fEffW, fAccW, isPtW, isTnP;
-
-  std::string kineLabel;
+  bool fEffW, fAccW;
+  bool isPtW, isTnP;
   std::string fname;
-  std::string DATE;
 
-  double mc_alpha, mc_n, mc_sigma, mc_x, mc_f;
-
-  TFile *fInputData = nullptr;
-  TFile *fMcParams = nullptr;
-  RooWorkspace *ws = nullptr;
-  RooFitResult *fitResult = nullptr;
+  json plotting_style;
+  int nMassBin;
+  double massPlotMin, massPlotMax;
+  double massFitMin, massFitMax;
 };

@@ -1,6 +1,24 @@
 #include "McMassFit.h"
+#include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <algorithm>
+
+#include "TLatex.h"
+#include "TFile.h"
+#include "TSystem.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "RooWorkspace.h"
+#include "RooFitResult.h"
+#include "RooPlot.h"
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "RooCBShape.h"
+#include "RooAddPdf.h"
+#include "RooFormulaVar.h"
+#include "RooGaussian.h"
+#include "RooChebychev.h"
+
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TFile.h"
@@ -19,144 +37,294 @@
 #include "RooFitResult.h"
 #include "RooWorkspace.h"
 #include "RooMsgService.h"
+
 #include "../headers/polarizationUtilities.h"
 
 using namespace RooFit;
 
-McMassFit::McMassFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
-                     float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP)
-    : ptLow(ptLow), ptHigh(ptHigh), yLow(yLow), yHigh(yHigh), cLow(cLow), cHigh(cHigh),
-      cosLow(cosLow), cosHigh(cosHigh), PR(PR), PRw(PRw),
-      fEffW(fEffW), fAccW(fAccW), isPtW(isPtW), isTnP(isTnP)
+McMassFit::McMassFit(const std::string &global_config_path, const std::string &local_config_path)
 {
-  gStyle->SetEndErrorSize(0);
-
   RooMsgService::instance().getStream(1).removeTopic(RooFit::ObjectHandling);
+  loadConfiguration(global_config_path, local_config_path);
 }
 
 McMassFit::~McMassFit()
 {
   RooMsgService::instance().getStream(1).addTopic(RooFit::ObjectHandling);
-  delete fInputData;
+
   delete ws;
   delete fitResult;
+  if (fInputData)
+  {
+    if (fInputData->IsOpen())
+      fInputData->Close();
+    delete fInputData;
+  }
 }
 
 void McMassFit::run()
 {
-  std::cout << "===== Start run() =====\n\n";
-  setLabels();
-  openInputFile();
+  std::cout << "===== McMassFit::run() =====\n\n";
   setupWorkspaceAndData();
   setVariableRanges();
   defineModel();
   performFit();
   makePlot();
   saveResults();
+  std::cout << "===== McMassFit finished =====\n";
 }
 
-void McMassFit::setLabels()
+void McMassFit::loadConfiguration(const std::string &global_path_str, const std::string &local_path_str)
 {
-  std::cout << "===== Start setLabels() =====\n\n";
-
-  DATE = "No_Weight_2";
-  gSystem->mkdir(Form("roots/2DFit_%s/mc_Mass", DATE.c_str()), kTRUE);
-  gSystem->mkdir(Form("figs/2DFit_%s/mc_Mass", DATE.c_str()), kTRUE);
-
-  // TString bCont;
-  // if (PR == 0)
-  //   bCont = "Prompt";
-  // else if (PR == 1)
-  //   bCont = "NonPrompt";
-  // else if (PR == 2)
-  //   bCont = "Inclusive";
-
-  kineLabel = std::string(getKineLabel(ptLow, ptHigh, yLow, yHigh, 0.0, cLow, cHigh).Data());
-
-  if (PRw == 1)
-    fname = "PR";
-  else if (PRw == 2)
-    fname = "NP";
-}
-
-void McMassFit::openInputFile()
-{
-  std::cout << "===== Start openInputFile() =====\n\n";
-  fInputData = new TFile("../files_roodata/RooDataSet_miniAOD_isMC1_PR_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root");
-
-  if (!fInputData || fInputData->IsZombie())
+  try
   {
-    std::cerr << "CRITICAL: MC Input data file could not be opened. Aborting.\n";
+    // load global config file
+    std::ifstream f_global(global_path_str);
+    if (!f_global.is_open())
+    {
+      std::cerr << "FATAL: Global config file could not be opened: " << global_path_str << "\n";
+      exit(1);
+    }
+    global_config = json::parse(f_global);
+
+    // load local config file
+    std::ifstream f_local(local_path_str);
+    if (!f_local.is_open())
+    {
+      std::cerr << "FATAL: Local config file could not be opened: " << local_path_str << "\n";
+      exit(1);
+    }
+    local_config = json::parse(f_local);
+
+    // --- set variables from json file ---
+    std::string roodata_dir = global_config.at("roodata_dir");
+    json mcMassConfig = local_config.at("McMassFit");
+    full_input_path = roodata_dir + "/" + mcMassConfig.at("input_file").get<std::string>();
+
+    // nCPU = global_config.value("num_cpu", 8);
+
+    json kine_settings = local_config.at("kinematics");
+    ptLow = kine_settings.at("ptLow");
+    ptHigh = kine_settings.at("ptHigh");
+    yLow = kine_settings.at("yLow");
+    yHigh = kine_settings.at("yHigh");
+    cLow = kine_settings.at("cLow");
+    cHigh = kine_settings.at("cHigh");
+    cosLow = kine_settings.at("cosLow");
+    cosHigh = kine_settings.at("cosHigh");
+
+    json flag_settings = local_config.at("weights");
+    PRw = flag_settings.at("PRw");
+    PR = flag_settings.at("PR");
+    fEffW = flag_settings.at("fEffW");
+    fAccW = flag_settings.at("fAccW");
+    isPtW = flag_settings.at("isPtW");
+    isTnP = flag_settings.at("isTnP");
+    fname = (PRw == 1) ? "PR" : "NP";
+
+    // model info
+    yields = mcMassConfig.at("yields");
+    signal_model_type = mcMassConfig.at("signal_model").at("type");
+    signal_model_params = mcMassConfig.at("signal_model").at("params");
+
+    // plotting info
+    params_to_plot = mcMassConfig.value("plot_params", std::vector<std::string>{});
+    plotting_style = mcMassConfig.value("plotting", json::object());
+    nMassBin = mcMassConfig.at("plot_bins");
+    massPlotMin = mcMassConfig.at("plot_range").at("min");
+    massPlotMax = mcMassConfig.at("plot_range").at("max");
+    massFitMin = mcMassConfig.at("fit_range").at("min");
+    massFitMax = mcMassConfig.at("fit_range").at("max");
+
+    std::string date_tag = global_config.value("date_tag", "test");
+    std::string base_output_roots = global_config.value("base_output_dir_roots", "roots/");
+    std::string base_output_figs = global_config.value("base_output_dir_figs", "fig/");
+
+    std::string out_dir_name = Form("2DFit_%s/mc_Mass", date_tag.c_str());
+    output_root_path = base_output_roots + out_dir_name;
+    output_fig_path = base_output_figs + out_dir_name;
+
+    TString kineLabel_tmp = getKineLabel(ptLow, ptHigh, yLow, yHigh, 0.0, cLow, cHigh);
+    output_base_name = Form("mc_Mass_%s", kineLabel_tmp.Data());
+
+    gSystem->mkdir(output_root_path.c_str(), kTRUE);
+    gSystem->mkdir(output_fig_path.c_str(), kTRUE);
+
+    ws = new RooWorkspace("workspace", "MC Mass Fit Workspace");
+  }
+  catch (const json::parse_error &e)
+  {
+    std::cerr << "\nFATAL: JSON parsing error in " << e.what() << '\n'
+              << "Message: " << e.what() << '\n'
+              << "Location: Byte " << e.byte << " in one of the config files." << '\n'
+              << "HINT: Please check for missing commas, extra commas, or mismatched brackets in your JSON files.\n";
+    exit(1);
+  }
+  catch (const json::out_of_range &e)
+  {
+    std::cerr << "\nFATAL: JSON key not found: " << e.what() << '\n'
+              << "HINT: Please check if all required keys (like 'McMassFit', 'kinematics', etc.) exist in your config files.\n";
     exit(1);
   }
 }
 
 void McMassFit::setupWorkspaceAndData()
 {
-  std::cout << "===== Start setupWorkspaceAndData() =====\n\n";
-  ws = new RooWorkspace("workspace");
-  RooDataSet *dataset = (RooDataSet *)fInputData->Get("dataset");
-  ws->import(*dataset);
+  std::cout << "===== McMassFit::setupWorkspaceAndData() =====" << "\n";
+  fInputData = new TFile(full_input_path.c_str());
+  if (!fInputData || fInputData->IsZombie())
+  {
+    std::cerr << "FATAL: Input data file could not be opened: " << full_input_path << "\n";
+    exit(1);
+  }
 
-  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh);
-  TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )"; // 2018 acceptance cut
+  RooDataSet *ds_reduce = (RooDataSet *)fInputData->Get("dataset");
+  ws->import(*ds_reduce, Rename("ds_reduce"));
+
+  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, cLow, cHigh);
+  TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )";
   TString osCut = "recoQQsign==0";
   TString angleCut = Form("cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
   TString finalCut = TString::Format("%s && %s && %s && %s", osCut.Data(), accCut.Data(), kineCut.Data(), angleCut.Data());
 
-  // Todo: weight fit flag
-  // RooDataSet *datasetW = new RooDataSet("datasetW","A sample",*dataset->get(),Import(*dataset),WeightVar(*ws->var("weight")));
-  RooDataSet *datasetW = new RooDataSet("datasetW", "A sample", *dataset->get(), Import(*dataset));
-  RooDataSet *dsAB = (RooDataSet *)datasetW->reduce(RooArgSet(*(ws->var("ctau3DRes")), *(ws->var("ctau3D")), *(ws->var("ctau3DErr")), *(ws->var("mass")), *(ws->var("pt")), *(ws->var("y"))), finalCut.Data());
-  ws->import(*dsAB, Rename("dsAB"));
+  RooArgSet varsToKeep;
+  varsToKeep.add(*ws->var("mass"));
+  varsToKeep.add(*ws->var("pt"));
+  varsToKeep.add(*ws->var("y"));
+  varsToKeep.add(*ws->var("cBin"));
+  varsToKeep.add(*ws->var("recoQQsign"));
+  varsToKeep.add(*ws->var("pt1"));
+  varsToKeep.add(*ws->var("pt2"));
+  varsToKeep.add(*ws->var("eta1"));
+  varsToKeep.add(*ws->var("eta2"));
+  varsToKeep.add(*ws->var("cos_ep"));
 
-  delete datasetW;
+  bool apply_weights = local_config.at("McMassFit").value("apply_event_weights", false);
+  RooDataSet *ds_weighted = nullptr;
+  if (apply_weights)
+  {
+    std::cout << "INFO: Applying event weights." << "\n";
+    ds_weighted = new RooDataSet("ds_weighted", "", ds_reduce, *ds_reduce->get(), finalCut.Data(), "weight");
+    ds_reduce = ds_weighted;
+  }
+
+  RooDataSet *dsAB = (RooDataSet *)ds_reduce->reduce(varsToKeep, finalCut.Data());
+  dsAB->SetName("dsAB");
+  ws->import(*dsAB);
+
+  if (ds_weighted)
+    delete ds_weighted;
+  delete dsAB;
 }
 
 void McMassFit::setVariableRanges()
 {
-  std::cout << "===== Start setVariableRanges() =====\n\n";
-  ws->var("mass")->setRange(massLow, massHigh);
-  ws->var("mass")->setRange("mcPlotRange", massLow, massHigh);
-  ws->var("mass")->setRange("mcFitRange", massMin, massMax);
+  std::cout << "===== McMassFit::setVariableRanges() =====\n";
+  ws->var("mass")->setRange("mcPlotRange", massPlotMin, massPlotMax);
+  ws->var("mass")->setRange("mcFitRange", massFitMin, massFitMax);
 }
 
 void McMassFit::defineModel()
 {
-  std::cout << "===== Start defineModel() =====\n\n";
-  // signal parameters
-  RooRealVar mean("m_{J/#Psi}", "mean of the signal", 3.096, 3.086, 3.106);
-  RooRealVar sigma_1_A("sigma_1_A", "width of the signal", 0.01, 0.001, 0.1);
-  RooRealVar x_A("x_A", "sigma ratio", 1.1, 1, 3);
-  RooRealVar alpha_1_A("alpha_1_A", "tail shift", 1.5, 0.8, 5);
-  RooRealVar n_1_A("n_1_A", "power order", 1.5, 0.8, 5);
-  RooRealVar f("f", "fraction of first CB", 0.6, 0.05, 0.95);
+  std::cout << "===== McMassFit::defineModel() for type: " << signal_model_type << " =====" << "\n";
 
-  RooFormulaVar sigma_2_A("sigma_2_A", "sigma_1_A * x_A", "@0*@1", RooArgList(sigma_1_A, x_A));
-  RooFormulaVar alpha_2_A("alpha_2_A", "alpha_1_A", "1.0*@0", RooArgList(alpha_1_A));
-  RooFormulaVar n_2_A("n_2_A", "n_1_A", "1.0*@0", RooArgList(n_1_A));
+  // parameters
+  for (auto const &[name, p] : yields.items())
+  {
+    ws->factory(Form("%s[%.4f, %.4f, %.4f]", name.c_str(),
+                     p.at("val").get<double>(),
+                     p.at("min").get<double>(),
+                     p.at("max").get<double>()));
+    ws->var(name.c_str())->SetTitle(p.at("title").get<std::string>().c_str());
+  }
 
-  // signal models
-  RooCBShape cb_1_A("cball_1_A", "Crystal Ball 1", *(ws->var("mass")), mean, sigma_1_A, alpha_1_A, n_1_A);
-  RooCBShape cb_2_A("cball_2_A", "Crystal Ball 2", *(ws->var("mass")), mean, sigma_2_A, alpha_2_A, n_2_A);
+  for (auto const &[name, p] : signal_model_params.items())
+  {
+    ws->factory(Form("%s[%.4f, %.4f, %.4f]", name.c_str(),
+                     p.at("val").get<double>(),
+                     p.at("min").get<double>(),
+                     p.at("max").get<double>()));
+    ws->var(name.c_str())->SetTitle(p.at("title").get<std::string>().c_str());
+  }
 
-  RooAddPdf pdfMASS_Jpsi("pdfMASS_Jpsi", "Signal Shape", RooArgList(cb_1_A, cb_2_A), RooArgList(f));
+  std::vector<std::string> required_vars;
+  if (signal_model_type == "DoubleCB")
+  {
+    required_vars = {"mass", "mean_jpsi", "sigma_1_A", "x_A", "alpha_1_A", "n_1_A", "f"};
+  }
+  else if (signal_model_type == "SingleGauss")
+  {
+    required_vars = {"mass", "mean", "sigma"};
+  }
 
-  //fit model
-  RooRealVar N_Jpsi("N_Jpsi", "Number of J/psi signals", 20000, 1, 100000);
-  RooAddPdf pdfMASS_Tot("pdfMASS_Tot", "Total MC PDF", RooArgList(pdfMASS_Jpsi), RooArgList(N_Jpsi));
+  for (const auto &var_name : required_vars)
+  {
+    if (!ws->var(var_name.c_str()))
+    {
+      std::cerr << "FATAL: Required variable '" << var_name << "' not found in workspace before building model!" << '\n';
+      std::cerr << "HINT: Check if the variable is defined in the input RooDataSet or in the 'params' section of your JSON config." << '\n';
+      ws->Print();
+      exit(1);
+    }
+  }
 
-  // To call individual componets
-  ws->import(cb_1_A);
-  ws->import(cb_2_A);
+  // build models
+  signal_component_names.clear();
+  bkg_component_names.clear();
 
-  // RecycleConflictNodes -> Use componetns insdie worksapce to build complicated model
-  ws->import(pdfMASS_Tot, RooFit::RecycleConflictNodes()); 
+  if (signal_model_type == "DoubleCB")
+  {
+    ws->factory("RooFormulaVar::sigma_2_A('@0*@1',{sigma_1_A, x_A})");
+    ws->factory("RooFormulaVar::alpha_2_A('1.0*@0',{alpha_1_A})");
+    ws->factory("RooFormulaVar::n_2_A('1.0*@0',{n_1_A})");
+
+    RooCBShape cb_1_A("cball_1_A", "CB1", *ws->var("mass"), *ws->var("mean_jpsi"), *ws->var("sigma_1_A"), *ws->var("alpha_1_A"), *ws->var("n_1_A"));
+    RooCBShape cb_2_A("cball_2_A", "CB2", *ws->var("mass"), *ws->var("mean_jpsi"), *ws->function("sigma_2_A"), *ws->function("alpha_2_A"), *ws->function("n_2_A"));
+
+    ws->import(cb_1_A);
+    ws->import(cb_2_A);
+    signal_component_names.push_back("cball_1_A");
+    signal_component_names.push_back("cball_2_A");
+
+    RooAddPdf pdfMASS_Jpsi("pdfMASS_Jpsi", "Signal Shape", {cb_1_A, cb_2_A}, *ws->var("f"));
+    ws->import(pdfMASS_Jpsi, RecycleConflictNodes());
+  }
+  else if (signal_model_type == "SingleGauss")
+  {
+    RooGaussian gauss("pdfMASS_Jpsi", "Signal Gauss", *ws->var("mass"), *ws->var("mean"), *ws->var("sigma"));
+
+    ws->import(gauss);
+    signal_component_names.push_back("pdfMASS_Jpsi");
+  }
+  else if (signal_model_type == "CBG")
+  {
+    RooCBShape cb_shape("cb_shape", "Crystal Ball Component", *ws->var("mass"), *ws->var("mean_jpsi"), *ws->var("sigma_cb"), *ws->var("alpha_cb"), *ws->var("n_cb"));
+    RooGaussian gauss_shape("gauss_shape", "Gaussian Component", *ws->var("mass"), *ws->var("mean_jpsi"), *ws->var("sigma_gauss"));
+
+    ws->import(cb_shape);
+    ws->import(gauss_shape);
+    signal_component_names.push_back("cb_shape");
+    signal_component_names.push_back("gauss_shape");
+
+    RooAddPdf pdfMASS_Jpsi("pdfMASS_Jpsi", "Signal Shape (CB+Gauss)", {cb_shape, gauss_shape}, *ws->var("frac_cb"));
+    ws->import(pdfMASS_Jpsi, RooFit::RecycleConflictNodes());
+  }
+  else
+  {
+    std::cerr << "FATAL: Unknown signal model type '" << signal_model_type << "'" << "\n";
+    exit(1);
+  }
+
+  RooAddPdf pdfMASS_Tot("pdfMASS_Tot", "Total MC PDF",
+                        RooArgList(*ws->pdf("pdfMASS_Jpsi")),
+                        RooArgList(*ws->var("N_Jpsi")));
+
+  ws->import(pdfMASS_Tot, RooFit::RecycleConflictNodes());
 }
 
 void McMassFit::performFit()
 {
-  std::cout << "===== Start performFit() =====\n\n";
+  std::cout << "===== McMassFit::performFit() =====" << "\n";
   RooAbsPdf *pdf = ws->pdf("pdfMASS_Tot");
   RooAbsData *data = ws->data("dsAB");
 
@@ -167,7 +335,8 @@ void McMassFit::performFit()
                          Range("mcFitRange"),
                          NumCPU(nCPU),
                          SumW2Error(isWeighted),
-                         Strategy(2));
+                         Strategy(2),
+                         PrintLevel(0));
 
   fitResult->Print("V");
 
@@ -186,139 +355,197 @@ void McMassFit::performFit()
 
 void McMassFit::makePlot()
 {
-  std::cout << "===== Start makePlot() =====\n\n";
-  TCanvas *myCanvas = new TCanvas("myCanvas", "", 800, 800);
-  myCanvas->cd();
+  std::cout << "===== McMassFit::makePlot() =====" << '\n';
 
-  TPad *pad1 = new TPad("pad1", "", 0.0, 0.3, 1.0, 1.0);
+  // read plot setting
+  json plot_cfg = local_config.at("McMassFit").at("plotting");
+  int canvas_w = plot_cfg.value("canvas_size", json::object()).value("width", 800);
+  int canvas_h = plot_cfg.value("canvas_size", json::object()).value("height", 800);
+  double pad_split_ratio = plot_cfg.value("pad_split_ratio", 0.3);
+
+  TCanvas *myCanvas = new TCanvas("myCanvas", "MC Mass Fit", canvas_w, canvas_h);
+
+  // pad 1, 2
+  TPad *pad1 = new TPad("pad1", "Main pad", 0.0, pad_split_ratio, 1.0, 1.0);
   pad1->SetBottomMargin(0.02);
   pad1->SetTicks(1, 1);
   pad1->Draw();
+
+  TPad *pad2 = new TPad("pad2", "Pull pad", 0.0, 0.0, 1.0, pad_split_ratio);
+  pad2->SetTopMargin(0);
+  pad2->SetBottomMargin(0.35);
+  pad2->SetTicks(1, 1);
+  pad2->Draw();
+
+  // --- pad1 ---
   pad1->cd();
-  gPad->SetLogy();
+  pad1->SetLogy();
 
-  RooPlot *massFrame = ws->var("mass")->frame(nMassBin); // bins
-  massFrame->SetTitle("");
+  // add frame, draw data and plots
+  RooPlot *massFrame = ws->var("mass")->frame(Title(""), Bins(nMassBin), Range(massPlotMin, massPlotMax));
 
-  ws->data("dsAB")->plotOn(massFrame, Name("dataOS"), MarkerSize(.8));
+  ws->data("dsAB")->plotOn(massFrame, Name("dataOS"));
   ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("pdfMASS_Tot"), LineColor(kBlack), Range("mcFitRange"), NormRange("mcFitRange"));
 
-  ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("cball_1_A"), Components("cball_1_A"), LineWidth(1), LineColor(kGreen + 2), Range("mcFitRange"), NormRange("mcFitRange"), LineStyle(kDashed));
-  ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("cball_2_A"), Components("cball_2_A"), LineWidth(1), LineColor(kBlue + 2), Range("mcFitRange"), NormRange("mcFitRange"), LineStyle(kDashed));
+  json sig_style = plot_cfg.value("signal_components", json::object());
+  std::vector<int> sig_colors = sig_style.value("colors", std::vector<int>{4, 2});
+  std::vector<int> sig_styles = sig_style.value("styles", std::vector<int>{2, 7});
+  for (size_t i = 0; i < signal_component_names.size(); ++i)
+  {
+    const std::string &name = signal_component_names[i];
+    ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Components(name.c_str()), Name(name.c_str()), LineColor(sig_colors[i % sig_colors.size()]), LineStyle(sig_styles[i % sig_styles.size()]), Range("mcFitRange"), NormRange("mcFitRange"));
+  }
 
-
-  massFrame->SetFillStyle(4000);
-  massFrame->GetYaxis()->SetTitleOffset(1.43);
-  // massFrame->GetYaxis()->CenterTitle();
-  // massFrame->GetYaxis()->SetTitleSize(0.058);
-  // massFrame->GetYaxis()->SetLabelSize(0.054);
-  // massFrame->GetYaxis()->SetRangeUser(ws->var("N_Jpsi")->getVal()/100, ws->var("N_Jpsi")->getVal());
-
-  TH1 *hTmp = ws->data("dsAB")->createHistogram("hist", *ws->var("mass"), Binning(massFrame->GetNbinsX(), massFrame->GetXaxis()->GetXmin(), massFrame->GetXaxis()->GetXmax()));
+  // set y range
+  TH1 *hTmp = ws->data("dsAB")->createHistogram("hTmp", *ws->var("mass"), Binning(nMassBin, massPlotMin, massPlotMax));
   Double_t YMax = hTmp->GetBinContent(hTmp->GetMaximumBin());
-  // Double_t YMin = min( hTmp->GetBinContent(hTmp->FindFirstBinAbove(0.0)), hTmp->GetBinContent(hTmp->FindLastBinAbove(0.0)) );
   Double_t YMin = 1e99;
   for (int i = 1; i <= hTmp->GetNbinsX(); i++)
+  {
     if (hTmp->GetBinContent(i) > 0)
+    {
       YMin = std::min(YMin, hTmp->GetBinContent(i));
-  double Ydown;
-  double Yup;
-  Ydown = YMin / (TMath::Power((YMax / YMin), (0.1 / (1.0 - 0.1 - 0.4))));
-  Yup = YMax * TMath::Power((YMax / YMin), (0.4 / (1.0 - 0.1 - 0.4)));
-  
+    }
+  }
+  double Ydown = YMin / (TMath::Power((YMax / YMin), (0.1 / (1.0 - 0.1 - 0.4))));
+  double Yup = 2 * YMax * TMath::Power((YMax / YMin), (0.4 / (1.0 - 0.1 - 0.4)));
+
+  if (Ydown <= 0)
+    Ydown = 0.1;
+
   massFrame->GetYaxis()->SetRangeUser(Ydown, Yup);
+  delete hTmp;
+
+  // draw frame
+  massFrame->GetYaxis()->SetTitle(Form("Events / ( %.3f GeV/c^{2} )", (massPlotMax - massPlotMin) / nMassBin));
+  massFrame->GetYaxis()->SetTitleOffset(1.4);
   massFrame->GetXaxis()->SetLabelSize(0);
   massFrame->GetXaxis()->SetTitleSize(0);
-  massFrame->GetXaxis()->CenterTitle();
-  massFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{-}} (GeV/c^{2})");
   massFrame->Draw();
 
-  drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c", ptLow, ptHigh), text_x, text_y, text_color, text_size);
-  if (yLow == 0)
-    drawText(Form("|y^{#mu#mu}| < %.1f", yHigh), text_x, text_y - y_diff, text_color, text_size);
-  else if (yLow != 0)
-    drawText(Form("%.1f < |y^{#mu#mu}| < %.1f", yLow, yHigh), text_x, text_y - y_diff, text_color, text_size);
-  drawText(Form("N_{J/#psi} = %.f #pm %.f", ws->var("N_Jpsi")->getVal(), ws->var("N_Jpsi")->getError()), text_x, text_y - y_diff * 2, text_color, text_size);
-  // drawText(Form("n_{Bkg} = %.f #pm %.f",ws->var("N_Bkg")->getVal(),ws->var("N_Bkg")->getError()),text_x,text_y-y_diff*4,text_color,text_size);
-  drawText(Form("#alpha = %.4f #pm %.4f", ws->var("alpha_1_A")->getVal(), ws->var("alpha_1_A")->getError()), text_x, text_y - y_diff * 3, text_color, text_size);
-  drawText(Form("f = %.4f #pm %.4f", ws->var("f")->getVal(), ws->var("f")->getError()), text_x, text_y - y_diff * 4, text_color, text_size);
-  drawText(Form("n_{1} = %.4f #pm %.4f", ws->var("n_1_A")->getVal(), ws->var("n_1_A")->getError()), text_x, text_y - y_diff * 5, text_color, text_size);
-  drawText(Form("#sigma_{1} = %.4f #pm %.4f", ws->var("sigma_1_A")->getVal(), ws->var("sigma_1_A")->getError()), text_x, text_y - y_diff * 6, text_color, text_size);
-  drawText(Form("#sigma_{2} / #sigma_{1} = %.4f #pm %.4f", ws->var("x_A")->getVal(), ws->var("x_A")->getError()), text_x, text_y - y_diff * 7, text_color, text_size);
+  // draw parameters
+  json kine_text_style = plot_cfg.value("kinematics_text", json::object());
+  drawText(Form("%.1f < p_{T} < %.1f GeV/c", ptLow, ptHigh), kine_text_style.value("x", 0.18f), kine_text_style.value("y", 0.85f), kBlack, kine_text_style.value("size", 20));
+  drawText(Form("%.1f < |y| < %.1f", yLow, yHigh), kine_text_style.value("x", 0.18f), kine_text_style.value("y", 0.85f) - kine_text_style.value("dy", 0.06f), kBlack, kine_text_style.value("size", 20));
+  drawText(Form("Cent. %d-%d %%", cLow / 2, cHigh / 2), kine_text_style.value("x", 0.18f), kine_text_style.value("y", 0.85f) - 2 * kine_text_style.value("dy", 0.06f), kBlack, kine_text_style.value("size", 20));
 
-  TPad *pad2 = new TPad("pad2", "", 0.0, 0.0, 1.0, 0.3);
-  myCanvas->cd();
-  pad2->Draw();
+  json param_text_style = plot_cfg.value("parameters_text", json::object());
+  float param_y = param_text_style.value("y", 0.85f);
+  float param_dy = param_text_style.value("dy", 0.06f);
+
+  for (const auto &param_name : params_to_plot)
+  {
+    RooRealVar *param = ws->var(param_name.c_str());
+    if (param)
+    {
+      TString title = param->GetTitle();
+      double val = param->getVal();
+      double err = param->getError();
+
+      if (TString(param->GetName()).BeginsWith("N_"))
+      {
+        drawText(Form("%s = %.0f #pm %.0f", title.Data(), val, err),
+                 param_text_style.value("x", 0.65f), param_y, kBlack, param_text_style.value("size", 20));
+      }
+      else
+      {
+        int precision = 3;
+        double min_displayable_error = TMath::Power(10, -precision); // 0.001
+
+        if (err > 0 && err < min_displayable_error)
+        {
+
+          drawText(Form("%s = %.*f #pm < %.*f", title.Data(), precision, val, precision, min_displayable_error),
+                   param_text_style.value("x", 0.65f), param_y, kBlack, param_text_style.value("size", 20));
+        }
+        else
+        {
+          drawText(Form("%s = %.*f #pm %.*f", title.Data(), precision, val, precision, err),
+                   param_text_style.value("x", 0.65f), param_y, kBlack, param_text_style.value("size", 20));
+        }
+      }
+      param_y -= param_dy;
+    }
+  }
+
+  json legend_style = plot_cfg.value("legend", json::object());
+  TLegend *leg = new TLegend(legend_style.value("x1", 0.2f), legend_style.value("y1", 0.65f), legend_style.value("x2", 0.5f), legend_style.value("y2", 0.82f));
+  leg->SetBorderSize(0);
+  leg->SetFillStyle(0);
+  leg->SetTextFont(42);
+  leg->AddEntry(massFrame->findObject("dataOS"), "Data", "pe");
+  leg->AddEntry(massFrame->findObject("pdfMASS_Tot"), "Total Fit", "l");
+  for (const auto &name : signal_component_names)
+  {
+    leg->AddEntry(massFrame->findObject(name.c_str()), ws->pdf(name.c_str())->GetTitle(), "l");
+  }
+  leg->Draw("same");
+
+  // --- pull pad ---
   pad2->cd();
-  pad2->SetTopMargin(0); // Upper and lower plot are joined
-  pad2->SetBottomMargin(0.67);
-  pad2->SetBottomMargin(0.4);
-  pad2->SetFillStyle(4000);
-  pad2->SetFrameFillStyle(4000);
-  pad2->SetTicks(1, 1);
-
   RooPlot *frameTMP = (RooPlot *)massFrame->Clone("frameTMP");
+  RooPlot *pullFrame = ws->var("mass")->frame(Title(" "), Bins(nMassBin), Range(massPlotMin, massPlotMax));
   RooHist *pullHist = frameTMP->pullHist("dataOS", "pdfMASS_Tot", true);
-  pullHist->SetMarkerSize(0.8);
-  RooPlot *pullFrame = ws->var("mass")->frame(Title(" "));
   pullFrame->addPlotable(pullHist, "P");
-  pullFrame->SetTitle("");
-  pullFrame->SetTitleSize(0);
-  pullFrame->GetYaxis()->SetTitleOffset(0.3);
+
+  double pull_min = plot_cfg.value("pull_plot", json::object()).value("y_range_min", -5.0);
+  double pull_max = plot_cfg.value("pull_plot", json::object()).value("y_range_max", 5.0);
+  pullFrame->GetYaxis()->SetRangeUser(pull_min, pull_max);
   pullFrame->GetYaxis()->SetTitle("Pull");
-  pullFrame->GetYaxis()->SetTitleSize(0.15);
-  pullFrame->GetYaxis()->SetLabelSize(0.15);
-  pullFrame->GetYaxis()->SetRangeUser(-3.8, 3.8);
+  pullFrame->GetYaxis()->SetTitleSize(0.12);
+  pullFrame->GetYaxis()->SetLabelSize(0.12);
+  pullFrame->GetYaxis()->SetTitleOffset(0.35);
+  pullFrame->GetYaxis()->SetNdivisions(505);
   pullFrame->GetYaxis()->CenterTitle();
 
   pullFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{-}} (GeV/c^{2})");
-  pullFrame->GetXaxis()->SetTitleOffset(1.05);
-  pullFrame->GetXaxis()->SetLabelOffset(0.04);
-  pullFrame->GetXaxis()->SetLabelSize(0.15);
-  pullFrame->GetXaxis()->SetTitleSize(0.15);
+  pullFrame->GetXaxis()->SetTitleSize(0.12);
+  pullFrame->GetXaxis()->SetLabelSize(0.12);
+  pullFrame->GetXaxis()->SetTitleOffset(1.15);
   pullFrame->GetXaxis()->CenterTitle();
-
-  pullFrame->GetYaxis()->SetTickSize(0.04);
-  pullFrame->GetYaxis()->SetNdivisions(404);
-  pullFrame->GetXaxis()->SetTickSize(0.03);
   pullFrame->Draw();
 
-  TLine *l1 = new TLine(massLow, 0, massHigh, 0);
-  l1->SetLineStyle(1);
+  TLine *l1 = new TLine(massPlotMin, 0, massPlotMax, 0);
+  l1->SetLineStyle(kDashed);
   l1->Draw("same");
-
   printChi2(ws, pad2, frameTMP, fitResult, "mass", "dataOS", "pdfMASS_Tot", nMassBin, false);
 
-  Double_t theNLL = fitResult->minNll();
-  std::cout << " *** NLL : " << theNLL << "\n";
+  std::string fig_save_path = Form("%s/%s.png", output_fig_path.c_str(), output_base_name.c_str());
+  myCanvas->SaveAs(fig_save_path.c_str());
+  std::cout << "Plot saved to " << fig_save_path << '\n';
 
-  myCanvas->Update();
-  myCanvas->SaveAs(Form("figs/2DFit_%s/mc_Mass/mc_Mass_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
-
-  delete hTmp;
+  delete frameTMP;
   delete myCanvas;
   delete massFrame;
-  delete frameTMP;
   delete pullFrame;
 }
 
 void McMassFit::saveResults()
 {
-  std::cout << "===== Start saveResults() =====\n\n";
-  TFile *outputFile = new TFile(Form("roots/2DFit_%s/mc_Mass/mc_MassFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP), "recreate");
+  std::cout << "===== McMassFit::saveResults() =====" << '\n';
+
+  std::string root_save_path = Form("%s/%s_FitResult.root", output_root_path.c_str(), output_base_name.c_str());
+  TFile *outputFile = new TFile(root_save_path.c_str(), "RECREATE");
+  if (!outputFile || outputFile->IsZombie())
+  {
+    std::cerr << "ERROR: Could not create output file: " << root_save_path << '\n';
+    return;
+  }
+  outputFile->cd();
 
   ws->pdf("pdfMASS_Tot")->Write();
+  fitResult->Write("fitResult");
 
+  // dataset noticing the list of parameters -> Do we need it?
   RooArgSet *fitargs = new RooArgSet();
   fitargs->add(fitResult->floatParsFinal());
   RooDataSet *datasetMass = new RooDataSet("datasetMass", "dataset with Mass Fit result", *fitargs);
-  datasetMass->add(*fitargs);
   datasetMass->Write();
 
-  // fitResult->Print("v");
-
   outputFile->Close();
-  
+
+  std::cout << "Results saved to " << root_save_path << '\n';
+
   delete fitargs;
   delete datasetMass;
   delete outputFile;
