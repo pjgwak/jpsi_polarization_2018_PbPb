@@ -1,66 +1,61 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <map>
-#include"../headers/json.hpp"
+#include <tuple>
 
 class TFile;
 class RooWorkspace;
 class RooFitResult;
-class RooPlot;
-
-using json = nlohmann::json;
 
 class McMassFit
 {
 public:
-  McMassFit(const std::string &global_config_path, const std::string &local_config_path);
+  McMassFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
+            float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP);
   ~McMassFit();
 
+  void init();
   void run();
 
+  std::string inputFilePath;
+  std::string DATE;
+  std::string pdfType;
+  bool isWeighted = false;
+
+  double massMin = 2.6;
+  double massMax = 3.22;
+
+  void initVar(const std::string &varName, double init, double low, double high);
+
 private:
-  void loadConfiguration(const std::string &global_path, const std::string &local_path);
-  
+  void setLabels();
+  void openInputFile();
   void setupWorkspaceAndData();
   void setVariableRanges();
   void defineModel();
   void performFit();
   void makePlot();
-  void drawPlotInfo(RooPlot *frame);
   void saveResults();
 
-  TFile *fInputData = nullptr;
-  RooWorkspace *ws = nullptr;
-  RooFitResult *fitResult = nullptr;
-
-  json global_config;
-  json local_config;
-  std::string full_input_path;
-  std::string output_root_path;
-  std::string output_fig_path;
-  std::string output_base_name;
-  // int nCPU;
+  // pdfs
+  void buildDoubleCB();
+  void buildCBG();
   
-  // kinematics and flags
+
   float ptLow, ptHigh, yLow, yHigh;
   int cLow, cHigh;
   float cosLow, cosHigh;
   int PR, PRw;
   bool fEffW, fAccW, isPtW, isTnP;
-  std::string fname; // PR, NP
 
-  // model info
-  json yields;
-  std::string signal_model_type;
-  json signal_model_params;
-  std::vector<std::string> signal_component_names;
-  std::vector<std::string> bkg_component_names;
+  // lablels and paths
+  std::string kineLabel;
+  std::string fname;
 
-  // plotting info
-  std::vector<std::string> params_to_plot;
-  json plotting_style;
-  int nMassBin;
-  double massPlotMin, massPlotMax;
-  double massFitMin, massFitMax;
+  // pdf parameters
+  std::map<std::string, std::tuple<double, double, double>> pdfParameters;
+
+  TFile *fInputData = nullptr;
+  RooWorkspace *ws = nullptr;
+  RooFitResult *fitResult = nullptr;
 };
