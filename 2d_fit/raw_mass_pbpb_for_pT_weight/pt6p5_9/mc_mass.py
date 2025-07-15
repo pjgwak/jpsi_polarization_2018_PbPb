@@ -20,31 +20,32 @@ from ROOT import McMassFit
 
 # make an instance
 fit = McMassFit(
-    ptLow=3.0, ptHigh=6.5,
+    ptLow=6.5, ptHigh=9.0,
     yLow=1.6, yHigh=2.4,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
-    PR=cfg["default_PR"], # 이하 local_config로 이동?
+    PR=cfg["default_PR"],
     PRw=cfg["default_PRw"],
-    fEffW=False,
-    fAccW=False,
-    isPtW=False,
-    isTnP=False
+    fEffW=cfg['default_fEffW'],
+    fAccW=cfg['default_fAccW'],
+    isPtW=cfg['default_isPtW'],
+    isTnP=cfg['default_isTnP']
 )
 
 # input, user name tag and pdf type
-fit.inputFilePath = cfg["input_path"]
+fit.inputFilePath = cfg["mc_input_path"]
 fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
-fit.pdfType = cfg["default_pdf_type"] # doubleCB, CBG
+fit.pdfType = cfg["default_pdf_mass_sig"] # doubleCB, CBG
+# fit.pdfType = 'CBG' # for test
 fit.isWeighted = False
 
-# mc mass fit range
+# mc mass fit range - you can change it too!
 fit.massMax = 3.27
 
 fit.init() # set lablels, pdfs
 
 # fit parameters
-if fit.pdfType == "doubleCB":
+if fit.pdfType == 'doubleCB':
   fit.initVar('N_Jpsi', 500000, 200000, 600000)
   fit.initVar('mean', 3.096, 3.086, 3.106)
   fit.initVar('sigma_1_A', 0.01, 0.001, 0.1)

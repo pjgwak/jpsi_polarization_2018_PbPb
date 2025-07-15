@@ -40,11 +40,7 @@ McMassFit::~McMassFit()
 {
   RooMsgService::instance().getStream(1).addTopic(RooFit::ObjectHandling);
   
-  if (fInputData) {
-    fInputData->Close();
-    delete fInputData;
-  }
-  
+  delete fInputData;  
   delete ws;
   delete fitResult;
 }
@@ -204,7 +200,7 @@ void McMassFit::buildDoubleCB() {
 void McMassFit::buildCBG()
 {
   // signal parameters
-  RooRealVar mean("mean", "gauss mean", 3.096, 3.086, 3.106);
+  RooRealVar mean("mean", "cb mean", 3.096, 3.086, 3.106);
   RooRealVar sigma_cb("sigma_cb", "CB sigma", 0.01, 0.001, 0.1);
   RooRealVar x_A("x_A", "sigma ratio", 1.1, 1, 3);
   RooRealVar alpha_cb("alpha_cb", "tail shift", 1.5, 0.8, 5);
@@ -232,6 +228,13 @@ void McMassFit::buildCBG()
 
 void McMassFit::initVar(const std::string &varName, double init, double low, double high)
 {
+  if (init < low || init > high)
+  {
+    std::cerr << "[ERROR] init value out of bounds for variable: " << varName << "\n";
+    std::cerr << "        init = " << init << ", range = [" << low << ", " << high << "]\n";
+    exit(1);
+  }
+
   ws->var(varName.c_str())->setVal(init);
   ws->var(varName.c_str())->setRange(low, high);
 }
@@ -294,7 +297,6 @@ void McMassFit::makePlot()
     ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("gauss"), Components("gauss"), LineWidth(3), LineColor(kBlue + 2), Range("mcFitRange"), NormRange("mcFitRange"), LineStyle(kDashed));
   }
   
-
   // legend
   TLegend *legend = new TLegend(0.6, 0.65, 0.88, 0.88);
   legend->SetBorderSize(0);
@@ -331,7 +333,7 @@ void McMassFit::makePlot()
   double Ydown;
   double Yup;
   Ydown = YMin / (TMath::Power((YMax / YMin), (0.1 / (1.0 - 0.1 - 0.4))));
-  Yup = YMax * TMath::Power((YMax / YMin), (0.4 / (1.0 - 0.1 - 0.4)));
+  Yup = 10 * YMax * TMath::Power((YMax / YMin), (0.4 / (1.0 - 0.1 - 0.4)));
 
   massFrame->GetYaxis()->SetRangeUser(Ydown, Yup);
   massFrame->GetXaxis()->SetLabelSize(0);
@@ -341,28 +343,37 @@ void McMassFit::makePlot()
   massFrame->Draw();
   legend->Draw();
 
-  drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c", ptLow, ptHigh), text_x, text_y, text_color, text_size);
+  // draw bin information
+  // drawText(Form("%.1f < p_{T} < %.1f GeV/c", ptLow, ptHigh), text_x+0.3, text_y, kBlack, text_size);
+  // drawText(Form("%.1f < |y| < %.1f", yLow, yHigh), text_x+0.3, text_y - y_diff, kBlack, text_size);
+  // drawText(Form("Cent. %d-%d %%", cLow / 2, cHigh / 2), text_x+0.3, text_y - 2 * y_diff, kBlack, text_size);
+
+  // draw fit parameters
   if (yLow == 0)
-    drawText(Form("|y^{#mu#mu}| < %.1f", yHigh), text_x, text_y - y_diff, text_color, text_size);
+    drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c, |y^{#mu#mu}| < %.1f, Cent. %d - %d%s ", ptLow, ptHigh, yHigh, cLow / 2, cHigh / 2, "%"), text_x, text_y, text_color, text_size);
   else if (yLow != 0)
-    drawText(Form("%.1f < |y^{#mu#mu}| < %.1f", yLow, yHigh), text_x, text_y - y_diff, text_color, text_size);
-  drawText(Form("N_{J/#psi} = %.f #pm %.f", ws->var("N_Jpsi")->getVal(), ws->var("N_Jpsi")->getError()), text_x, text_y - y_diff * 2, text_color, text_size);
+    drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c; %.1f < |y^{#mu#mu}| < %.1f; Cent. %d - %d%s", ptLow, ptHigh, yLow, yHigh, cLow / 2, cHigh / 2, "%"), text_x, text_y, text_color, text_size);
+
+  int y_count = 1;
+
+  drawText(Form("N_{J/#psi} = %.f #pm %.f", ws->var("N_Jpsi")->getVal(), ws->var("N_Jpsi")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+  drawText(Form("mean = %.4f #pm %.4f", ws->var("mean")->getVal(), ws->var("mean")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
   // drawText(Form("n_{Bkg} = %.f #pm %.f",ws->var("N_Bkg")->getVal(),ws->var("N_Bkg")->getError()),text_x,text_y-y_diff*4,text_color,text_size);
   if (pdfType == "doubleCB")
   {
-    drawText(Form("#alpha = %.4f #pm %.4f", ws->var("alpha_1_A")->getVal(), ws->var("alpha_1_A")->getError()), text_x, text_y - y_diff * 3, text_color, text_size);
-    drawText(Form("f = %.4f #pm %.4f", ws->var("f")->getVal(), ws->var("f")->getError()), text_x, text_y - y_diff * 4, text_color, text_size);
-    drawText(Form("n_{1} = %.4f #pm %.4f", ws->var("n_1_A")->getVal(), ws->var("n_1_A")->getError()), text_x, text_y - y_diff * 5, text_color, text_size);
-    drawText(Form("#sigma_{1} = %.4f #pm %.4f", ws->var("sigma_1_A")->getVal(), ws->var("sigma_1_A")->getError()), text_x, text_y - y_diff * 6, text_color, text_size);
-    drawText(Form("#sigma_{2} / #sigma_{1} = %.4f #pm %.4f", ws->var("x_A")->getVal(), ws->var("x_A")->getError()), text_x, text_y - y_diff * 7, text_color, text_size);
+    drawText(Form("#alpha = %.4f #pm %.4f", ws->var("alpha_1_A")->getVal(), ws->var("alpha_1_A")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawText(Form("f = %.4f #pm %.4f", ws->var("f")->getVal(), ws->var("f")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawText(Form("n_{1} = %.4f #pm %.4f", ws->var("n_1_A")->getVal(), ws->var("n_1_A")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawText(Form("#sigma_{1} = %.4f #pm %.4f", ws->var("sigma_1_A")->getVal(), ws->var("sigma_1_A")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawText(Form("#sigma_{2} / #sigma_{1} = %.4f #pm %.4f", ws->var("x_A")->getVal(), ws->var("x_A")->getError()), text_x, text_y - y_diff * y_count++, text_color, text_size);
   }
   else if (pdfType == "CBG")
   {
-    drawText(Form("#alpha = %.4f #pm %.4f", ws->var("alpha_cb")->getVal(), ws->var("alpha_cb")->getError()), text_x, text_y - y_diff * 3, text_color, text_size);
-    drawText(Form("f = %.4f #pm %.4f", ws->var("f")->getVal(), ws->var("f")->getError()), text_x, text_y - y_diff * 4, text_color, text_size);
-    drawText(Form("n_{cb} = %.4f #pm %.4f", ws->var("n_cb")->getVal(), ws->var("n_cb")->getError()), text_x, text_y - y_diff * 5, text_color, text_size);
-    drawText(Form("#sigma_{cb} = %.4f #pm %.4f", ws->var("sigma_cb")->getVal(), ws->var("sigma_cb")->getError()), text_x, text_y - y_diff * 6, text_color, text_size);
-    drawText(Form("#sigma_{gauss} / #sigma_{cb} = %.4f #pm %.4f", ws->var("x_A")->getVal(), ws->var("x_A")->getError()), text_x, text_y - y_diff * 7, text_color, text_size);
+    drawText(Form("#alpha = %.4f #pm %.4f", ws->var("alpha_cb")->getVal(), ws->var("alpha_cb")->getError()), text_x, text_y - y_diff * y_diff * y_count++, text_color, text_size);
+    drawText(Form("f = %.4f #pm %.4f", ws->var("f")->getVal(), ws->var("f")->getError()), text_x, text_y - y_diff * y_diff * y_count++, text_color, text_size);
+    drawText(Form("n_{cb} = %.4f #pm %.4f", ws->var("n_cb")->getVal(), ws->var("n_cb")->getError()), text_x, text_y - y_diff * y_diff * y_count++, text_color, text_size);
+    drawText(Form("#sigma_{cb} = %.4f #pm %.4f", ws->var("sigma_cb")->getVal(), ws->var("sigma_cb")->getError()), text_x, text_y - y_diff * y_diff * y_count++, text_color, text_size);
+    drawText(Form("#sigma_{gauss} / #sigma_{cb} = %.4f #pm %.4f", ws->var("x_A")->getVal(), ws->var("x_A")->getError()), text_x, text_y - y_diff * y_diff * y_count++, text_color, text_size);
   }
   
 

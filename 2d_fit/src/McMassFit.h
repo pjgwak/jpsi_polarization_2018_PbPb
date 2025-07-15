@@ -1,7 +1,5 @@
 #pragma once
 #include <string>
-#include <map>
-#include <tuple>
 
 class TFile;
 class RooWorkspace;
@@ -40,7 +38,6 @@ private:
   // pdfs
   void buildDoubleCB();
   void buildCBG();
-  
 
   float ptLow, ptHigh, yLow, yHigh;
   int cLow, cHigh;
@@ -51,9 +48,6 @@ private:
   // lablels and paths
   std::string kineLabel;
   std::string fname;
-
-  // pdf parameters
-  std::map<std::string, std::tuple<double, double, double>> pdfParameters;
 
   TFile *fInputData = nullptr;
   RooWorkspace *ws = nullptr;
