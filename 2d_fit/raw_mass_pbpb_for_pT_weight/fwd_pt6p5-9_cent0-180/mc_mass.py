@@ -36,7 +36,7 @@ fit.inputFilePath = cfg["mc_input_path"]
 fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
 fit.pdfType = cfg["default_pdf_mass_sig"] # doubleCB, CBG
 # fit.pdfType = 'CBG' # for test
-fit.isWeighted = False
+fit.isWeighted = False # should it go to local_config?
 
 # mc mass fit range - you can change it too!
 # fit.massMin = 2.6
