@@ -33,6 +33,9 @@ private:
   void defineModel();
   void performFit();
   void makePlot();
+  void makeRatioPlot();
+  void drawTextVar(const char *varName, const char *label, float xp, float yp, int textColor, int textSize);
+  void drawTextVarInt(const char *varName, const char *label, float xp, float yp, int textColor, int textSize);
   void saveResults();
 
   // pdfs

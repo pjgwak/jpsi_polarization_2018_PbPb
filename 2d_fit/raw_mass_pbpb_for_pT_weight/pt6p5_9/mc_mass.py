@@ -5,7 +5,6 @@ from local_config import get_common_config
 
 import shutil
 
-
 from ROOT import gSystem, gROOT
 gROOT.SetBatch(True)
 
@@ -20,7 +19,7 @@ from ROOT import McMassFit
 
 # make an instance
 fit = McMassFit(
-    ptLow=6.5, ptHigh=9.0,
+    ptLow=6.5, ptHigh=9,
     yLow=1.6, yHigh=2.4,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
@@ -40,33 +39,28 @@ fit.pdfType = cfg["default_pdf_mass_sig"] # doubleCB, CBG
 fit.isWeighted = False
 
 # mc mass fit range - you can change it too!
-fit.massMax = 3.27
+# fit.massMin = 2.6
+fit.massMax = 3.2
 
 fit.init() # set lablels, pdfs
 
 # fit parameters
 if fit.pdfType == 'doubleCB':
-  fit.initVar('N_Jpsi', 500000, 200000, 600000)
-  fit.initVar('mean', 3.096, 3.086, 3.106)
-  fit.initVar('sigma_1_A', 0.01, 0.001, 0.1)
-  fit.initVar('x_A', 1.1, 1, 3)
-  fit.initVar('alpha_1_A', 1.5, 0.2, 5)
-  fit.initVar('n_1_A', 1, 0.2, 5)
-  fit.initVar('f', 0.6, 0.05, 0.95)
+  fit.initVar('N_Jpsi', 400000, 200000, 600000)
+  # fit.initVar('mean', 3.096, 3.096, 3.096) # use default value
+  fit.initVar('sigma_1_A', 0.02, 0.001, 0.08)
+  fit.initVar('x_A', 2, 1.0, 3.0)
+  fit.initVar('alpha_1_A', 1.5, 0.001, 3)
+  fit.initVar('n_1_A', 1.5, 1, 5)
+  fit.initVar('f', 0.5, 0.01, 0.98)
 
 fit.run()
 
-# --- set plotting configuration ---
-# drawing options etc
-# positon
-# legend
-# etc.
-# 그냥 root 파일에 필요한 거 저장해놓고 한 번 더 돌릴까?
-
 print('--- Finish mc_mass fit ---')
 
-
-# ---- Not used ----
+# -----------------------
+# --- free user notes ---
+# -----------------------
 # if pdfType == "DoubleCB":
 #   fit.initVar('N_Jpsi', 500000, 200000, 600000)
 #   fit.initVar('mean', 3.096, 3.086, 3.106)

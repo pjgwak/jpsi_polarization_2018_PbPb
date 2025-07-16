@@ -303,9 +303,22 @@ void MassFit::buildExpo()
   ws->import(pdfMASS_bkg);
 }
 
-void MassFit::buildCheby(int order)
+void MassFit::buildCheby()
 {
   std::cout << "===== buildCheby() =====\n\n";
+
+  // get the order number
+  int order = -1;
+  if (pdfTypeBkg.find("cheby") == 0 && pdfTypeBkg.size() == 6 && isdigit(pdfTypeBkg[5]))
+  {
+    order = pdfTypeBkg[5] - '0'; // trick: change char -> int
+  }
+  if (order < 1 || order > 6)
+  {
+    std::cout << "[ERROR] failed to build bkg model: " << pdfTypeBkg << "\n";
+    std::cout << "possible PDFs: expo, cheby1, cheby2 ... cheby6\n";
+  }
+
   // bkg parameters
   RooRealVar sl1("sl1", "mass bkg sl1", 0.01, -1., 1.);
   RooRealVar sl2("sl2", "mass bkg sl2", 0.01, -1., 1.);
@@ -345,18 +358,8 @@ void MassFit::defineModel()
   // bkg
   if (pdfTypeBkg == "expo")
     buildExpo();
-  else if (pdfTypeBkg == "cheby1")
-    buildCheby(1);
-  else if (pdfTypeBkg == "cheby2")
-    buildCheby(2);
-  else if (pdfTypeBkg == "cheby3")
-    buildCheby(3);
-  else if (pdfTypeBkg == "cheby4")
-    buildCheby(4);
-  else if (pdfTypeBkg == "cheby5")
-    buildCheby(5);
-  else if (pdfTypeBkg == "cheby6")
-    buildCheby(6);
+  else if (pdfTypeBkg.find("cheby") == 0)
+    buildCheby();
   else
   {
     std::cout << "[ERROR] failed to build bkg model: " << pdfTypeBkg << "\n";
@@ -397,20 +400,72 @@ void MassFit::performFit()
   fitResult = pdf->fitTo(*data, Save(), Hesse(kTRUE), Range("massFitRange"), Timer(kTRUE), Extended(kTRUE), SumW2Error(isWeighted), NumCPU(nCPU), Strategy(2));
 
   fitResult->Print("V");
+}
 
-  std::cout << "fixing floating parameters to constant (after fitting)\n";
-  const RooArgList &floatted_params = fitResult->floatParsFinal();
-  for (auto arg : floatted_params)
-  {
-    RooRealVar *param = dynamic_cast<RooRealVar *>(arg);
-    if (param)
-    {
-      std::cout << "Fixing parameter: " << param->GetName() << "\n";
-      ws->var(param->GetName())->setConstant(kTRUE);
-    }
-  }
+void MassFit::drawTextVar(const char *varName, const char *label, float xp, float yp, int textColor, int textSize)
+{
+  RooRealVar *var = ws->var(varName);
+  if (!var)
+    return;
 
-  // Todo: turn off setConstantn - N_Jpsi, N_Bkg
+  double val = var->getVal();
+  double err = var->getError();
+  double low = var->getMin();
+  double high = var->getMax();
+  bool isConst = var->isConstant();
+
+  const double abs_epsilon = 1e-4; // boundary-val < 0.0001
+  const double rel_epsilon = 1e-3; // 0.1 %
+  const double minErr = 1e-4;
+
+  // if boundary-val <0.0001 and diff/limit < 0.1%, parameter is stuck at the boundary
+  bool atLowerLimit = (std::fabs(val - low) < abs_epsilon) || (low != 0 && std::fabs((val - low) / low) < rel_epsilon);
+  bool atUpperLimit = (std::fabs(val - high) < abs_epsilon) || (high != 0 && std::fabs((val - high) / high) < rel_epsilon);
+
+  TString text;
+  if (isConst)
+    text = Form("%s = %.4f (fixed)", label, val);
+  else if (atLowerLimit || atUpperLimit)
+    text = Form("%s = %.4f (limit)", label, val);
+  else if (err < minErr)
+    text = Form("%s = %.4f #pm < %.4f", label, val, minErr);
+  else
+    text = Form("%s = %.4f #pm %.4f", label, val, err);
+
+  drawText(text, xp, yp, textColor, textSize);
+}
+
+void MassFit::drawTextVarInt(const char *varName, const char *label, float xp, float yp, int textColor, int textSize)
+{
+  RooRealVar *var = ws->var(varName);
+  if (!var)
+    return;
+
+  double val = var->getVal();
+  double err = var->getError();
+  double low = var->getMin();
+  double high = var->getMax();
+  bool isConst = var->isConstant();
+
+  const double abs_epsilon = 1e-4; // boundary-val < 0.0001
+  const double rel_epsilon = 1e-3; // 0.1 %
+  const double minErr = 1e-4;
+
+  // if boundary-val <0.0001 and diff/limit < 0.1%, parameter is stuck at the boundary
+  bool atLowerLimit = (std::fabs(val - low) < abs_epsilon) || (low != 0 && std::fabs((val - low) / low) < rel_epsilon);
+  bool atUpperLimit = (std::fabs(val - high) < abs_epsilon) || (high != 0 && std::fabs((val - high) / high) < rel_epsilon);
+
+  TString text;
+  if (isConst)
+    text = Form("%s = %.f (fixed)", label, val);
+  else if (atLowerLimit || atUpperLimit)
+    text = Form("%s = %.f (limit)", label, val);
+  else if (err < minErr)
+    text = Form("%s = %.f #pm < %.f", label, val, minErr);
+  else
+    text = Form("%s = %.f #pm %.f", label, val, err);
+
+  drawText(text, xp, yp, textColor, textSize);
 }
 
 void MassFit::makePlot()
@@ -445,9 +500,6 @@ void MassFit::makePlot()
     ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("bkg_plus_cb"), Components(RooArgSet(*ws->pdf("pdfMASS_bkg"), *ws->pdf("cb"))), LineColor(44), LineStyle(kDashDotted), Range("massFitRange"), NormRange("massFitRange"));
     ws->pdf("pdfMASS_Tot")->plotOn(massFrame, Name("bkg_plus_gauss"), Components(RooArgSet(*ws->pdf("pdfMASS_bkg"), *ws->pdf("gauss"))), LineColor(8), LineStyle(kDashDotted), Range("massFitRange"), NormRange("massFitRange"));
   }
-
-
-
 
   massFrame->SetFillStyle(4000);
   massFrame->GetYaxis()->SetTitleOffset(1.43);
@@ -503,31 +555,32 @@ void MassFit::makePlot()
     drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c, |y^{#mu#mu}| < %.1f, Cent. %d - %d%s ", ptLow, ptHigh, yHigh, cLow / 2, cHigh / 2, "%"), text_x, text_y, text_color, text_size);
   else if (yLow != 0)
     drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c; %.1f < |y^{#mu#mu}| < %.1f; Cent. %d - %d%s", ptLow, ptHigh, yLow, yHigh, cLow / 2, cHigh / 2, "%"), text_x, text_y, text_color, text_size);
-  drawText(Form("N_{J/#psi} = %.f #pm %.f,  N_{Bkg} = %.f #pm %.f", ws->var("N_Jpsi")->getVal(), ws->var("N_Jpsi")->getError(), ws->var("N_Bkg")->getVal(), ws->var("N_Bkg")->getError()), text_x, text_y - y_diff * 1, text_color, text_size);
-  drawText(Form("mean = %.4f #pm %.4f", ws->var("mean")->getVal(), ws->var("mean")->getError()), text_x, text_y - y_diff * 2, text_color, text_size);
 
-  int y_count = 3; // After: y, N_Jpsi, N_Bkg
-
+  int y_count = 1;
+  drawTextVarInt("N_Jpsi", "N_{J/#psi}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+  drawTextVarInt("N_Bkg", "N_{Bkg}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+  drawTextVar("mean", "mean", text_x, text_y - y_diff * y_count++, text_color, text_size);
   if (pdfTypeSig == "doubleCB")
   {
-    drawText(Form("#alpha_{J/#psi} = %.4f (fixed)", ws->var("alpha_1_A")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("f_{J/#psi} = %.4f (fixed)", ws->var("f")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("n_{J/#psi} = %.4f (fixed)", ws->var("n_1_A")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("#sigma1_{J/#psi} = %.2f #pm %.2f MeV/c^{2}, (#sigma2/#sigma1)_{J/#psi} = %.3f (fixed)", (ws->var("sigma_1_A")->getVal()) * 1000, (ws->var("sigma_1_A")->getError()) * 1000, ws->var("x_A")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("alpha_1_A", "#alpha", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("f", "f", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("n_1_A", "n_{1}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("sigma_1_A", "#sigma_{1}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("x_A", "#sigma_{2} / #sigma_{1}", text_x, text_y - y_diff * y_count++, text_color, text_size);
   }
   else if (pdfTypeSig == "CBG")
   {
-    drawText(Form("#alpha_{J/#psi} = %.4f (fixed)", ws->var("alpha_cb")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("f_{J/#psi} = %.4f (fixed)", ws->var("f")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("n_{J/#psi} = %.4f (fixed)", ws->var("n_cb")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
-    drawText(Form("#sigma1_{J/#psi} = %.2f #pm %.2f MeV/c^{2}, (#sigma2/#sigma1)_{J/#psi} = %.3f (fixed)", (ws->var("sigma_cb")->getVal()) * 1000, (ws->var("sigma_cb")->getError()) * 1000, ws->var("x_A")->getVal()), text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("alpha_cb", "#alpha", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("f", "f", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("n_cb", "n_{cb}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("sigma_cb", "#sigma_{cb}", text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("x_A", "#sigma_{gauss} / #sigma_{cb}", text_x, text_y - y_diff * y_count++, text_color, text_size);
   }
 
   // bkgs
   if (pdfTypeBkg == "expo")
   {
-    drawText(Form("#lambda_{Expo} = %.4f #pm %.4f", ws->var("lambda")->getVal(), ws->var("lambda")->getError()),
-             text_x, text_y - y_diff * y_count++, text_color, text_size);
+    drawTextVar("lambda", "#lambda_{Expo}", text_x, text_y - y_diff * y_count++, text_color, text_size);
   }
   else if (pdfTypeBkg.find("cheby") == 0)
   {
@@ -536,8 +589,8 @@ void MassFit::makePlot()
       std::string parName = Form("sl%d", i);
       if (ws->var(parName.c_str()))
       {
-        drawText(Form("sl%d = %.4f #pm %.4f", i, ws->var(parName.c_str())->getVal(), ws->var(parName.c_str())->getError()),
-                 text_x, text_y - y_diff * y_count++, text_color, text_size);
+        std::string label = Form("sl%d", i);
+        drawTextVar(parName.c_str(), label.c_str(), text_x, text_y - y_diff * y_count++, text_color, text_size);
       }
     }
   }
@@ -590,7 +643,7 @@ void MassFit::makePlot()
 
   
   myCanvas->Update();
-  myCanvas->SaveAs(Form("../figs/2DFit_%s/Mass/Mass_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  myCanvas->SaveAs(Form("../figs/2DFit_%s/Mass/Mass_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.pdf", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
   myCanvas->SaveAs(Form("figs/2DFit_%s/Mass_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
 
   delete myCanvas;

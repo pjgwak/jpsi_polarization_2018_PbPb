@@ -31,7 +31,7 @@ def get_common_config():
     'default_pdf_mass_bkg': 'cheby2',
 
     # ctau fit
-
+    
 
     # sample information flags
     'default_PR': 2,

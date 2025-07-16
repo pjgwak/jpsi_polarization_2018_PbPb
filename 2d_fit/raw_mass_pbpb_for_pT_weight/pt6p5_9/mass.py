@@ -45,7 +45,7 @@ fit.init() # input, lablels, pdfs
 
 # # fit parameters
 if fit.pdfTypeSig == 'doubleCB': # signal
-  fit.initVar('N_Jpsi', 50000, 10000, 100000)
+  fit.initVar('N_Jpsi', 100000, 10000, 200000)
   fit.initVar('sigma_1_A', 0.01, 0.001, 0.1)
   # fixed: x_A, alpha_1_A, n_1_A, f
 elif fit.pdfTypeSig == "CBG":
@@ -54,11 +54,15 @@ elif fit.pdfTypeSig == "CBG":
   # fit.initVar('mean', 3.096, 3.086, 3.106) # use default value
   # fixed: x_A, alpha_cb, n_cb, f
 
+# bkg
 if fit.pdfTypeBkg == 'expo': 
   fit.initVar('N_Bkg', 50000, 20000, 60000)
   fit.initVar('lambda', -0.01, -1., 0.)
+elif fit.pdfTypeBkg == 'cheby1': 
+  fit.initVar('N_Bkg', 50000, 20000, 60000)
+  fit.initVar('sl1', 0.01, -1, 1)
 elif fit.pdfTypeBkg == 'cheby2': 
-  # bkg - please change pdf name and comment in (out) according to order
+  # sl1~6 have default values inside MassFit.cpp
   fit.initVar('N_Bkg', 50000, 20000, 60000)
   fit.initVar('sl1', 0.01, -1, 1) # cheby always -1 ~ 1
   fit.initVar('sl2', 0.01, -1, 1)
@@ -69,13 +73,6 @@ elif fit.pdfTypeBkg == 'cheby2':
 
 
 fit.run()
-
-# # --- set plotting configuration ---
-# # drawing options etc
-# # positon
-# # legend
-# # etc.
-# # 그냥 root 파일에 필요한 거 저장해놓고 한 번 더 돌릴까?
 
 print('--- Finish mass fit ---')
 

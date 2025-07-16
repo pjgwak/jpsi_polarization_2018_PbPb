@@ -33,13 +33,15 @@ private:
   void defineModel();
   void performFit();
   void makePlot();
+  void drawTextVar(const char *varName, const char *label, float xp, float yp, int textColor, int textSize);
+  void drawTextVarInt(const char *varName, const char *label, float xp, float yp, int textColor, int textSize);
   void saveResults();
 
   // pdfs
   void buildDoubleCB();
   void buildCBG();
   void buildExpo();
-  void buildCheby(int order); // cheby 1 ~ 6
+  void buildCheby(); // cheby 1 ~ 6
 
 
   float ptLow, ptHigh, yLow, yHigh;
