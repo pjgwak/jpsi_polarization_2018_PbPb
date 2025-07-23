@@ -52,6 +52,8 @@ class FlowSkimRun3DataPbPb
 
     // event counter
     long totalEvents = 0;
+
+    int count_all = 0;
     int count = 0;
     int count_soft = 0;
     int count_vtx = 0;
@@ -85,7 +87,7 @@ class FlowSkimRun3DataPbPb
     Float_t Reco_QQ_VtxProb[maxBranchSize], Reco_QQ_ctau3D[maxBranchSize], Reco_QQ_ctauErr3D[maxBranchSize];
 
     // Reco_mu 
-    Int_t Reco_mu_whichGen[maxBranchSize];
+    Short_t Reco_mu_whichGen[maxBranchSize];
     Bool_t Reco_mu_highPurity[maxBranchSize], Reco_mu_TMOneStaTight[maxBranchSize];
     Int_t Reco_mu_nTrkHits[maxBranchSize], Reco_mu_nMuValHits[maxBranchSize], Reco_mu_StationsMatched[maxBranchSize];
     Float_t Reco_mu_normChi2_global[maxBranchSize], Reco_mu_dxy[maxBranchSize], Reco_mu_dxyErr[maxBranchSize];

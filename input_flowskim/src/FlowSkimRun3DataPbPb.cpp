@@ -70,10 +70,10 @@ void FlowSkimRun3DataPbPb::run(long nevt)
   saveResults();
 
   // output summary
-  // std::cout << "count " << count << "\n";
-  // std::cout << "count soft " << count_soft << "\n";
-  // std::cout << "count vtx " << count_vtx << "\n";
-  // std::cout << "counttnp " << counttnp << "\n";
+  std::cout << "count_all " << count_all << "\n";
+  std::cout << "count soft " << count_soft << "\n";
+  std::cout << "count vtx " << count_vtx << "\n";
+  std::cout << "counttnp " << counttnp << "\n";
 }
 
 void FlowSkimRun3DataPbPb::setLabels()
@@ -89,6 +89,10 @@ void FlowSkimRun3DataPbPb::setLabels()
 
   if (kTrigSel == 12) // Todo: use cutsAndBins
     trigIndx = 0;
+  else if (kTrigSel == -1)
+    trigIndx = 99999; // dummy
+
+  gSystem->mkdir(Form("../roots"));
   
   // not used
   // else if (kTrigSel == kTrigUps)
@@ -120,10 +124,12 @@ void FlowSkimRun3DataPbPb::setInputBranches()
   Reco_QQ_4mom = new TClonesArray("TLorentzVector");
   Reco_mu_4mom = new TClonesArray("TLorentzVector");
 
-
-  inputTree->SetBranchAddress("runNb", &runNb);
+  if (!isMC) {
+    inputTree->SetBranchAddress("runNb", &runNb);
+    inputTree->SetBranchAddress("LS", &LS);
+  }
+  
   inputTree->SetBranchAddress("eventNb", &eventNb);
-  inputTree->SetBranchAddress("LS", &LS);
   inputTree->SetBranchAddress("zVtx", &zVtx);
   inputTree->SetBranchAddress("Centrality", &Centrality);
   inputTree->SetBranchAddress("HLTriggers", &HLTriggers);
@@ -173,7 +179,7 @@ void FlowSkimRun3DataPbPb::setOutputFile()
 {
   std::cout << "===== setOutputFile() =====\n\n";
   // Todo: change naming rule
-  outputFile = new TFile(Form("OniaFlowSkim_isMC%d_%s.root", isMC, userTag.c_str()), "recreate");
+  outputFile = new TFile(Form("../roots/OniaFlowSkim_isMC%d_%s.root", isMC, userTag.c_str()), "recreate");
   // outputFile = new TFile(Form("OniaFlowSkim_%sTrig_5p36TeV_%sPD_miniAOD_isMC%d_%s_231019.root", fTrigName[trigIndx].Data(), sampleType.Data(), isMC, centHfTag.Data()), "recreate");
 }
 
@@ -183,9 +189,12 @@ void FlowSkimRun3DataPbPb::setOutputBranches()
   outputTree = new TTree(outputTreeName.c_str(), "");
   outputTree->SetMaxTreeSize(MAXTREESIZE);
 
+  
   outputTree->Branch("event", &evt, "event/I");
-  outputTree->Branch("runN", &runN, "runN/I");
-  outputTree->Branch("lumi", &lumi, "lumi/I");
+  if (!isMC) {
+    outputTree->Branch("runN", &runN, "runN/I");
+    outputTree->Branch("lumi", &lumi, "lumi/I");
+  }
   outputTree->Branch("cBin", &cBin, "cBin/I");
   outputTree->Branch("vz", &vz, "vz/F");
   outputTree->Branch("nDimu", &nDimu, "nDimu/I");
@@ -228,8 +237,11 @@ void FlowSkimRun3DataPbPb::processEvent(long iev)
 
   // event value
   evt = eventNb;
-  runN = runNb;
-  lumi = LS;
+  if (!isMC) {
+    runN = runNb;
+    lumi = LS;
+  }
+  
   vz = zVtx;
 
   // decide centrality bins 
@@ -249,18 +261,19 @@ void FlowSkimRun3DataPbPb::processEvent(long iev)
 
   // apply high level trigger
   // if((  (HLTriggers&((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel)) ) ){ std::cout << "iev : " << iev << " HLTriggers : " << HLTriggers << " kTrigSel : " << kTrigSel << "\n";	}
-  if (!((HLTriggers & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
-    return;
+  // if (!((HLTriggers & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
+  //   return;
 
   for (Int_t irqq = 0; irqq < Reco_QQ_size; ++irqq)
   {
+    ++count_all;
     // --- trigger --- 
     // if( ( (Reco_QQ_trig[irqq]&((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel)) ) ){ std::cout << "Reco_QQ_trig : " << Reco_QQ_trig[irqq] << "\n";}
-    if (!((Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
-      continue;
+    // if (!((Reco_QQ_trig[irqq] & ((ULong64_t)pow(2, kTrigSel))) == ((ULong64_t)pow(2, kTrigSel))))
+    //   continue;
 
     // --- soft muon cut ---
-    bool passMuonTypePl = true;
+    bool passMuonTypePl = true; // below two lines includes Reco_mu_highPurity, Reco_mu_TMOneStaTight
     passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[irqq]] & ((int)pow(2, 1)));
     passMuonTypePl = passMuonTypePl && (Reco_mu_SelectionType[Reco_QQ_mupl_idx[irqq]] & ((int)pow(2, 3)));
 
@@ -268,20 +281,20 @@ void FlowSkimRun3DataPbPb::processEvent(long iev)
     passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[irqq]] & ((int)pow(2, 1)));
     passMuonTypeMi = passMuonTypeMi && (Reco_mu_SelectionType[Reco_QQ_mumi_idx[irqq]] & ((int)pow(2, 3)));
 
-    bool muplSoft = ( //(Reco_mu_TMOneStaTight[Reco_QQ_mupl_idx[irqq]]==true) &&
+    bool muplSoft = ( (Reco_mu_TMOneStaTight[Reco_QQ_mupl_idx[irqq]]==true) &&
         (Reco_mu_nTrkWMea[Reco_QQ_mupl_idx[irqq]] > 5) &&
         (Reco_mu_nPixWMea[Reco_QQ_mupl_idx[irqq]] > 0) &&
         (fabs(Reco_mu_dxy[Reco_QQ_mupl_idx[irqq]]) < 0.3) &&
         (fabs(Reco_mu_dz[Reco_QQ_mupl_idx[irqq]]) < 20.) &&
-        passMuonTypePl //                       &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true)
+        passMuonTypePl && (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true)
     );
 
-    bool mumiSoft = ( //(Reco_mu_TMOneStaTight[Reco_QQ_mumi_idx[irqq]]==true) &&
+    bool mumiSoft = ( (Reco_mu_TMOneStaTight[Reco_QQ_mumi_idx[irqq]]==true) &&
         (Reco_mu_nTrkWMea[Reco_QQ_mumi_idx[irqq]] > 5) &&
         (Reco_mu_nPixWMea[Reco_QQ_mumi_idx[irqq]] > 0) &&
         (fabs(Reco_mu_dxy[Reco_QQ_mumi_idx[irqq]]) < 0.3) &&
         (fabs(Reco_mu_dz[Reco_QQ_mumi_idx[irqq]]) < 20.) &&
-        passMuonTypeMi //                        &&  (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true)
+        passMuonTypeMi && (Reco_mu_highPurity[Reco_QQ_mupl_idx[irqq]]==true)
     );
 
     if ((muplSoft && mumiSoft))
@@ -331,11 +344,10 @@ void FlowSkimRun3DataPbPb::processEvent(long iev)
       weight = findNcoll(Centrality) * Gen_weight;
     }
 
-    count++;
     // Todo:
     //  1. Which filter should we use?
     //  [Done] 2. where is tnp realted functions?
-    if (isMC)
+    if (isMC && kTrigSel != -1)
     {
       tnp_weight = 1; // reset
       tnp_trig_weight_mupl = -1; // negative one
