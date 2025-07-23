@@ -15,8 +15,12 @@ def get_common_config():
 
   config = {
     # --- input ---
-    'mc_input_path': str(files_root / 'RooDataSet_miniAOD_isMC1_PR_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root'),
-    'data_input_path': str(files_root / 'RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root'),
+    # 'mc_input_path': str(files_root / 'RooDataSet_miniAOD_isMC1_PR_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root'),
+    # 'data_input_path': str(files_root / 'RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root'),
+
+    'mc_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC1_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
+    'data_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
+    
     'shared_lib_path': str(lib_path),
 
     # --- output base dir ---

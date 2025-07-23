@@ -1,7 +1,12 @@
-import sys
+import os, sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent)) # to call local_config
 from local_config import get_common_config
+
+# set working directory path - parent of this script
+script_path = os.path.abspath(sys.argv[0])
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
 import shutil
 
@@ -17,10 +22,10 @@ gSystem.Load(cfg['shared_lib_path'])
 # import cpp class
 from ROOT import MassFit
 
-# # make an instance
+# make an instance
 fit = MassFit(
-    ptLow=6.5, ptHigh=9.0,
-    yLow=1.6, yHigh=2.4,
+    ptLow=6.5, ptHigh=50,
+    yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
     PR=cfg["default_PR"],
@@ -38,34 +43,39 @@ fit.pdfTypeSig = cfg["default_pdf_mass_sig"] # doubleCB, CBG
 fit.pdfTypeBkg = cfg["default_pdf_mass_bkg"] # expo, cheby1, ..., cheby6
 # fit.pdfTypeSig = 'CBG' # for test
 # fit.pdfTypeBkg = 'expo' # for test
-# fit.pdfTypeBkg = 'cheby2' #for test
+# fit.pdfTypeBkg = 'cheby1' #for test
 fit.isWeighted = False
 
 fit.init() # input, lablels, pdfs
 
-# # fit parameters
+# fit parameters
 if fit.pdfTypeSig == 'doubleCB': # signal
-  fit.initVar('N_Jpsi', 100000, 10000, 200000)
-  fit.initVar('sigma_1_A', 0.01, 0.001, 0.1)
+  fit.initVar('N_Jpsi', 7000, 5000, 10000)
+  fit.initVar('sigma_1_A', 0.02, 0.001, 0.1)
   # fixed: x_A, alpha_1_A, n_1_A, f
+  # fit.initVar('mean', 3.096, 3.086, 3.106) # use default value
+  # fit.initVar('x_A', 1.1, 1, 5) # fixed
+  # fit.initVar('alpha_1_A', 1.5, 0.2, 5) # fixed
+  # fit.initVar('n_1_A', 1.5, 1, 100) # fixed
+  # fit.initVar('f', 0.6, 0.05, 0.95) # fixed
 elif fit.pdfTypeSig == "CBG":
-  fit.initVar('N_Jpsi', 50000, 10000, 600000)
+  fit.initVar('N_Jpsi', 10000, 2000, 40000)
   fit.initVar('sigma_cb', 0.01, 0.001, 0.1)
   # fit.initVar('mean', 3.096, 3.086, 3.106) # use default value
   # fixed: x_A, alpha_cb, n_cb, f
 
 # bkg
 if fit.pdfTypeBkg == 'expo': 
-  fit.initVar('N_Bkg', 50000, 20000, 60000)
-  fit.initVar('lambda', -0.01, -1., 0.)
+  fit.initVar('N_Bkg', 2000, 10, 20000)
+  fit.initVar('lambda', -0.01, -1., 1)
 elif fit.pdfTypeBkg == 'cheby1': 
-  fit.initVar('N_Bkg', 50000, 20000, 60000)
-  fit.initVar('sl1', 0.01, -1, 1)
+  fit.initVar('N_Bkg', 8000, 5000, 10000)
+  fit.initVar('sl1', 0.02, -1, 1)
 elif fit.pdfTypeBkg == 'cheby2': 
   # sl1~6 have default values inside MassFit.cpp
-  fit.initVar('N_Bkg', 50000, 20000, 60000)
-  fit.initVar('sl1', 0.01, -1, 1) # cheby always -1 ~ 1
-  fit.initVar('sl2', 0.01, -1, 1)
+  fit.initVar('N_Bkg', 8000, 5000, 10000)
+  fit.initVar('sl1', 0.03, -1, 1) # cheby always -1 ~ 1
+  fit.initVar('sl2', 0.05, -1, 1)
   # fit.initVar('sl3', 0.01, -1, 1)
   # fit.initVar('sl4', 0.01, -1, 1)
   # fit.initVar('sl5', 0.01, -1, 1)

@@ -1,7 +1,12 @@
-import sys
+import os, sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent)) # to call local_config
 from local_config import get_common_config
+
+# set working directory path - parent of this script
+script_path = os.path.abspath(sys.argv[0])
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
 import shutil
 
@@ -19,8 +24,8 @@ from ROOT import McMassFit
 
 # make an instance
 fit = McMassFit(
-    ptLow=6.5, ptHigh=9,
-    yLow=1.6, yHigh=2.4,
+    ptLow=6.5, ptHigh=50,
+    yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
     PR=cfg["default_PR"],
@@ -40,23 +45,24 @@ fit.isWeighted = False # should it go to local_config?
 
 # mc mass fit range - you can change it too!
 # fit.massMin = 2.6
-fit.massMax = 3.2
+fit.massMax = 3.21
 
 fit.init() # set lablels, pdfs
 
 # fit parameters
 if fit.pdfType == 'doubleCB':
-  fit.initVar('N_Jpsi', 400000, 200000, 600000)
+  fit.initVar('N_Jpsi', 2000000, 1000000, 3000000)
   # fit.initVar('mean', 3.096, 3.096, 3.096) # use default value
-  fit.initVar('sigma_1_A', 0.02, 0.001, 0.08)
-  fit.initVar('x_A', 2, 1.0, 3.0)
-  fit.initVar('alpha_1_A', 1.5, 0.001, 3)
-  fit.initVar('n_1_A', 1.5, 1, 5)
+  fit.initVar('sigma_1_A', 0.02, 0.001, 0.05)
+  fit.initVar('x_A', 2, 1.0, 5.0)
+  fit.initVar('alpha_1_A', 1.5, 0.01, 3)
+  fit.initVar('n_1_A', 1.5, 1, 3)
   fit.initVar('f', 0.5, 0.01, 0.98)
 
 fit.run()
 
 print('--- Finish mc_mass fit ---')
+
 
 # -----------------------
 # --- free user notes ---

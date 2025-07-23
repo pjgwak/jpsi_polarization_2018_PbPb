@@ -104,7 +104,8 @@ void MassFit::setupWorkspaceAndData()
   TString kineCutStr = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh);
   TString accCutStr = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )"; // 2018
   TString osCutStr = "recoQQsign==0";
-  TString angleCutStr = Form("cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
+  // TString angleCutStr = Form("cosEP>%.2f && cosEP<%.2f", cosLow, cosHigh);
+  TString angleCutStr = "true"; // For test -> user config? : cos, phi, frame
   TString finalCut = TString::Format("%s && %s && %s && %s", osCutStr.Data(), accCutStr.Data(), kineCutStr.Data(), angleCutStr.Data());
 
   // is weighted?
@@ -272,10 +273,15 @@ void MassFit::buildCBG()
   RooRealVar sigma_cb("sigma_cb", "CB sigma", sigma_val, sigma_range.first, sigma_range.second);
 
   // fixed parameters
-  RooRealVar x_A("x_A", "sigma ratio", xA_val);
-  RooRealVar alpha_cb("alpha_cb", "tail shift", alpha_val);
-  RooRealVar n_cb("n_cb", "power order", n_val);
-  RooRealVar f("f", "cb fraction", f_val);
+  // RooRealVar x_A("x_A", "sigma ratio", xA_val);
+  // RooRealVar alpha_cb("alpha_cb", "tail shift", alpha_val);
+  // RooRealVar n_cb("n_cb", "power order", n_val);
+  // RooRealVar f("f", "cb fraction", f_val);
+
+  RooRealVar x_A("x_A", "sigma ratio", xA_val, xA_range.first, xA_range.second);
+  RooRealVar alpha_cb("alpha_cb", "tail shift", alpha_val, alpha_range.first, alpha_range.second);
+  RooRealVar n_cb("n_cb", "power order", n_val, n_range.first, n_range.second);
+  RooRealVar f("f", "cb fraction", f_val, f_range.first, f_range.second);
 
   RooFormulaVar sigma_gauss("sigma_gauss", "sigma_cb * x_A", "@0*@1", RooArgList(sigma_cb, x_A));
 
@@ -397,7 +403,7 @@ void MassFit::performFit()
 
   bool isWeighted = ws->data("dsAB")->isWeighted();
 
-  fitResult = pdf->fitTo(*data, Save(), Hesse(kTRUE), Range("massFitRange"), Timer(kTRUE), Extended(kTRUE), SumW2Error(isWeighted), NumCPU(nCPU), Strategy(2));
+  fitResult = pdf->fitTo(*data, Save(), Range("massFitRange"), Timer(kTRUE), Extended(kTRUE), SumW2Error(isWeighted), NumCPU(nCPU), Strategy(2), RecoverFromUndefinedRegions(1.));
 
   fitResult->Print("V");
 }

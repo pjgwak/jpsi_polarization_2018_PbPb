@@ -114,7 +114,8 @@ void McMassFit::setupWorkspaceAndData()
   TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh);
   TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )"; // 2018 acceptance cut
   TString osCut = "recoQQsign==0";
-  TString angleCut = Form("cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
+  // TString angleCut = Form("cosEP>%.2f && cosEP<%.2f", cosLow, cosHigh);
+  TString angleCut = "true";
   TString finalCut = TString::Format("%s && %s && %s && %s", osCut.Data(), accCut.Data(), kineCut.Data(), angleCut.Data());
 
   // is weighted?
@@ -661,11 +662,11 @@ void McMassFit::makeRatioPlot()
   ratioFrame->GetYaxis()->SetTitle("Data / Fit");
   ratioFrame->GetYaxis()->SetTitleSize(0.08);
   ratioFrame->GetYaxis()->SetLabelSize(0.08);
-  ratioFrame->GetYaxis()->SetRangeUser(0, 3); // 0, 3
+  ratioFrame->GetYaxis()->SetRangeUser(0, 2); // 0, 3
   ratioFrame->GetYaxis()->CenterTitle();
 
-  ratioFrame->GetXaxis()->SetTitle("#font[12]{l}_{J/#psi} (mm)");
-  ratioFrame->GetXaxis()->SetTitleOffset(1.15);
+  ratioFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{-}} (GeV/c^{2})");
+  ratioFrame->GetXaxis()->SetTitleOffset(1.4);
   ratioFrame->GetXaxis()->SetLabelOffset(0.04);
   ratioFrame->GetXaxis()->SetLabelSize(0.08);
   ratioFrame->GetXaxis()->SetTitleSize(0.08);
