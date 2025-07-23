@@ -1,3 +1,4 @@
+#pragma once
 #include "CMS_lumi_v2mass.h"
 #include <iostream>
 

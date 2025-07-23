@@ -1,6 +1,7 @@
 #ifndef COMMONUTILITY_Yongsun_H
 #define COMMONUTILITY_Yongsun_H
 #include <iostream>
+#include <algorithm>
 #include <iomanip>
 #include <fstream>
 #include <sstream>
@@ -59,11 +60,11 @@ struct kinem {
 int debugIt=1;
 
 void changeLine() {
-  cout << "#################################################" << endl<< endl << endl;
+  std::cout << "#################################################" << std::endl<< std::endl << std::endl;
 }
 
 void debug() {
-  cout << " debugging..line" << debugIt << endl;
+  std::cout << " debugging..line" << debugIt << std::endl;
   debugIt++;
 }
 
@@ -97,7 +98,7 @@ double getDPHI( double phi1, double phi2) {
     dphi = dphi + 2. * 3.141592653589;
   
   if ( fabs(dphi) > 3.141592653589 ) {
-    cout << " commonUtility::getDPHI error!!! dphi is bigger than 3.141592653589 " << endl;
+    std::cout << " commonUtility::getDPHI error!!! dphi is bigger than 3.141592653589 " << std::endl;
   }
   
   return dphi;
@@ -116,7 +117,7 @@ double getDR( double eta1, double phi1, double eta2, double phi2){
 
 void divideWOerr( TH1* h1, TH1* h2) {  //by Yongsun Jan 26 2012                                                                              
   if ( h1->GetNbinsX() != h2->GetNbinsX() ) {
-    cout << " different bin numbers!!" << endl;
+    std::cout << " different bin numbers!!" << std::endl;
     return;
   }
 
@@ -206,7 +207,7 @@ void integerizeTH1(TH1* h1) {
 
 void multiplyBonA(TH1* h1, TH1* h2) {
    if ( h1->GetNbinsX() != h2->GetNbinsX() ) { 
-      cout << " different bin numbers.." << endl ;
+      std::cout << " different bin numbers.." << std::endl ;
       return ;
    }
    
@@ -326,7 +327,7 @@ void makeMultiPanelCanvas(TCanvas*& canv, const Int_t columns,
                           const Float_t bottomMargin=0.2,
                           const Float_t edge=0.05) {
   if (canv==0) {
-    cout << "make MultiPanelCanvas    Got null canvas." << endl<<endl<<endl<<endl;
+    std::cout << "make MultiPanelCanvas    Got null canvas." << std::endl<<std::endl<<std::endl<<std::endl;
     return;
   }
    canv->Clear();
@@ -401,7 +402,7 @@ void makeEfficiencyCanvas(TCanvas*& canv, const Int_t columns,
   const Int_t rows = 2;
   
   if (canv==0) {
-    cout <<"makeMultiPanelCanvas              Got null canvas." <<endl<<endl<<endl;
+    std::cout <<"makeMultiPanelCanvas              Got null canvas." <<std::endl<<std::endl<<std::endl;
     return;
   }
   canv->Clear();
@@ -468,7 +469,7 @@ void twikiSave(TCanvas* c=0, TString  name="",int w=0,int h=0)
    if ( h==0) h = c->GetWindowHeight();
    
    c->SaveAs(name.Data());
-   cout << Form(" <br/>   <img src=\"%%ATTACHURLPATH%%/%s\" alt=\"%s\" width='%d' height='%d'/>",name.Data(),name.Data(),w,h)<< endl;
+   std::cout << Form(" <br/>   <img src=\"%%ATTACHURLPATH%%/%s\" alt=\"%s\" width='%d' height='%d'/>",name.Data(),name.Data(),w,h)<< std::endl;
 }
 
 void centralityBinning(float *b=0)
@@ -557,17 +558,17 @@ void handsomeTGraph(TGraphAsymmErrors* a, int col=1)
 void TH1ScaleByWidth(TH1* h=0) 
 {
    int nBins = h->GetNbinsX();
-   // cout << "Start scaling by width" << endl;
+   // std::cout << "Start scaling by width" << std::endl;
    for ( int j=1; j<=nBins ;j++)
       {
          double theWidth = h->GetBinWidth(j);
-         //      cout << "width = " << theWidth << ",   " ;                                                                                  
+         //      std::cout << "width = " << theWidth << ",   " ;                                                                                  
 	 double cont = h->GetBinContent(j);
          double err =  h->GetBinError(j);
          h->SetBinContent(j, cont/theWidth);
          h->SetBinError  (j, err/theWidth);
       }
-   //   cout << endl;
+   //   std::cout << std::endl;
 }
 
 void scaleInt( TH1 *a=0, double normFac=1., double minX=-999.21231, double maxX=-999.21231)
@@ -685,7 +686,7 @@ void easyLeg( TLegend *a=0 , TString head="")
 double cleverRange(TH1* h,float fac=1.2, float minY=1.e-3)
 {
    float maxY =  fac * h->GetBinContent(h->GetMaximumBin());
-   //   cout <<" range will be set as " << minY << " ~ " << maxY << endl; 
+   //   std::cout <<" range will be set as " << minY << " ~ " << maxY << std::endl; 
    h->SetAxisRange(minY,maxY,"Y");
    return maxY;
 }
@@ -706,16 +707,16 @@ double cleverRange(TH1* h,TH1* h2, float fac=1.2, float minY=1.e-3)
   float maxY1 =  fac * h->GetBinContent(h->GetMaximumBin());
   float maxY2 =  fac * h2->GetBinContent(h2->GetMaximumBin());
   
-  //   cout <<" range will be set as " << minY << " ~ " << maxY << endl;                                                                    
-  h->SetAxisRange(minY,max(maxY1,maxY2),"Y");
-  h2->SetAxisRange(minY,max(maxY1,maxY2),"Y");
-  return max(maxY1,maxY2);
+  //   std::cout <<" range will be set as " << minY << " ~ " << maxY << std::endl;                                                                    
+  h->SetAxisRange(minY,std::max(maxY1,maxY2),"Y");
+  h2->SetAxisRange(minY,std::max(maxY1,maxY2),"Y");
+  return std::max(maxY1,maxY2);
 }
 
 void cleverRangeLog(TH1* h,float fac=1.2, float theOrder=1.e-4)
 {
   float maxY =  fac * h->GetBinContent(h->GetMaximumBin());
-  //   cout <<" range will be set as " << minY << " ~ " << maxY << endl;                                               
+  //   std::cout <<" range will be set as " << minY << " ~ " << maxY << std::endl;                                               
   h->SetAxisRange(maxY * theOrder,maxY,"Y");
 }
 
@@ -835,7 +836,7 @@ void drawCMS4(float px, float py, float nLumi, int textSize=15) {
 void getNiceBins( TH1* h=0, int nDiv=4) {
    int nBins = h->GetNbinsX();
    double allInt = h->Integral(1,nBins);
-   cout<< " All integral = " << allInt<< endl;
+   std::cout<< " All integral = " << allInt<< std::endl;
 
    TH1F* hacc = (TH1F*)h->Clone(Form("%s_accu",h->GetName()));
    hacc->Reset();
@@ -848,10 +849,10 @@ void getNiceBins( TH1* h=0, int nDiv=4) {
       hacc->SetBinContent( i , acc ) ;
        if ( ( hacc->GetBinContent(i) > j*allInt/nDiv ) && ( hacc->GetBinContent(i-1) <= j*allInt/nDiv)) {
 	 j++;
-	 cout << j << "th bin = " << i <<  "    value  = " << h->GetBinCenter(i) << endl;
+	 std::cout << j << "th bin = " << i <<  "    value  = " << h->GetBinCenter(i) << std::endl;
        }
    }     
-   cout << " acc = " << acc << endl;
+   std::cout << " acc = " << acc << std::endl;
    TCanvas* c1 = new TCanvas(Form("%s_c1Acc",h->GetName()),"",400,400);
    c1->Draw();
    handsomeTH1(hacc,1);
@@ -871,13 +872,13 @@ void stripErr(TH1* theHist=0) {
 double getPolyArea(TH1* h1, TH1* h2, double minX, double maxX) { 
   if ( (h1->GetNbinsX() != h2->GetNbinsX()) || ( h1->FindBin(minX) != h2->FindBin(minX)) || (h1->FindBin(maxX) != h2->FindBin(maxX)) ) 
     {
-      cout <<" binnings are not matched!!! " << endl;
+      std::cout <<" binnings are not matched!!! " << std::endl;
       return -1;
     }
   
   int minBin = h1->FindBin(minX);
   int maxBin = h1->FindBin(maxX);
-  cout << " getPolyArea : from " << h1->GetBinLowEdge(minBin) << " to " << h1->GetBinLowEdge(maxBin+1) << endl;
+  std::cout << " getPolyArea : from " << h1->GetBinLowEdge(minBin) << " to " << h1->GetBinLowEdge(maxBin+1) << std::endl;
   double area = 0;
   for ( int ibin = minBin ; ibin <= maxBin ; ibin++) {
     area = area + ( h2->GetBinContent(ibin) - h1->GetBinContent(ibin) ) * h1->GetBinWidth(ibin) ;
@@ -889,7 +890,7 @@ double getPolyArea(TH1* h1, TH1* h2, double minX, double maxX) {
 double getPolyAreaErr(TH1* h1, TH1* h2, double minX, double maxX) {
   if ( (h1->GetNbinsX() != h2->GetNbinsX()) || ( h1->FindBin(minX) != h2->FindBin(minX)) || (h1->FindBin(maxX) != h2->FindBin(maxX)) )
     {
-      cout <<" binnings are not matched!!! " << endl;
+      std::cout <<" binnings are not matched!!! " << std::endl;
       return -1;
     }
 

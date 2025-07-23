@@ -7,14 +7,14 @@ class RooDataSet;
 class RooRealVar;
 class RooArgSet;
 
-class RooMakerRun3DataPbPb
+class RooMakerRun3PbPb
 {
 public:
-  RooMakerRun3DataPbPb(int cLow, int cHigh, float massLow, float massHigh,
-                       bool isMC, bool isAccW, bool isEffW,
-                       bool isTnP, bool isPtW, int hiHFBinEdge, int mcType,
-                       std::string fInputPath, std::string inputChainName);
-  ~RooMakerRun3DataPbPb();
+  RooMakerRun3PbPb(int cLow, int cHigh, float massLow, float massHigh,
+                   bool isMC, bool isAccW, bool isEffW,
+                   bool isTnP, bool isPtW, int hiHFBinEdge, int mcType,
+                   std::string fInputPath, std::string inputChainName, std::string userTag);
+  ~RooMakerRun3PbPb();
 
   void init();
   void run();
@@ -47,6 +47,7 @@ private:
   // paths
   std::string fInputPath, fEffPath, fAccPath;
   std::string inputChainName;
+  std::string userTag;
 
   // file
   TFile *fEff = nullptr;
@@ -62,6 +63,8 @@ private:
   float mass[nMaxDimu], pt[nMaxDimu], y[nMaxDimu];
   float pt1[nMaxDimu], pt2[nMaxDimu], eta1[nMaxDimu], eta2[nMaxDimu];
   float ctau3D[nMaxDimu], ctau3DErr[nMaxDimu];
+  float cosHX[nMaxDimu], phiHX[nMaxDimu], cosCS[nMaxDimu], phiCS[nMaxDimu];
+  float cosEP[nMaxDimu], phiEP[nMaxDimu];
   // float ctau3D2S[nMaxDimu], ctau3DErr2S[nMaxDimu], ctau3DRes2S[nMaxDimu];
   float vz;
   double weight;
@@ -75,4 +78,7 @@ private:
   RooRealVar *ctau3D2SVar, *ctau3DErr2SVar, *ctau3DRes2SVar;
   RooRealVar *NumDimu;
   RooArgSet *argSet;
+  
+  // angles
+  RooRealVar *cosHXVar, *phiHXVar, *cosCSVar, *phiCSVar, *cosEPVar, *phiEPVar;
 };

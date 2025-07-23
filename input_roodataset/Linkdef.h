@@ -5,7 +5,7 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
-#pragma link C++ class RooMakerRun3DataPbPb+;
+#pragma link C++ class RooMakerRun3PbPb+;
 // #pragma link C++ class MassFit+;
 // #pragma link C++ class CtauErrFit+;
 // #pragma link C++ class CtauResFit+;

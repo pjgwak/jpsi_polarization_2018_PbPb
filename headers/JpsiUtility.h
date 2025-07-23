@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include "RooPlot.h"
 #include "rootFitHeaders.h"

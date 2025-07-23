@@ -1,4 +1,4 @@
-#include "RooMakerRun3DataPbPb.h"
+#include "RooMakerRun3PbPb.h"
 #include <iostream>
 #include "TSystem.h"
 #include "TFile.h"
@@ -6,6 +6,7 @@
 #include "RooDataSet.h"
 #include "RooRealVar.h"
 #include "RooArgSet.h"
+#include "TMath.h"
 #include "../headers/HiEvtPlaneList.h"
 
 using namespace std;
@@ -14,13 +15,14 @@ using namespace hi;
 
 static const long MAXTREESIZE = 1000000000000;
 
-RooMakerRun3DataPbPb::RooMakerRun3DataPbPb(int cLow, int cHigh, float massLow, float massHigh,
-                                           bool isMC, bool isAccW, bool isEffW,
-                                           bool isTnP, bool isPtW, int hiHFBinEdge, int mcType,
-                                           std::string fInputPath, std::string inputChainName)
+RooMakerRun3PbPb::RooMakerRun3PbPb(int cLow, int cHigh, float massLow, float massHigh,
+                                   bool isMC, bool isAccW, bool isEffW,
+                                   bool isTnP, bool isPtW, int hiHFBinEdge, int mcType,
+                                   std::string fInputPath, std::string inputChainName, std::string userTag)
     : cLow(cLow), cHigh(cHigh), massLow(massLow), massHigh(massHigh),
       isMC(isMC), isAccW(isAccW), isEffW(isEffW),
-      isTnP(isTnP), isPtW(isPtW), hiHFBinEdge(hiHFBinEdge), mcType(mcType), fInputPath(fInputPath), inputChainName(inputChainName)
+      isTnP(isTnP), isPtW(isPtW), hiHFBinEdge(hiHFBinEdge), mcType(mcType), 
+      fInputPath(fInputPath), inputChainName(inputChainName), userTag(userTag)
 {
   // TH1::SetDefaultSumw2();
   // gStyle->SetOptStat(0); // no histogram stat box
@@ -29,7 +31,7 @@ RooMakerRun3DataPbPb::RooMakerRun3DataPbPb(int cLow, int cHigh, float massLow, f
   // gROOT->ForceStyle();
 }
 
-RooMakerRun3DataPbPb::~RooMakerRun3DataPbPb()
+RooMakerRun3PbPb::~RooMakerRun3PbPb()
 {
   delete fEff;
   delete fAcc;
@@ -57,9 +59,16 @@ RooMakerRun3DataPbPb::~RooMakerRun3DataPbPb()
 
   delete argSet;
   delete dataSet;
+
+  delete cosHXVar;
+  delete phiHXVar;
+  delete cosCSVar;
+  delete phiCSVar;
+  delete cosEPVar;
+  delete phiEPVar;
 }
 
-void RooMakerRun3DataPbPb::init()
+void RooMakerRun3PbPb::init()
 {
   std::cout << "===== init() =====\n\n";
   setLabels();
@@ -72,20 +81,20 @@ void RooMakerRun3DataPbPb::init()
   setupRooDataSet();
 }
 
-void RooMakerRun3DataPbPb::run()
+void RooMakerRun3PbPb::run()
 {
   std::cout << "===== run() =====\n\n";
   loopAndFillData();
   saveResults();
 }
 
-void RooMakerRun3DataPbPb::setLabels()
+void RooMakerRun3PbPb::setLabels()
 {
   std::cout << "===== setLabels() =====\n\n";
   sampleTag = (isMC) ? "MC" : "Data";
   mcTag = (mcType == 0) ? "PR" : "NP";
 
-  gSystem->mkdir(Form("roots"));
+  gSystem->mkdir(Form("../roots"));
 
   if (hiHFBinEdge == 1)
     centHfTag = "HFUp";
@@ -101,7 +110,7 @@ void RooMakerRun3DataPbPb::setLabels()
   //   dimusignString = "SS";
 }
 
-void RooMakerRun3DataPbPb::openInputFile()
+void RooMakerRun3PbPb::openInputFile()
 {
   std::cout << "===== openInputFile() =====\n\n";
   inChain = new TChain(inputChainName.c_str());
@@ -136,7 +145,7 @@ void RooMakerRun3DataPbPb::openInputFile()
   }
 }
 
-void RooMakerRun3DataPbPb::setupTree()
+void RooMakerRun3PbPb::setupTree()
 {
   std::cout << "===== setupTree() =====\n\n";
   inChain->SetBranchAddress("event", &event);
@@ -157,9 +166,16 @@ void RooMakerRun3DataPbPb::setupTree()
   // inChain->SetBranchAddress("ctau3DErr2S", ctau3DErr2S);
   // inChain->SetBranchAddress("ctau3DRes2S", ctau3DRes2S);
   inChain->SetBranchAddress("weight", &weight);
+
+  inChain->SetBranchAddress("cosHX", cosHX);
+  inChain->SetBranchAddress("phiHX", phiHX);
+  inChain->SetBranchAddress("cosCS", cosCS);
+  inChain->SetBranchAddress("phiCS", phiCS);
+  inChain->SetBranchAddress("cosEP", cosEP);
+  inChain->SetBranchAddress("phiEP", phiEP);
 }
 
-void RooMakerRun3DataPbPb::defineRooVariables()
+void RooMakerRun3PbPb::defineRooVariables()
 {
   std::cout << "===== defineRooVariables() =====\n\n";
   massVar = new RooRealVar("mass", "mass", 1.0, 6.0);
@@ -180,6 +196,13 @@ void RooMakerRun3DataPbPb::defineRooVariables()
   // ctau3DRes2SVar = new RooRealVar("ctau3DRes2S", "ctau3DRes2S", -1e5, 1e5);
   NumDimu = new RooRealVar("NumDimu", "NumDimu", 0, 100);
 
+  cosHXVar = new RooRealVar("cosHX", "cosHX", -1.5, 1.5);
+  phiHXVar = new RooRealVar("phiHX", "phiHX", -TMath::Pi(), TMath::Pi());
+  cosCSVar = new RooRealVar("cosCS", "cosCS", -1.5, 1.5);
+  phiCSVar = new RooRealVar("phiCS", "phiCS", -TMath::Pi(), TMath::Pi());
+  cosEPVar = new RooRealVar("cosEP", "cosEP", -1.5, 1.5);
+  phiEPVar = new RooRealVar("phiEP", "phiEP", -TMath::Pi(), TMath::Pi());
+
   argSet = new RooArgSet(*massVar, *ptVar, *yVar, *pt1Var, *pt2Var, *eta1Var, *eta2Var, *evtWeight);
   argSet->add(*cBinVar);
   argSet->add(*recoQQ);
@@ -190,29 +213,42 @@ void RooMakerRun3DataPbPb::defineRooVariables()
   // argSet->add(*ctau3D2SVar);
   // argSet->add(*ctau3DErr2SVar);
   // argSet->add(*ctau3DRes2SVar);
+
+  argSet->add(*cosHXVar);
+  argSet->add(*phiHXVar);
+  argSet->add(*cosCSVar);
+  argSet->add(*phiCSVar);
+  argSet->add(*cosEPVar);
+  argSet->add(*phiEPVar);
 }
 
-void RooMakerRun3DataPbPb::setupRooDataSet()
+void RooMakerRun3PbPb::setupRooDataSet()
 {
   std::cout << "===== setupRooDataSet() =====\n\n";
-  dataSet = new RooDataSet("dataset", " a dataset", *argSet, RooFit::WeightVar(*evtWeight));
+  dataSet = new RooDataSet("dataset", " a dataset", *argSet);
+
+  // weight should be turned on by fitting step!
+  // dataSet = new RooDataSet("dataset", " a dataset", *argSet, RooFit::WeightVar(*evtWeight));
 }
 
-void RooMakerRun3DataPbPb::setOutfile()
+void RooMakerRun3PbPb::setOutfile()
 {
   std::cout << "===== setOutfile() =====\n\n";
-  outfile = new TFile(Form("roots/OniaFlowSkim_isMC%d_%s_230119.root", isMC, centHfTag.c_str()), "recreate");
+  // outfile = new TFile(Form("roots/OniaFlowSkim_isMC%d_%s_230119.root", isMC, centHfTag.c_str()), "recreate");
+
+  // centHfTag.c_str()
+  outfile= new TFile(Form("../roots/OniaRooDataSet_miniAOD_isMC%d_Jpsi_cent%i_%i_Effw%d_Accw%d_PtW%d_TnP%d_%s.root", isMC, cLow, cHigh, isEffW, isAccW, isPtW, isTnP, userTag.c_str()), "recreate");
 }
 
-void RooMakerRun3DataPbPb::loopAndFillData()
+void RooMakerRun3PbPb::loopAndFillData()
 {
   std::cout << "===== loopAndFillData() =====\n\n";
   long nEvt = inChain->GetEntries();
   for (long i = 0; i < nEvt; i++)
   {
     inChain->GetEntry(i);
-    // if (fabs(vz) > 15)
-    //   continue;
+    if (fabs(vz) > 15)
+      continue;
 
     for (int j = 0; j < nDimu; j++)
     {
@@ -238,13 +274,20 @@ void RooMakerRun3DataPbPb::loopAndFillData()
       evtWeight->setVal(weight);
       NumDimu->setVal(nDimu);
 
+      cosHXVar->setVal(cosHX[j]);
+      phiHXVar->setVal(phiHX[j]);
+      cosCSVar->setVal(cosCS[j]);
+      phiCSVar->setVal(phiCS[j]);
+      cosEPVar->setVal(cosEP[j]);
+      phiEPVar->setVal(phiEP[j]);
+
       dataSet->add(*argSet);
     }
   }
 }
 
 // Todo: make this function - include weighitng
-// void RooMakerRun3DataPbPb::loopAndFillData()
+// void RooMakerRun3PbPb::loopAndFillData()
 // {
 //   std::cout << "===== loopAndFillData() =====\n\n";
 //   // double weight_acc = 1;
@@ -365,23 +408,17 @@ void RooMakerRun3DataPbPb::loopAndFillData()
 //   // cout << "How many Jpsi??: " << nDimu_one << endl;
 // }
 
-void RooMakerRun3DataPbPb::saveResults()
+void RooMakerRun3PbPb::saveResults()
 {
   std::cout << "===== saveResults() =====\n\n";
   outfile->cd();
   
-  // check file name rule
-  // TFile *wf = new TFile(Form("skimmedFiles/OniaRooDataSet_miniAOD_isMC%d_Psi2S_cent%i_%i_Effw%d_Accw%d_PtW%d_TnP%d_230513.root",
-  //                            isMC, cLow, cHigh, isEffW, isAccW, isPtW, isTnP),
-  //                       "recreate");
-  // wf->cd();
-
   dataSet->Write();
   outfile->Close();
 }
 
 // --- Make later ---
-void RooMakerRun3DataPbPb::loadEffHist()
+void RooMakerRun3PbPb::loadEffHist()
 {
   std::cout << "===== loadEffHist() =====\n\n";
   // TH1D *hEffPt[4];
@@ -391,7 +428,7 @@ void RooMakerRun3DataPbPb::loadEffHist()
   // hEffPt[3] = (TH1D *)fEff->Get(Form("mc_eff_vs_pt_TnP%d_PtW%d_cent_0_to_200_absy1p8_2p4", isTnP, isPtW));
 }
 
-void RooMakerRun3DataPbPb::loadAccHist()
+void RooMakerRun3PbPb::loadAccHist()
 {
   std::cout << "===== loadAccHist() =====\n\n";
   // TH1D *hAccPt[3];
@@ -400,7 +437,7 @@ void RooMakerRun3DataPbPb::loadAccHist()
   // hAccPt[2] = (TH1D *)fAcc->Get("hAccPt_2021_Fory");
 }
 
-void RooMakerRun3DataPbPb::getEffWeight()
+void RooMakerRun3PbPb::getEffWeight()
 {
   std::cout << "===== getEffWeight() =====\n\n";
   // double binN = h->FindBin(pt);
@@ -408,7 +445,7 @@ void RooMakerRun3DataPbPb::getEffWeight()
   // return weight_;
 }
 
-void RooMakerRun3DataPbPb::getAccWeight()
+void RooMakerRun3PbPb::getAccWeight()
 {
   std::cout << "===== getAccWeight() =====\n\n";
   // double binN = h->FindBin(pt);

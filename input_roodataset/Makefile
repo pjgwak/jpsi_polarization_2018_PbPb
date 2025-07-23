@@ -3,7 +3,7 @@ PROGRAM = RooMaker
 SRCDIR    = src
 OBJDIR    = obj
 
-HDRS = $(SRCDIR)/RooMakerRun3DataPbPb.h \
+HDRS = $(SRCDIR)/RooMakerRun3PbPb.h \
 			#  $(SRCDIR)/CtauTrueFit.h \
 			#  $(SRCDIR)/CtauBkgFit.h \
 			#  $(SRCDIR)/CtauResFit.h \
@@ -11,7 +11,7 @@ HDRS = $(SRCDIR)/RooMakerRun3DataPbPb.h \
 			#  $(SRCDIR)/MassFit.h \
 			#  $(SRCDIR)/McMassFit.h \
 			
-OBJS = $(OBJDIR)/RooMakerRun3DataPbPb.o \
+OBJS = $(OBJDIR)/RooMakerRun3PbPb.o \
 			 $(OBJDIR)/dict_$(PROGRAM).o \
 			#  $(OBJDIR)/CtauTrueFit.o \
 			#  $(OBJDIR)/CtauBkgFit.o \
