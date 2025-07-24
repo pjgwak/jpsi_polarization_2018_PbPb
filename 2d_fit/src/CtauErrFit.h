@@ -8,11 +8,16 @@ class CtauErrFit
 {
 public:
   CtauErrFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
-             float cosLow, float cosHigh, int PR, int PRw,
-             bool fEffW, bool fAccW, bool isPtW, bool isTnP);
+             float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP);
   ~CtauErrFit();
 
   void run();
+
+  std::string inputFilePath;
+  std::string DATE;
+  double ctauErrMin = -1; // -1 means auto-range
+  double ctauErrMax = -1;
+  
 
 private:
   void setLabels();
@@ -32,9 +37,7 @@ private:
 
   std::string kineLabel;
   std::string fname;
-  std::string DATE;
-  double ctauErrMin = 0.0;
-  double ctauErrMax = 0.0;
+
   int nBins = 100;
 
   TFile *fInputData = nullptr;

@@ -281,7 +281,8 @@ void McMassFit::performFit()
 void McMassFit::drawTextVar(const char *varName, const char *label, float xp, float yp, int textColor, int textSize)
 {
   RooRealVar *var = ws->var(varName);
-  if (!var) return;
+  if (!var)
+    return;
 
   double val = var->getVal();
   double err = var->getError();
@@ -304,6 +305,8 @@ void McMassFit::drawTextVar(const char *varName, const char *label, float xp, fl
     text = Form("%s = %.4f (limit)", label, val);
   else if (err < minErr)
     text = Form("%s = %.4f #pm < %.4f", label, val, minErr);
+  else if (err > (high - low))
+    text = Form("%s = %.4f #pm %.4f (unstable)", label, val, err);
   else
     text = Form("%s = %.4f #pm %.4f", label, val, err);
 
@@ -337,6 +340,8 @@ void McMassFit::drawTextVarInt(const char *varName, const char *label, float xp,
     text = Form("%s = %.f (limit)", label, val);
   else if (err < minErr)
     text = Form("%s = %.f #pm < %.f", label, val, minErr);
+  else if (err > (high - low))
+    text = Form("%s = %.f #pm < %.f (unstable)", label, val, minErr);
   else
     text = Form("%s = %.f #pm %.f", label, val, err);
 

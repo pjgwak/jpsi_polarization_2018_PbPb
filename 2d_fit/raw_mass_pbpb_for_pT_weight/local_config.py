@@ -20,6 +20,7 @@ def get_common_config():
 
     'mc_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC1_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
     'data_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
+    'mc_gen_only_input_path': '../../../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_GenOnly_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250307.root',
     
     'shared_lib_path': str(lib_path),
 
@@ -35,7 +36,8 @@ def get_common_config():
     'default_pdf_mass_bkg': 'cheby2',
 
     # ctau fit
-    
+    'defalut_res_n_gauss': 2, # number of gauss in Res functions
+    'defalut_true_n_exp': 2, # number of decay exponentinal
 
     # sample information flags
     'default_PR': 2,

@@ -27,11 +27,9 @@
 using namespace RooFit;
 
 CtauErrFit::CtauErrFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
-                       float cosLow, float cosHigh, int PR, int PRw,
-                       bool fEffW, bool fAccW, bool isPtW, bool isTnP)
+                       float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP)
     : ptLow(ptLow), ptHigh(ptHigh), yLow(yLow), yHigh(yHigh), cLow(cLow), cHigh(cHigh),
-      cosLow(cosLow), cosHigh(cosHigh), PR(PR), PRw(PRw),
-      fEffW(fEffW), fAccW(fAccW), isPtW(isPtW), isTnP(isTnP)
+      cosLow(cosLow), cosHigh(cosHigh), PR(PR), PRw(PRw), fEffW(fEffW), fAccW(fAccW), isPtW(isPtW), isTnP(isTnP)
 {
   gStyle->SetEndErrorSize(0);
 
@@ -76,8 +74,9 @@ void CtauErrFit::setLabels()
   std::cout << "===== setLabels() =====\n\n";
   DATE = "No_Weight_2";
   gStyle->SetEndErrorSize(0);
-  gSystem->mkdir(Form("roots/2DFit_%s/CtauErr", DATE.c_str()), kTRUE);
-  gSystem->mkdir(Form("figs/2DFit_%s/CtauErr", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("roots/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("figs/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("../figs/2DFit_%s/CtauErr", DATE.c_str()), kTRUE);
 
   if (PRw == 1) fname = "PR";
   else if (PRw == 2) fname = "NP";
@@ -88,8 +87,8 @@ void CtauErrFit::setLabels()
 void CtauErrFit::openInputFiles()
 {
   std::cout << "===== openInputFiles() =====\n\n";
-  fInputData = new TFile("../files_roodata/RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root");
-  fMass = new TFile(Form("roots/2DFit_%s/Mass/Mass_FixedFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  fInputData = new TFile(inputFilePath.c_str());
+  fMass = new TFile(Form("roots/2DFit_%s/MassFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
 
   if (!fInputData || fInputData->IsZombie())
   {
@@ -194,32 +193,32 @@ void CtauErrFit::setVariableRanges()
     }
   }
 
-  for (int i = 1; i < hTmp->GetNbinsX(); i++)
-  {
-    if (hTmp->GetBinContent(i) >= 1 && hTmp->GetBinContent(i + 1) < 1 && hTmp->GetBinContent(i + 2) < 1)
+  if (ctauErrMax == -1) { // if user doesn't set the max, find a max automatically
+    for (int i = 1; i < hTmp->GetNbinsX(); i++)
     {
-      ctauErrMax = hTmp->GetBinLowEdge(i) + hTmp->GetBinWidth(i);
-      break;
-    }
-    else
-    {
-      ctauErrMax = hTmp->GetBinLowEdge(i);
+      if (hTmp->GetBinContent(i) >= 1 && hTmp->GetBinContent(i + 1) < 1 && hTmp->GetBinContent(i + 2) < 1)
+      {
+        ctauErrMax = hTmp->GetBinLowEdge(i) + hTmp->GetBinWidth(i);
+        break;
+      }
+      else
+        ctauErrMax = hTmp->GetBinLowEdge(i);
     }
   }
-
-  // Todo: user custom ctauErr range
+  
   double binWidth = (ctauErrHigh - ctauErrLow) / nBinInit;
   nBins = (ctauErrMax - ctauErrMin) / binWidth;
 
+  ws->var("ctau3DErr")->setRange(ctauErrMin, ctauErrMax);
   ws->var("ctau3DErr")->setRange("sPlotRange", ctauErrMin, ctauErrMax);
+  std::cout << "ctau3DErr range: [" << ctauErrMin << ", " << ctauErrMax << "]\n";
 
   delete hTmp;
 }
 
 void CtauErrFit::buildPdfAndData()
 {
-  std::cout << "===== buildModels() =====\n\n";
-  
+  std::cout << "===== buildModels() =====\n\n";  
   // total
   TH1D *hTot = (TH1D *)ws->data("dsAB")->createHistogram(("hTot"), *ws->var("ctau3DErr"), Binning(nBins, ctauErrMin, ctauErrMax));
   RooDataHist *totHist = new RooDataHist("dsAB", "", *ws->var("ctau3DErr"), hTot);
@@ -259,8 +258,11 @@ void CtauErrFit::buildPdfAndData()
 void CtauErrFit::makePlot()
 {
   std::cout << "===== makePlot() =====\n\n";
-  double minRange = (double)(floor(ctauErrMin * 100.) / 100.);
-  double maxRange = (double)(ceil(ctauErrMax * 100.) / 100.);
+  // double minRange = (double)(floor(ctauErrMin * 100.) / 100.);
+  // double maxRange = (double)(ceil(ctauErrMax * 100.) / 100.);
+  double minRange = ctauErrMin;
+  double maxRange = ctauErrMax;
+
   ws->var("ctau3DErr")->setRange("sPlotRange", ctauErrMin, ctauErrMax);
 
   TCanvas *myCanvas = new TCanvas("myCanvas", "My plots", 554, 4, 550, 520);
@@ -303,9 +305,9 @@ void CtauErrFit::makePlot()
   ws->import(*ctauResCutDS);
   Double_t outTot = ws->data("dsAB")->numEntries();
   Double_t outRes = ws->data("ctauResCutDS")->numEntries();
-  std::cout << "Tot evt: (" << outTot << ")" << "\n";
-  std::cout << "Res evt: (" << outRes << ")" << "\n";
-  std::cout << "lost evt: (" << ((outTot - outRes) * 100) / outTot << ")%, " << outRes << "evts" << "\n";
+  std::cout << "Tot evt: " << outTot << "" << "\n";
+  std::cout << "Res evt: " << outRes << "" << "\n";
+  std::cout << "lost evt: " << outTot - outRes << " evt (" << ((outTot - outRes) * 100) / outTot << " %)" << "\n";
 
   TLine *minline = new TLine(ctauErrMin, 0.0, ctauErrMin, (Ydown * TMath::Power((Yup / Ydown), 0.5)));
   minline->SetLineStyle(2);
@@ -390,13 +392,16 @@ void CtauErrFit::makePlot()
 
 
   myCanvas->Update();
-  myCanvas->SaveAs(Form("figs/2DFit_%s/CtauErr/ctauErr_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  myCanvas->SaveAs(Form("../figs/2DFit_%s/CtauErr/CtauErr_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.pdf", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  myCanvas->SaveAs(Form("figs/2DFit_%s/CtauErr_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.png", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+
+
 }
 
 void CtauErrFit::saveResults()
 {
   std::cout << "===== saveResults() =====\n\n";
-  TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauErr/CtauErrResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP), "recreate");
+  TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauErrResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP), "recreate");
 
   ws->data("dataw_Sig")->Write();
   ws->data("dataw_Bkg")->Write();

@@ -32,11 +32,8 @@
 using std::cout; using std::endl;
 using namespace RooFit;
 
-CtauTrueFit::CtauTrueFit(float ptLow, float ptHigh,
-                       float yLow, float yHigh,
-                       int cLow, int cHigh,
-                       float cosLow, float cosHigh,
-                       int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP)
+CtauTrueFit::CtauTrueFit(float ptLow, float ptHigh, float yLow, float yHigh, int cLow, int cHigh,
+                       float cosLow, float cosHigh, int PR, int PRw, bool fEffW, bool fAccW, bool isPtW, bool isTnP)
     : ptLow(ptLow), ptHigh(ptHigh),
       yLow(yLow), yHigh(yHigh),
       cLow(cLow), cHigh(cHigh),
@@ -70,15 +67,19 @@ CtauTrueFit::~CtauTrueFit()
   delete inputFile;
 }
 
-void CtauTrueFit::run()
+void CtauTrueFit::init()
 {
-  std::cout << "===== Start run() =====\n\n";
+  std::cout << "===== init() =====\n\n";
   setLabels();
   openInputFile();
   createKinematicCut();
   setupWorksapceAndData();
   setVariableRanges();
   defineModel();
+}
+void CtauTrueFit::run()
+{
+  std::cout << "===== run() =====\n\n";
   performFit();
   makePlot();
   saveResults();
@@ -86,11 +87,11 @@ void CtauTrueFit::run()
 
 void CtauTrueFit::setLabels()
 {
-  std::cout << "===== Start setLabels() =====\n\n";
-
+  std::cout << "===== setLabels() =====\n\n";
   DATE = "No_Weight_2";
-  gSystem->mkdir(Form("roots/2DFit_%s/CtauTrue", DATE.c_str()), kTRUE);
-  gSystem->mkdir(Form("figs/2DFit_%s/CtauTrue", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("roots/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("figs/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("../figs/2DFit_%s/CtauTrue", DATE.c_str()), kTRUE);
 
   TString kineTmp = getKineLabel(ptLow, ptHigh, yLow, yHigh, 0.0, cLow, cHigh);
   kineLabel = std::string(kineTmp.Data());
@@ -99,9 +100,8 @@ void CtauTrueFit::setLabels()
 
 void CtauTrueFit::openInputFile()
 {
-  std::cout << "===== Start openInputFile() =====\n\n";
-  // Todo: user custom input path
-  inputFile = new TFile("../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_GenOnly_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250307.root");
+  std::cout << "===== openInputFile() =====\n\n";
+  inputFile = new TFile(inputFilePath.c_str());
 
   if (!inputFile || inputFile->IsZombie())
   {
@@ -112,7 +112,7 @@ void CtauTrueFit::openInputFile()
 
 void CtauTrueFit::createKinematicCut()
 {
-  std::cout << "===== Start createKinematicCut() =====\n\n";
+  std::cout << "===== createKinematicCut() =====\n\n";
   TString cut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>2.6 && mass<3.5", ptLow, ptHigh, yLow, yHigh);
 
   // It doesn't use the accCut
@@ -124,7 +124,7 @@ void CtauTrueFit::createKinematicCut()
 
 void CtauTrueFit::setupWorksapceAndData()
 {
-  std::cout << "===== Start setupWorksapceAndData() =====\n\n";
+  std::cout << "===== setupWorksapceAndData() =====\n\n";
   ws = new RooWorkspace("workspace");
 
   RooDataSet *datasetMC = (RooDataSet *)inputFile->Get("dataset");
@@ -138,7 +138,7 @@ void CtauTrueFit::setupWorksapceAndData()
 
 void CtauTrueFit::setVariableRanges()
 {
-  std::cout << "===== Start setVariableRanges() =====\n\n";
+  std::cout << "===== setVariableRanges() =====\n\n";
   RooRealVar *ctauVar = ws->var("ctau3D");
 
   ctauVar->setRange(ctau3DMin, ctau3DMax);
@@ -148,33 +148,145 @@ void CtauTrueFit::setVariableRanges()
 
 void CtauTrueFit::defineModel()
 {
-  std::cout << "===== Start defineModel() =====\n\n";
-  // resolution model
-  RooTruthModel delta_fcn("RooTruthModel", "", *ws->var("ctau3D"));
+  std::cout << "===== defineModel() =====\n\n";
 
-  // decay parameters
+  if (nExp == 1) buildTrue1Expo();
+  else if (nExp == 2) buildTrue2Expo();
+  else if (nExp == 3) buildTrue3Expo();
+  else if (nExp == 4) buildTrue4Expo();
+  else {
+    std::cout << "[ERROR] failed to build a " << nExp << " exponential decay model\n";
+    std::cout << "possible nExp: 1 - 4\n";
+    exit(1);
+  }
+}
+
+void CtauTrueFit::buildTrue1Expo()
+{
+  std::cout << "===== buildTrue1Expo() =====\n\n";
+  RooRealVar *ctau = ws->var("ctau3D");
+  RooTruthModel deltaFcn("deltaFcn_CTAUTRUE", "", *ctau);
+
   RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5);
-  RooRealVar lambdaDSS2("lambdaDSS2", "", 0.1, 0.01, 5);
-  RooRealVar fDSS("fDSS", "fracion of decay1", 0.6, 0.01, 1);
+  RooDecay pdfCTAUTRUEDSS1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
 
-  // decay models
-  RooDecay pdfCTAUTRUEDSS1("pdfCTAUTRUEDSS1", "", *ws->var("ctau3D"), lambdaDSS, delta_fcn, RooDecay::SingleSided);
-  RooDecay pdfCTAUTRUEDSS2("pdfCTAUTRUEDSS2", "", *ws->var("ctau3D"), lambdaDSS2, delta_fcn, RooDecay::SingleSided);
+  RooRealVar N_Jpsi_MC("N_Jpsi_MC", "", 500000, 100000, 1000000);
+  RooExtendPdf total("TrueModel_Tot", "", pdfCTAUTRUEDSS1, N_Jpsi_MC);
+  ws->import(total);
+}
 
-  // combine decay models
+void CtauTrueFit::buildTrue2Expo()
+{
+  std::cout << "===== buildTrue2Expo() =====\n\n";
+
+  RooRealVar *ctau = ws->var("ctau3D");
+  RooTruthModel deltaFcn("deltaFcn_CTAUTRUE", "", *ctau);
+
+  // RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5);
+  // RooRealVar lambdaDSS2("lambdaDSS2", "", 0.2, 0.01, 5); // old style - two correlated parameters
+
+  RooRealVar lambdaDSS("lambdaDSS", "base decay const", 0.1, 0.01, 5.0);
+  RooRealVar r_lambda2("r_lambda2", "log(lambda2/lambda1)", 0.0, -2.0, 2.0); // ln(lambda2 / lambda1)
+  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * exp(@1)", RooArgList(lambdaDSS, r_lambda2));
+
+  RooDecay pdfCTAUTRUEDSS1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdfCTAUTRUEDSS2("pdfCTAUTRUEDSS2", "", *ctau, lambdaDSS2, deltaFcn, RooDecay::SingleSided);
+
+  RooRealVar fDSS("fDSS", "fraction of decay1", 0.6, 0.01, 1.0);
   RooAddPdf pdfCTAUTRUE("pdfCTAUTRUE", "", RooArgList(pdfCTAUTRUEDSS1, pdfCTAUTRUEDSS2), RooArgList(fDSS));
 
-  // extend decay model for fitting
   RooRealVar N_Jpsi_MC("N_Jpsi_MC", "", 500000, 100000, 1000000);
-  auto ctauTrueModel = new RooExtendPdf("TrueModel_Tot", "", pdfCTAUTRUE, N_Jpsi_MC);
-  ws->import(*ctauTrueModel);
+  RooExtendPdf total("TrueModel_Tot", "", pdfCTAUTRUE, N_Jpsi_MC);
 
-  delete ctauTrueModel;
+  ws->import(total);
+}
+
+void CtauTrueFit::buildTrue3Expo()
+{
+  std::cout << "===== buildTrue3Expo() =====\n\n";
+  RooRealVar *ctau = ws->var("ctau3D");
+  RooTruthModel deltaFcn("deltaFcn_CTAUTRUE", "", *ctau);
+
+  // RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5);
+  // RooRealVar lambdaDSS2("lambdaDSS2", "", 0.2, 0.01, 5);
+  // RooRealVar lambdaDSS3("lambdaDSS3", "", 0.3, 0.01, 5);
+
+  RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5.0);
+  RooRealVar r_lambda2("r_lambda2", "", 0.0, 0, 2.0);
+  RooRealVar r_lambda3("r_lambda3", "", 0.0, 0, 2.0);
+
+  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * exp(@1)", RooArgList(lambdaDSS, r_lambda2));
+  RooFormulaVar lambdaDSS3("lambdaDSS3", "@0 * exp(@1)", RooArgList(r_lambda2, r_lambda3));
+
+  RooDecay pdf1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdf2("pdfCTAUTRUEDSS2", "", *ctau, lambdaDSS2, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdf3("pdfCTAUTRUEDSS3", "", *ctau, lambdaDSS3, deltaFcn, RooDecay::SingleSided);
+
+  RooRealVar fDSS("fDSS", "fraction of pdf1", 0.4, 0.01, 1.0);
+  RooRealVar f2_DSS("f2_DSS", "fraction of pdf2", 0.3, 0.01, 1.0);
+
+  RooAddPdf sum23("pdfCTAUTRUE_23", "", RooArgList(pdf2, pdf3), RooArgList(f2_DSS));
+  RooAddPdf pdfCTAUTRUE("pdfCTAUTRUE", "", RooArgList(pdf1, sum23), RooArgList(fDSS));
+
+  RooRealVar N_Jpsi_MC("N_Jpsi_MC", "", 500000, 100000, 1000000);
+  RooExtendPdf total("TrueModel_Tot", "", pdfCTAUTRUE, N_Jpsi_MC);
+  ws->import(total);
+}
+
+void CtauTrueFit::buildTrue4Expo()
+{
+  std::cout << "===== buildTrue4Expo() =====\n\n";
+  RooRealVar *ctau = ws->var("ctau3D");
+  RooTruthModel deltaFcn("deltaFcn_CTAUTRUE", "", *ctau);
+
+  // RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5);
+  // RooRealVar lambdaDSS2("lambdaDSS2", "", 0.2, 0.01, 5);
+  // RooRealVar lambdaDSS3("lambdaDSS3", "", 0.3, 0.01, 5);
+  // RooRealVar lambdaDSS4("lambdaDSS4", "", 0.4, 0.01, 5);
+
+  RooRealVar lambdaDSS("lambdaDSS", "", 0.1, 0.01, 5.0);
+  RooRealVar r_lambda2("r_lambda2", "", 0.0, -2.0, 2.0);
+  RooRealVar r_lambda3("r_lambda3", "", 0.5, -2.0, 2.0);
+  RooRealVar r_lambda4("r_lambda4", "", 1.0, -2.0, 2.0);
+
+  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * exp(@1)", RooArgList(lambdaDSS, r_lambda2));
+  RooFormulaVar lambdaDSS3("lambdaDSS3", "@0 * exp(@1)", RooArgList(lambdaDSS2, r_lambda3));
+  RooFormulaVar lambdaDSS4("lambdaDSS4", "@0 * exp(@1)", RooArgList(lambdaDSS3, r_lambda4));
+
+  RooDecay pdf1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdf2("pdfCTAUTRUEDSS2", "", *ctau, lambdaDSS2, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdf3("pdfCTAUTRUEDSS3", "", *ctau, lambdaDSS3, deltaFcn, RooDecay::SingleSided);
+  RooDecay pdf4("pdfCTAUTRUEDSS4", "", *ctau, lambdaDSS4, deltaFcn, RooDecay::SingleSided);
+
+  RooRealVar fDSS("fDSS", "", 0.3, 0.01, 1.0);
+  RooRealVar f2_DSS("f2_DSS", "", 0.3, 0.01, 1.0);
+  RooRealVar f3_DSS("f3_DSS", "", 0.3, 0.01, 1.0);
+
+  RooAddPdf sum34("pdfCTAUTRUE_34", "", RooArgList(pdf3, pdf4), RooArgList(f3_DSS));
+  RooAddPdf sum234("pdfCTAUTRUE_234", "", RooArgList(pdf2, sum34), RooArgList(f2_DSS));
+  RooAddPdf pdfCTAUTRUE("pdfCTAUTRUE", "", RooArgList(pdf1, sum234), RooArgList(fDSS));
+
+  RooRealVar N_Jpsi_MC("N_Jpsi_MC", "", 500000, 100000, 1000000);
+  RooExtendPdf total("TrueModel_Tot", "", pdfCTAUTRUE, N_Jpsi_MC);
+  ws->import(total);
+}
+
+void CtauTrueFit::initVar(const std::string &varName, double init, double low, double high)
+{
+  if (init < low || init > high)
+  {
+    std::cerr << "[ERROR] init value out of bounds for variable: " << varName << "\n";
+    std::cerr << "        init = " << init << ", range = [" << low << ", " << high << "]\n";
+    exit(1);
+  }
+
+  ws->var(varName.c_str())->setVal(init);
+  ws->var(varName.c_str())->setRange(low, high);
 }
 
 void CtauTrueFit::performFit()
 {
-  std::cout << "===== Start performFit() =====\n\n";
+  std::cout << "===== performFit() =====\n\n";
   RooDataSet *dataToFit = (RooDataSet *)ws->data("reducedDS_MC")->reduce(Form("ctau3D>=%.f&&ctau3D<%.f", ctau3DMin, ctau3DMax));
   ws->import(*dataToFit, Rename("dataToFit"));
 
@@ -183,23 +295,81 @@ void CtauTrueFit::performFit()
   // Range("trueFitRange") makes fit be better
 
   fitResult->Print("V");
+}
 
-  std::cout << "fixing floating parameters to constant (after fitting)\n";
-  const RooArgList &floatted_params = fitResult->floatParsFinal();
-  for (auto arg : floatted_params)
-  {
-    RooRealVar *param = dynamic_cast<RooRealVar *>(arg);
-    if (param)
-    {
-      std::cout << "Fixing parameter: " << param->GetName() << "\n";
-      ws->var(param->GetName())->setConstant(kTRUE);
-    }
-  }
+void CtauTrueFit::drawTextVar(const char *varName, const char *label, float xp, float yp, int textColor, int textSize)
+{
+  RooRealVar *var = ws->var(varName);
+  if (!var)
+    return;
+
+  double val = var->getVal();
+  double err = var->getError();
+  double low = var->getMin();
+  double high = var->getMax();
+  bool isConst = var->isConstant();
+
+  const double abs_epsilon = 1e-4; // boundary-val < 0.0001
+  const double rel_epsilon = 1e-3; // 0.1 %
+  const double minErr = 1e-4;
+
+  // if boundary-val <0.0001 and diff/limit < 0.1%, parameter is stuck at the boundary
+  bool atLowerLimit = (std::fabs(val - low) < abs_epsilon) || (low != 0 && std::fabs((val - low) / low) < rel_epsilon);
+  bool atUpperLimit = (std::fabs(val - high) < abs_epsilon) || (high != 0 && std::fabs((val - high) / high) < rel_epsilon);
+
+  TString text;
+  if (isConst)
+    text = Form("%s = %.4f (fixed)", label, val);
+  else if (atLowerLimit || atUpperLimit)
+    text = Form("%s = %.4f (limit)", label, val);
+  else if (err < minErr)
+    text = Form("%s = %.4f #pm < %.4f", label, val, minErr);
+  else if (err > (high - low))
+    text = Form("%s = %.4f #pm %.4f (unstable)", label, val, err);
+  else
+    text = Form("%s = %.4f #pm %.4f", label, val, err);
+
+  drawText(text, xp, yp, textColor, textSize);
+}
+
+void CtauTrueFit::drawTextVarInt(const char *varName, const char *label, float xp, float yp, int textColor, int textSize)
+{
+  RooRealVar *var = ws->var(varName);
+  if (!var)
+    return;
+
+  double val = var->getVal();
+  double err = var->getError();
+  double low = var->getMin();
+  double high = var->getMax();
+  bool isConst = var->isConstant();
+
+  const double abs_epsilon = 1e-4; // boundary-val < 0.0001
+  const double rel_epsilon = 1e-3; // 0.1 %
+  const double minErr = 1e-4;
+
+  // if boundary-val <0.0001 and diff/limit < 0.1%, parameter is stuck at the boundary
+  bool atLowerLimit = (std::fabs(val - low) < abs_epsilon) || (low != 0 && std::fabs((val - low) / low) < rel_epsilon);
+  bool atUpperLimit = (std::fabs(val - high) < abs_epsilon) || (high != 0 && std::fabs((val - high) / high) < rel_epsilon);
+
+  TString text;
+  if (isConst)
+    text = Form("%s = %.f (fixed)", label, val);
+  else if (atLowerLimit || atUpperLimit)
+    text = Form("%s = %.f (limit)", label, val);
+  else if (err < minErr)
+    text = Form("%s = %.f #pm < %.f", label, val, minErr);
+  else if (err > (high - low))
+    text = Form("%s = %.f #pm < %.f (unstable)", label, val, minErr);
+  else
+    text = Form("%s = %.f #pm %.f", label, val, err);
+
+  drawText(text, xp, yp, textColor, textSize);
 }
 
 void CtauTrueFit::makePlot()
 {
-  std::cout << "===== Start makePlot() =====\n\n";
+  std::cout << "===== makePlot() =====\n\n";
   ws->pdf("TrueModel_Tot")->setNormRange("trueFitRange");
 
   // add local label
@@ -224,17 +394,16 @@ void CtauTrueFit::makePlot()
   RooPlot *ctauFrame = ws->var("ctau3D")->frame(Bins(nCtauTrueBins), Range("truePlotRange"));
 
   // draw dataset and pdfs
-  ws->data("dataToFit")->plotOn(ctauFrame, Name("dataToFit")); // DataError(RooAbsData::SumW2)
-  ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Range("truePlotRange"), NormRange("trueFitRange"), Name("TrueModel_Tot"));
+  ws->data("dataToFit")->plotOn(ctauFrame, Name("dataToFit"), DataError(RooAbsData::SumW2));
+
+  ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Range("truePlotRange"), NormRange("trueFitRange"), LineColor(kBlack), Name("TrueModel_Tot"));
+  ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp1"), Components(*ws->pdf("pdfCTAUTRUEDSS1")), LineStyle(kDashed), LineColor(kGreen + 2), Range("truePlotRange"), NormRange("trueFitRange"));
   if (nExp >= 2)
-  {
-    ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp1"), Components(*ws->pdf("pdfCTAUTRUEDSS1")), LineStyle(kDashed), LineColor(kGreen + 2), Range("truePlotRange"), NormRange("trueFitRange"));
     ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp2"), Components(*ws->pdf("pdfCTAUTRUEDSS2")), LineStyle(kDashed), LineColor(kAzure - 4), Range("truePlotRange"), NormRange("trueFitRange"));
-  }
   if (nExp >= 3)
-  {
-    ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp3"), Components(*ws->pdf("pdfCTAUTRUEDSS3")), LineStyle(kDotted), LineColor(kOrange + 1), Range("truePlotRange"), NormRange("trueFitRange"));
-  }
+    ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp3"), Components(*ws->pdf("pdfCTAUTRUEDSS3")), LineStyle(kDashed), LineColor(kOrange + 1), Range("truePlotRange"), NormRange("trueFitRange"));
+  if (nExp >= 4)
+    ws->pdf("TrueModel_Tot")->plotOn(ctauFrame, Name("comp4"), Components(*ws->pdf("pdfCTAUTRUEDSS4")), LineStyle(kDashed), LineColor(kViolet + 1), Range("truePlotRange"), NormRange("trueFitRange"));
 
   // set y-axis range
   gPad->SetLogy();
@@ -261,21 +430,46 @@ void CtauTrueFit::makePlot()
   ctauFrame->Draw();
 
   // legend
-  TLegend *leg = new TLegend(0.6, 0.65, 0.93, 0.88);
+  TLegend *leg = new TLegend(text_x + 0.29, text_y + 0.03, text_x + 0.39, text_y - 0.17);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->AddEntry(ctauFrame->findObject("dataToFit"), "Gen ctau3D", "pe");
   leg->AddEntry(ctauFrame->findObject("TrueModel_Tot"), "Total fit", "l");
-  if (nExp >= 2)
-  {
-    leg->AddEntry(ctauFrame->findObject("comp1"), "Decay Exp1", "l");
-    leg->AddEntry(ctauFrame->findObject("comp2"), "Decay Exp2", "l");
-  }
-  if (nExp >= 3)
-  {
-    leg->AddEntry(ctauFrame->findObject("comp3"), "Decay Exp3", "l");
-  }
+  leg->AddEntry(ctauFrame->findObject("comp1"), "Decay Exp1", "l");
+  if (nExp >= 2) leg->AddEntry(ctauFrame->findObject("comp2"), "Decay Exp2", "l");
+  if (nExp >= 3) leg->AddEntry(ctauFrame->findObject("comp3"), "Decay Exp3", "l");
+  if (nExp >= 4) leg->AddEntry(ctauFrame->findObject("comp4"), "Decay Exp4", "l");
   leg->Draw();
+
+  // print parameters
+  int yCountLeft = 0;
+  int yCountRight = 0;
+
+  // kinematics (left side)
+  drawText(Form("%.1f < p_{T}^{#mu#mu} < %.1f GeV/c", ptLow, ptHigh), text_x, text_y - y_diff * yCountLeft++, text_color, text_size);
+
+  if (yLow == 0)
+    drawText(Form("|y^{#mu#mu}| < %.1f", yHigh), text_x, text_y - y_diff * yCountLeft++, text_color, text_size);
+  else if (yLow != 0)
+    drawText(Form("%.1f < |y^{#mu#mu}| < %.1f", yLow, yHigh), text_x, text_y - y_diff * yCountLeft++, text_color, text_size);
+  
+  // parameters
+  drawTextVarInt("N_Jpsi_MC", "N_{J/#psi}^{MC}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+  drawTextVar("lambdaDSS", "#lambda_{1}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+  if (nExp >= 2) {
+    drawTextVar("r_lambda2", "ln(#lambda_{2}/#lambda_{1})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("fDSS", "f_{1}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+  }
+  if (nExp >= 3) {
+    drawTextVar("r_lambda3", "ln(#lambda_{3}/#lambda_{2})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("f2_DSS", "f_{2}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+  }
+  if (nExp >= 4) {
+    drawTextVar("r_lambda3", "ln(#lambda_{4}/#lambda_{3})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("f3_DSS", "f_{3}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+  }
+
+
 
   // pull part
   TPad *pullPad = new TPad("pullPad", "", 0.0, 0.0, 1.0, 0.3);
@@ -363,7 +557,8 @@ void CtauTrueFit::makePlot()
 
   // ===== draw main canvas ===== //
   myCanvas->Draw();
-  myCanvas->SaveAs(Form("figs/2DFit_%s/CtauTrue/ctauTrue_%s_%s.png", DATE.c_str(), bCont.Data(), kineLabel.c_str()));
+  myCanvas->SaveAs(Form("figs/2DFit_%s/CtauTrue_%s_%s.png", DATE.c_str(), bCont.Data(), kineLabel.c_str()));
+  myCanvas->SaveAs(Form("../figs/2DFit_%s/CtauTrue/CtauTrue_%s_%s.pdf", DATE.c_str(), bCont.Data(), kineLabel.c_str()));
 
   delete pullTmp;
   delete myCanvas;
@@ -371,13 +566,12 @@ void CtauTrueFit::makePlot()
 
 void CtauTrueFit::saveResults()
 {
-  std::cout << "===== Start saveResults() =====\n\n";
+  std::cout << "===== saveResults() =====\n\n";
+  // TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
 
-  TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauTrue/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
+  // fitResult->Write();
+  // ws->pdf("TrueModel_Tot")->Write();
 
-  fitResult->Write();
-  ws->pdf("TrueModel_Tot")->Write();
-
-  outputFile->Close();
-  delete outputFile;
+  // outputFile->Close();
+  // delete outputFile;
 }
