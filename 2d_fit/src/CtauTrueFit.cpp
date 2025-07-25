@@ -567,11 +567,11 @@ void CtauTrueFit::makePlot()
 void CtauTrueFit::saveResults()
 {
   std::cout << "===== saveResults() =====\n\n";
-  // TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
+  TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
 
-  // fitResult->Write();
-  // ws->pdf("TrueModel_Tot")->Write();
+  fitResult->Write();
+  ws->pdf("TrueModel_Tot")->Write();
 
-  // outputFile->Close();
-  // delete outputFile;
+  outputFile->Close();
+  delete outputFile;
 }

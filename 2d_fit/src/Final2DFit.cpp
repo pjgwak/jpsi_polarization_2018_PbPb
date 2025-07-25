@@ -99,8 +99,9 @@ void Final2DFit::setLabels()
 {
   std::cout << "===== Start setLabels() =====\n\n";
   DATE = "No_Weight_2";
-  gSystem->mkdir(Form("roots/2DFit_%s/Final", DATE.c_str()), kTRUE);
-  gSystem->mkdir(Form("figs/2DFit_%s/Final", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("roots/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("figs/2DFit_%s/", DATE.c_str()), kTRUE);
+  gSystem->mkdir(Form("../figs/2DFit_%s/Final", DATE.c_str()), kTRUE);
 
   if (PRw == 1)
     fname = "PR";
@@ -120,7 +121,8 @@ void Final2DFit::createKinematicCut()
   
   TString osPart = "recoQQsign==0 &&";
 
-  TString anglePart = Form("&& cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
+  // TString anglePart = Form("&& cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
+  TString anglePart = "true";
 
   kineCut = std::string((osPart + accPart + kinePart + anglePart).Data());
 }
@@ -128,12 +130,12 @@ void Final2DFit::createKinematicCut()
 void Final2DFit::openInputFiles()
 {
   std::cout << "===== Start openInputFiles() =====\n\n";
-  f1 = new TFile("../files_roodata/RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root");
-  fMass = new TFile(Form("roots/2DFit_%s/Mass/Mass_FixedFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
-  fCErr = new TFile(Form("roots/2DFit_%s/CtauErr/CtauErrResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
-  fCRes = new TFile(Form("roots/2DFit_%s/CtauRes/CtauResResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
-  fCBkg = new TFile(Form("roots/2DFit_%s/CtauBkg/CtauBkgResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
-  fCTrue = new TFile(Form("roots/2DFit_%s/CtauTrue/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()));
+  f1 = new TFile("../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root");
+  fMass = new TFile(Form("roots/2DFit_%s/MassFitResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  fCErr = new TFile(Form("roots/2DFit_%s/CtauErrResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  fCRes = new TFile(Form("roots/2DFit_%s/CtauResResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  fCBkg = new TFile(Form("roots/2DFit_%s/CtauBkgResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP));
+  fCTrue = new TFile(Form("roots/2DFit_%s/CtauTrueResult_Inclusive_%s.root", DATE.c_str(), kineLabel.c_str()));
 }
 
 void Final2DFit::setupWorksapceAndData()
@@ -168,7 +170,7 @@ void Final2DFit::setupWorksapceAndData()
   argSet.add(*(ws->var("pt2")));
   argSet.add(*(ws->var("eta1")));
   argSet.add(*(ws->var("eta2")));
-  argSet.add(*(ws->var("cos_ep")));
+  // argSet.add(*(ws->var("cos_ep")));
   argSet.add(*(ws->var("recoQQsign")));
   argSet.add(*(ws->var("cBin")));
 
@@ -505,7 +507,8 @@ void Final2DFit::plotMass()
   line_at_0->SetLineStyle(kDashed);
   line_at_0->Draw("same");
 
-  c_mass->SaveAs(Form("figs/2DFit_%s/Final/Fit_Mass_%s.png", DATE.c_str(), kineLabel.c_str()));
+  c_mass->SaveAs(Form("figs/2DFit_%s/Fit_Mass_%s.png", DATE.c_str(), kineLabel.c_str()));
+  c_mass->SaveAs(Form("../figs/2DFit_%s/Final/Fit_Mass_%s.pdf", DATE.c_str(), kineLabel.c_str()));
   delete frameTMP;
   delete c_mass;
 }
@@ -598,14 +601,15 @@ void Final2DFit::plotCtau()
   g_ratio_ctau->SetMarkerSize(0.8);
   g_ratio_ctau->Draw("P SAME");
 
-  c_ctau->SaveAs(Form("figs/2DFit_%s/Final/Fit_Ctau_%s.png", DATE.c_str(), kineLabel.c_str()));
+  c_ctau->SaveAs(Form("figs/2DFit_%s/Fit_Ctau_%s.png", DATE.c_str(), kineLabel.c_str()));
+  c_ctau->SaveAs(Form("../figs/2DFit_%s/Final/Fit_Ctau_%s.pdf", DATE.c_str(), kineLabel.c_str()));
   delete c_ctau;
 }
 
 void Final2DFit::saveResults()
 {
   std::cout << "\n===== Start saveResults() =====\n";
-  TFile *outputFile = new TFile(Form("roots/2DFit_%s/Final/FitResult_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
+  TFile *outputFile = new TFile(Form("roots/2DFit_%s/FitResult_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
   outputFile->cd();
 
   RooWorkspace wsTmp("ws_final");
