@@ -187,7 +187,7 @@ void CtauTrueFit::buildTrue2Expo()
 
   RooRealVar lambdaDSS("lambdaDSS", "base decay const", 0.1, 0.01, 5.0);
   RooRealVar r_lambda2("r_lambda2", "log(lambda2/lambda1)", 0.0, -2.0, 2.0); // ln(lambda2 / lambda1)
-  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * exp(@1)", RooArgList(lambdaDSS, r_lambda2));
+  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * @1", RooArgList(lambdaDSS, r_lambda2));
 
   RooDecay pdfCTAUTRUEDSS1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
   RooDecay pdfCTAUTRUEDSS2("pdfCTAUTRUEDSS2", "", *ctau, lambdaDSS2, deltaFcn, RooDecay::SingleSided);
@@ -215,8 +215,8 @@ void CtauTrueFit::buildTrue3Expo()
   RooRealVar r_lambda2("r_lambda2", "", 0.0, 0, 2.0);
   RooRealVar r_lambda3("r_lambda3", "", 0.0, 0, 2.0);
 
-  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * exp(@1)", RooArgList(lambdaDSS, r_lambda2));
-  RooFormulaVar lambdaDSS3("lambdaDSS3", "@0 * exp(@1)", RooArgList(r_lambda2, r_lambda3));
+  RooFormulaVar lambdaDSS2("lambdaDSS2", "@0 * @1", RooArgList(lambdaDSS, r_lambda2));
+  RooFormulaVar lambdaDSS3("lambdaDSS3", "@0 * @1", RooArgList(r_lambda2, r_lambda3));
 
   RooDecay pdf1("pdfCTAUTRUEDSS1", "", *ctau, lambdaDSS, deltaFcn, RooDecay::SingleSided);
   RooDecay pdf2("pdfCTAUTRUEDSS2", "", *ctau, lambdaDSS2, deltaFcn, RooDecay::SingleSided);
@@ -273,6 +273,13 @@ void CtauTrueFit::buildTrue4Expo()
 
 void CtauTrueFit::initVar(const std::string &varName, double init, double low, double high)
 {
+  RooRealVar *var = ws->var(varName.c_str());
+  if (!var)
+  {
+    std::cerr << "[ERROR] there is no variable:: " << varName << "\n";
+    exit(1);
+  }
+
   if (init < low || init > high)
   {
     std::cerr << "[ERROR] init value out of bounds for variable: " << varName << "\n";
@@ -280,8 +287,10 @@ void CtauTrueFit::initVar(const std::string &varName, double init, double low, d
     exit(1);
   }
 
-  ws->var(varName.c_str())->setVal(init);
-  ws->var(varName.c_str())->setRange(low, high);
+  var->setVal(init);
+  // var->setMin(low);
+  // var->setMax(high);
+  var->setRange(low, high);
 }
 
 void CtauTrueFit::performFit()
@@ -457,15 +466,15 @@ void CtauTrueFit::makePlot()
   drawTextVarInt("N_Jpsi_MC", "N_{J/#psi}^{MC}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
   drawTextVar("lambdaDSS", "#lambda_{1}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
   if (nExp >= 2) {
-    drawTextVar("r_lambda2", "ln(#lambda_{2}/#lambda_{1})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("r_lambda2", "#lambda_{2}/#lambda_{1}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
     drawTextVar("fDSS", "f_{1}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
   }
   if (nExp >= 3) {
-    drawTextVar("r_lambda3", "ln(#lambda_{3}/#lambda_{2})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("r_lambda3", "#lambda_{3}/#lambda_{2}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
     drawTextVar("f2_DSS", "f_{2}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
   }
   if (nExp >= 4) {
-    drawTextVar("r_lambda3", "ln(#lambda_{4}/#lambda_{3})", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
+    drawTextVar("r_lambda3", "#lambda_{4}/#lambda_{3}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
     drawTextVar("f3_DSS", "f_{3}", text_x + 0.5, text_y - y_diff * yCountRight++, text_color, text_size);
   }
 

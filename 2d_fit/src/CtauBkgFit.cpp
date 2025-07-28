@@ -171,7 +171,6 @@ void CtauBkgFit::defineModel()
   // common variables
   ws->factory("zeroMean[0.0]");
   ws->factory("N_BkgCtau[1e5, 10, 1e7]");
-  // ws->factory("b_Bkg[0.4, 0.1, 1]"); // NP b fraction of bkg
 
   // resolution model
   buildResModel();
@@ -315,27 +314,33 @@ void CtauBkgFit::combineDecayModels()
   std::cout << "===== combineDecayModels() =====\n\n";
   ws->factory("fDecayP[0.5, 0.0, 1.0]");
   ws->factory("fDecayM[0.25, 0.0, 1.0]");
-  ws->factory("expr::fResCore('1.0 - fDecayP - fDecayM', fDecayP, fDecayM)");
-  ws->factory("SUM::model(fResCore*pdfCTAURES, fDecayM*pdfCTAUDF, fDecayP*pdfCTAUDSS)");
+  // ws->factory("expr::fResCore('1.0 - fDecayP - fDecayM', fDecayP, fDecayM)");
+  // ws->factory("SUM::pdfCTAUCOND_BkgNoPR(fResCore*pdfCTAURES, fDecayM*pdfCTAUDF, fDecayP*pdfCTAUDSS)");
 
-  ws->factory("RooExtendPdf::pdfCTAU_Bkg_Tot(model, N_BkgCtau)");
+  ws->factory("SUM::pdfCTAUCOND_BkgNoPR(fDecayM*pdfCTAUDF, fDecayP*pdfCTAUDSS)");
 
-  // --- legacy test ---
-  // // ===== conditional model =====
-  // // To check goodness of fit -> NOT USED FOR FIT HERE.
-  // RooProdPdf pdfPR("pdfCTAU_BkgPR", "", *ws->pdf("pdfCTAUERR_Bkg"), Conditional(*ws->pdf("pdfCTAUCOND_BkgPR"), RooArgList(*ws->var("ctau3D"))));
-  // ws->import(pdfPR);
+  //
+  //
+  //
+  // --- for test ---
+  // To check goodness of fit -> NOT USED FOR FIT HERE.
+  ws->factory("expr::b_Bkg('1.0 - fDecayP - fDecayM', fDecayP, fDecayM)");
+  // ws->factory("b_Bkg[0.4, 0.1, 1]");                                   // NP b fraction of bkg
+  ws->factory(Form("SUM::%s(%s)", "pdfCTAUCOND_BkgPR", "pdfCTAURES")); // PR
+  ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAUCOND_Bkg", "b_Bkg", "pdfCTAUCOND_BkgNoPR", "pdfCTAUCOND_BkgPR"));
+  ws->factory(Form("RooExtendPdf::%s(%s,%s)", "pdfTot_Bkg", "pdfCTAUCOND_Bkg", "N_BkgCtau")); // N_Bkg is number of bkg from dataw_Bkg
 
-  // RooProdPdf pdfNoPR("pdfCTAU_BkgNoPR", "", *ws->pdf("pdfCTAUERR_Bkg"), Conditional(*ws->pdf("pdfCTAUCOND_BkgNoPR"), RooArgList(*ws->var("ctau3D"))));
-  // ws->import(pdfNoPR);
 
-  // ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU_Bkg", "b_Bkg", "pdfCTAU_BkgNoPR", "pdfCTAU_BkgPR"));
-  // RooAbsPdf *pdfCTAU_Bkg_Tot = new RooAddPdf("pdfCTAU_Bkg_Tot", "pdfCTAU_Bkg_Tot", RooArgList(*ws->pdf("pdfCTAU_Bkg")), RooArgList(*ws->var("N_BkgCtau")));
+  // --- puniz terms for final fit - Do not fit them here
+  RooProdPdf pdfPR("pdfCTAU_BkgPR", "", *ws->pdf("pdfCTAUERR_Bkg"), Conditional(*ws->pdf("pdfCTAUCOND_BkgPR"), RooArgList(*ws->var("ctau3D"))));
+  ws->import(pdfPR);
+  RooProdPdf pdfNoPR("pdfCTAU_BkgNoPR", "", *ws->pdf("pdfCTAUERR_Bkg"), Conditional(*ws->pdf("pdfCTAUCOND_BkgNoPR"), RooArgList(*ws->var("ctau3D"))));
+  ws->import(pdfNoPR);
 
-  // ws->import(*pdfCTAU_Bkg_Tot);
-
-  // delete pdfCTAU_Bkg_Tot;
-  // --- end of legacy test ---
+  ws->factory(Form("SUM::%s(%s*%s, %s)", "pdfCTAU_Bkg", "b_Bkg", "pdfCTAU_BkgNoPR", "pdfCTAU_BkgPR"));
+  RooAbsPdf *pdfCTAU_Bkg_Tot = new RooAddPdf("pdfCTAU_Bkg_Tot", "", RooArgList(*ws->pdf("pdfCTAU_Bkg")), RooArgList(*ws->var("N_BkgCtau")));
+  ws->import(*pdfCTAU_Bkg_Tot);
+  // --- end test ---
 }
 
 void CtauBkgFit::initVar(const std::string &varName, double init, double low, double high)
@@ -355,9 +360,9 @@ void CtauBkgFit::initVar(const std::string &varName, double init, double low, do
   }
 
   var->setVal(init);
-  var->setMin(low);
-  var->setMax(high);
-  // var->setRange(low, high);
+  // var->setMin(low);
+  // var->setMax(high);
+  var->setRange(low, high);
 }
 
 void CtauBkgFit::setConstVar(const std::string &varName, bool isConst, double value)
@@ -385,7 +390,7 @@ void CtauBkgFit::performFit()
 
   // fit
   bool isWeighted = ws->data("dataToFit")->isWeighted();
-  fitResult = ws->pdf("pdfCTAU_Bkg_Tot")->fitTo(*ws->data("dataToFit"), Save(), Range("bkgFitRange"), Extended(kTRUE), NumCPU(nCPU), PrintLevel(0), SumW2Error(isWeighted), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1), Strategy(2));
+  fitResult = ws->pdf("pdfTot_Bkg")->fitTo(*ws->data("dataToFit"), Save(), Range("bkgFitRange"), Extended(kTRUE), NumCPU(nCPU), PrintLevel(0), SumW2Error(isWeighted), RecoverFromUndefinedRegions(1.), PrintEvalErrors(-1), Strategy(2));
   fitResult->Print("V");
 
   delete dataToFit;
@@ -491,28 +496,28 @@ void CtauBkgFit::drawPullPlot()
     normBkg = ws->data("dataToFit")->sumEntries() * normDSTot / ws->data("dataw_Bkg")->sumEntries();
   }
 
-  ws->pdf("pdfCTAU_Bkg_Tot")->setNormRange("ctaubkgFitRange");
+  ws->pdf("pdfTot_Bkg")->setNormRange("ctaubkgFitRange");
   ctauFrame->updateNormVars(RooArgSet(*ws->var("ctau3D")));
   // ctauFrame->updateNormVars(RooArgSet(*ws->var("mass"), *ws->var("ctau3D"), *ws->var("ctau3DErr")));
 
   // plotting
   ws->data("dataToFit")->plotOn(ctauFrame, Name("data_points"), DataError(RooAbsData::SumW2)); // for normalization
-  ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("total_pdf"), ProjWData(*ws->data("dataw_Bkg")), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-  ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("gaussCore"), Components(RooArgSet(*ws->pdf("pdfCTAURES"))), LineStyle(kDashed), LineColor(kGreen + 2), LineWidth(3), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+  ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("total_pdf"), ProjWData(*ws->data("dataw_Bkg")), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+  ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("gaussCore"), Components(RooArgSet(*ws->pdf("pdfCTAURES"))), LineStyle(kDashed), LineColor(kGreen + 2), LineWidth(3), Range("bkgPlotRange"), NormRange("bkgFitRange"));
 
   if (nExp_L == 1)
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL"), Components(RooArgSet(*ws->pdf("pdfCTAUDF"))), LineStyle(kDashed), LineColor(kMagenta + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL"), Components(RooArgSet(*ws->pdf("pdfCTAUDF"))), LineStyle(kDashed), LineColor(kMagenta + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   else if (nExp_L == 2) {
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL1"), Components(RooArgSet(*ws->pdf("pdfCTAUDF1"))), LineStyle(kDashed), LineColor(kMagenta + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL2"), Components(RooArgSet(*ws->pdf("pdfCTAUDF2"))), LineStyle(kDotted), LineColor(kMagenta + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL1"), Components(RooArgSet(*ws->pdf("pdfCTAUDF1"))), LineStyle(kDashed), LineColor(kMagenta + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL2"), Components(RooArgSet(*ws->pdf("pdfCTAUDF2"))), LineStyle(kDotted), LineColor(kMagenta + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   }
 
   if (nExp_R == 1)
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS"))), LineStyle(kDashed), LineColor(kOrange + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS"))), LineStyle(kDashed), LineColor(kOrange + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   else if (nExp_R == 2)
   {
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR1"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS1"))), LineStyle(kDashed), LineColor(kOrange + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR2"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS2"))), LineStyle(kDotted), LineColor(kOrange + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR1"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS1"))), LineStyle(kDashed), LineColor(kOrange + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR2"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS2"))), LineStyle(kDotted), LineColor(kOrange + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   }
 
   ws->data("dataToFit")->plotOn(ctauFrame, Name("data_over_pdfs"), DataError(RooAbsData::SumW2)); // draw dataset again over pdf (cosmetic)
@@ -715,29 +720,29 @@ void CtauBkgFit::drawRatioPlot()
     normBkg = ws->data("dataToFit")->sumEntries() * normDSTot / ws->data("dataw_Bkg")->sumEntries();
   }
 
-  ws->pdf("pdfCTAU_Bkg_Tot")->setNormRange("ctaubkgFitRange");
+  ws->pdf("pdfTot_Bkg")->setNormRange("ctaubkgFitRange");
   ctauFrame->updateNormVars(RooArgSet(*ws->var("ctau3D")));
   // ctauFrame->updateNormVars(RooArgSet(*ws->var("mass"), *ws->var("ctau3D"), *ws->var("ctau3DErr")));
 
   // plotting
   ws->data("dataToFit")->plotOn(ctauFrame, Name("data_points"), DataError(RooAbsData::SumW2)); // for normalization
-  ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("total_pdf"), ProjWData(*ws->data("dataw_Bkg")), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-  ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("gaussCore"), Components(RooArgSet(*ws->pdf("pdfCTAURES"))), LineStyle(kDashed), LineColor(kGreen + 2), LineWidth(3), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+  ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("total_pdf"), ProjWData(*ws->data("dataw_Bkg")), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+  ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("gaussCore"), Components(RooArgSet(*ws->pdf("pdfCTAURES"))), LineStyle(kDashed), LineColor(kGreen + 2), LineWidth(3), Range("bkgPlotRange"), NormRange("bkgFitRange"));
 
   if (nExp_L == 1)
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL"), Components(RooArgSet(*ws->pdf("pdfCTAUDF"))), LineStyle(kDashed), LineColor(kMagenta + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL"), Components(RooArgSet(*ws->pdf("pdfCTAUDF"))), LineStyle(kDashed), LineColor(kMagenta + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   else if (nExp_L == 2)
   {
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL1"), Components(RooArgSet(*ws->pdf("pdfCTAUDF1"))), LineStyle(kDashed), LineColor(kMagenta + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyL2"), Components(RooArgSet(*ws->pdf("pdfCTAUDF2"))), LineStyle(kDotted), LineColor(kMagenta + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL1"), Components(RooArgSet(*ws->pdf("pdfCTAUDF1"))), LineStyle(kDashed), LineColor(kMagenta + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyL2"), Components(RooArgSet(*ws->pdf("pdfCTAUDF2"))), LineStyle(kDotted), LineColor(kMagenta + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   }
 
   if (nExp_R == 1)
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS"))), LineStyle(kDashed), LineColor(kOrange + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS"))), LineStyle(kDashed), LineColor(kOrange + 1), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   else if (nExp_R == 2)
   {
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR1"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS1"))), LineStyle(kDashed), LineColor(kOrange + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
-    ws->pdf("pdfCTAU_Bkg_Tot")->plotOn(ctauFrame, Name("deacyR2"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS2"))), LineStyle(kDotted), LineColor(kOrange + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR1"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS1"))), LineStyle(kDashed), LineColor(kOrange + 2), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
+    ws->pdf("pdfTot_Bkg")->plotOn(ctauFrame, Name("deacyR2"), Components(RooArgSet(*ws->pdf("pdfCTAUDSS2"))), LineStyle(kDotted), LineColor(kOrange + 3), LineWidth(2), Range("bkgPlotRange"), NormRange("bkgFitRange"));
   }
 
   ws->data("dataToFit")->plotOn(ctauFrame, Name("data_over_pdfs"), DataError(RooAbsData::SumW2)); // draw dataset again over pdf (cosmetic)
@@ -933,11 +938,11 @@ void CtauBkgFit::drawRatioPlot()
 void CtauBkgFit::saveResults()
 {
   std::cout << "===== saveResults() =====\n\n";
-  // TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauBkgResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP), "recreate");
+  TFile *outputFile = new TFile(Form("roots/2DFit_%s/CtauBkgResult_%s_%sw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fname.c_str(), fEffW, fAccW, isPtW, isTnP), "recreate");
 
-  // fitResult->Write();
-  // ws->pdf("pdfCTAU_Bkg_Tot")->Write("pdfCTAU_Bkg_Tot");
+  fitResult->Write();
+  ws->pdf("pdfCTAU_Bkg_Tot")->Write("pdfCTAU_Bkg_Tot");
 
-  // outputFile->Close();
-  // delete outputFile;
+  outputFile->Close();
+  delete outputFile;
 }

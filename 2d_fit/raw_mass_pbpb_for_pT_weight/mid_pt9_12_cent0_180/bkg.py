@@ -30,7 +30,7 @@ from ROOT import CtauBkgFit
 
 # make an instance
 fit = CtauBkgFit(
-    ptLow=12, ptHigh=15,
+    ptLow=9, ptHigh=12,
     yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
@@ -55,7 +55,7 @@ fit.init()
 fit.ctauMin = -2; fit.ctauMax = 2
 
 # pdf parameters
-fit.initVar('N_BkgCtau', 300, 1, 500)
+fit.initVar('N_BkgCtau', 300, 1, 10000)
 # fit.initVar('b_Bkg', 0.8, 0.3, 0.95)
 fit.initVar('fDecayP', 0.2, 0.01, 0.9)
 fit.initVar('fDecayM', 0.6, 0.01, 0.9)

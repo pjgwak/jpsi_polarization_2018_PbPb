@@ -113,7 +113,8 @@ void CtauErrFit::setupWorkspaceAndData()
   ws->import(*dataset);
   ws->import(*datasetMass);
   ws->import(*pdfMASS_Tot);
-  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh);
+  // TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh); // PbPb
+  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f", ptLow, ptHigh, yLow, yHigh, massLow, massHigh); // OO
   TString accCut = "(((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2) && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)))"; // 2018 acceptance cut
   TString OSCut = "recoQQsign==0";
   // TString angleCut = Form("cos_ep>%.2f && cos_ep<%.2f", cosLow, cosHigh);
@@ -126,7 +127,7 @@ void CtauErrFit::setupWorkspaceAndData()
   argSet->add(*(ws->var("eta1")));
   argSet->add(*(ws->var("eta2")));
   argSet->add(*(ws->var("recoQQsign")));
-  argSet->add(*(ws->var("cBin")));
+  // argSet->add(*(ws->var("cBin"))); // Todo: turn on it for PbPb - OO
 
   // Don't use MC weight when use the sPlot technique (?) -> check legacy AN code too.
   RooDataSet *dsAB = (RooDataSet *)ws->data("dataset")->reduce(*argSet, finalCut.Data());

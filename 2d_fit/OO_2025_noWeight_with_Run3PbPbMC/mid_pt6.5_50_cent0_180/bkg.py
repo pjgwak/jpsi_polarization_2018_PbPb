@@ -30,7 +30,7 @@ from ROOT import CtauBkgFit
 
 # make an instance
 fit = CtauBkgFit(
-    ptLow=12, ptHigh=15,
+    ptLow=6.5, ptHigh=50,
     yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
@@ -46,7 +46,7 @@ fit = CtauBkgFit(
 fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
 fit.nGauss = cfg['defalut_true_n_exp'] # nGauss of resolution - it must same with nGauss of ctauRes fit
 fit.nGauss = 2
-fit.nExp_L = 1; fit.nExp_R = 2
+fit.nExp_L = 1; fit.nExp_R = 1
 
 fit.init()
 
@@ -55,7 +55,7 @@ fit.init()
 fit.ctauMin = -2; fit.ctauMax = 2
 
 # pdf parameters
-fit.initVar('N_BkgCtau', 300, 1, 500)
+fit.initVar('N_BkgCtau', 300, 1, 10000)
 # fit.initVar('b_Bkg', 0.8, 0.3, 0.95)
 fit.initVar('fDecayP', 0.2, 0.01, 0.9)
 fit.initVar('fDecayM', 0.6, 0.01, 0.9)
@@ -77,8 +77,8 @@ if fit.nExp_L == 2:
 if fit.nExp_R == 1:
     fit.initVar('lambdaDSS_Bkg1', 0.4, 0.001, 2.0)
 if fit.nExp_R == 2:
-    fit.initVar('lambdaDSS_Bkg1', 0.4, 0.001, 2.0)
-    fit.initVar('rDSS12', 0.4, 0.001, 5.0)
+    fit.initVar('lambdaDSS_Bkg1', 0.4, 0.001, 5.0)
+    fit.initVar('rDSS12', 4, 1, 10.0)
     fit.initVar('fDSS12', 0.4, 0.01, 1.0)
 
 # if fit.nExp_C == 1:

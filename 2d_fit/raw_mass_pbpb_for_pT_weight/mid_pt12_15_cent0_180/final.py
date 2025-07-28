@@ -43,16 +43,30 @@ fit = Final2DFit(
 )
 
 # # user name tag and pdf info
-# fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
-# fit.inputFilePath = cfg["mc_gen_only_input_path"]
-# fit.nExp = cfg['defalut_true_n_exp'] # nExp in ctauTrue decay pdf
-# fit.nExp = 2 # for test
+fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
+fit.inputFilePath = cfg["data_input_path"]
+# fit.pdfTypeMassSig = cfg["default_pdf_mass_sig"] # doubleCB, CBG
+# fit.pdfTypeMassBkg = cfg["default_pdf_mass_bkg"] # expo, cheby1, ..., cheby6
+# fit.nGauss = cfg['defalut_res_n_gauss'] # 1 - 4
+# fit.nExpTrue = cfg['defalut_true_n_exp'] # 1 - 3
+# fit.nExpBkg_L = cfg['defalut_bkg_n_exp_L'] # 1 - 2
+# fit.nExpBkg_R = cfg['defalut_bkg_n_exp_R'] # 1 - 2
 
-# fit.init()
+fit.init()
 
 # --- change here ---
 # set custom ctau3DMin, ctau3DMax - if you need
 # fit.ctau3DMax = 6
+
+# fit.initVar('b_Jpsi', 0.1, 0.01, 0.3)
+# fit.setConstVar('fDecayM', False)
+# fit.setConstVar('b_Jpsi', True, 0.32)
+# fit.setConstVar('mean_Jpsi', True, 3.096)
+# fit.setConstVar('nSig2D', True, 10000)
+# fit.setConstVar('nBkg2D', True, 5000)
+# fit.setConstVar('sigma_1_A', True, 0.2)
+# fit.setConstVar('fDecayM', True)
+# fit.setConstVar('fDecayP', False)
 
 # pdf parameters
 # if fit.nExp == 2:
@@ -63,7 +77,7 @@ fit = Final2DFit(
 
 fit.run()
 
-print('--- Finish ctauBkg fit ---')
+print('--- Finish Final2DFit fit ---')
 
 
 # -----------------------

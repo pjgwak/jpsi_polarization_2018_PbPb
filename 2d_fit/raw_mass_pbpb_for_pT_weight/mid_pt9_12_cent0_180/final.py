@@ -26,11 +26,11 @@ cfg = get_common_config()
 gSystem.Load(cfg['shared_lib_path'])
 
 # import cpp class
-from ROOT import CtauBkgFit
+from ROOT import Final2DFit
 
 # make an instance
-fit = CtauBkgFit(
-    ptLow=12, ptHigh=15,
+fit = Final2DFit(
+    ptLow=9, ptHigh=12,
     yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,
@@ -44,54 +44,47 @@ fit = CtauBkgFit(
 
 # # user name tag and pdf info
 fit.DATE = cfg["date_tag"] # you can change it - usually to distinguish wegiht vs no weight
-fit.nGauss = cfg['defalut_true_n_exp'] # nGauss of resolution - it must same with nGauss of ctauRes fit
-fit.nGauss = 2
-fit.nExp_L = 1; fit.nExp_R = 2
+fit.inputFilePath = cfg["data_input_path"]
+# fit.pdfTypeMassSig = cfg["default_pdf_mass_sig"] # doubleCB, CBG
+# fit.pdfTypeMassBkg = cfg["default_pdf_mass_bkg"] # expo, cheby1, ..., cheby6
+# fit.nGauss = cfg['defalut_res_n_gauss'] # 1 - 4
+# fit.nExpTrue = cfg['defalut_true_n_exp'] # 1 - 3
+# fit.nExpBkg_L = cfg['defalut_bkg_n_exp_L'] # 1 - 2
+# fit.nExpBkg_R = cfg['defalut_bkg_n_exp_R'] # 1 - 2
 
 fit.init()
 
 # --- change here ---
-# set custom ctauMin, ctauMax - if you need
-fit.ctauMin = -2; fit.ctauMax = 2
+# set custom ctau3DMin, ctau3DMax - if you need
+# fit.ctau3DMax = 6
+
+fit.initVar('b_Jpsi', 0.1, 0.01, 0.9)
+# fit.initVar('sigma_1_A_smass_sig', 1.2, 0.8, 2)
+fit.initVar('nSig2D', 1000, 800, 3000)
+fit.initVar('nBkg2D', 1000, 400, 3000)
+fit.setConstVar('sl1', True)
+fit.setConstVar('sl2', True)
+
+# fit.setConstVar('nSig2D', True, 10000)
+# fit.setConstVar('fDecayM', False)
+# fit.setConstVar('b_Jpsi', True, 0.32)
+# fit.setConstVar('mean_Jpsi', True, 3.096)
+# fit.setConstVar('nSig2D', True, 10000)
+# fit.setConstVar('nBkg2D', True, 5000)
+# fit.setConstVar('sigma_1_A', True, 0.2)
+# fit.setConstVar('fDecayM', True)
+# fit.setConstVar('fDecayP', False)
 
 # pdf parameters
-fit.initVar('N_BkgCtau', 300, 1, 500)
-# fit.initVar('b_Bkg', 0.8, 0.3, 0.95)
-fit.initVar('fDecayP', 0.2, 0.01, 0.9)
-fit.initVar('fDecayM', 0.6, 0.01, 0.9)
-
-# make gauss sigma free - when the peak is too sharp
-# fit.initVar('s1_CtauRes', 0.93, 0.8, 3)
-# fit.setConstVar('s1_CtauRes', False)
-
-
-if fit.nExp_L == 1:
-    fit.initVar('lambdaDF_Bkg1', 0.2, 0.001, 1.0)
-    # fit.setConstVar('lambdaDF_Bkg1', True, 0.4)
-
-if fit.nExp_L == 2:
-    fit.initVar('lambdaDF_Bkg1', 1.5, 0.001, 2.0)
-    fit.initVar('rDF12', 1.5, 0.001, 5.0)
-    fit.initVar('fDF12', 0.4, 0.01, 1.0)
-
-if fit.nExp_R == 1:
-    fit.initVar('lambdaDSS_Bkg1', 0.4, 0.001, 2.0)
-if fit.nExp_R == 2:
-    fit.initVar('lambdaDSS_Bkg1', 0.4, 0.001, 2.0)
-    fit.initVar('rDSS12', 0.4, 0.001, 5.0)
-    fit.initVar('fDSS12', 0.4, 0.01, 1.0)
-
-# if fit.nExp_C == 1:
-#     fit.initVar('lambdaDDS_Bkg1', 0.4, 0.01, 2.0)
-# if fit.nExp_C == 2:
-#     fit.initVar('lambdaDDS_Bkg1', 0.4, 0.01, 2.0)
-#     fit.initVar('lambdaDDS_Bkg2', 1.5, 0.001, 2.0)
-#     fit.initVar('fDDS12', 0.4, 0.01, 1.0)
-
+# if fit.nExp == 2:
+#     fit.initVar('N_Jpsi_MC', 500000, 400000, 1000000)
+#     fit.initVar('lambdaDSS', 0.4, 0.001, 1) # > 0
+#     fit.initVar('r_lambda2', 0.5, -2, 2)  # ln(lambda2 / lambda1)
+#     fit.initVar('fDSS', 0.5, 0.01, 0.99)
 
 fit.run()
 
-print('--- Finish ctauBkg fit ---')
+print('--- Finish Final2DFit fit ---')
 
 
 # -----------------------

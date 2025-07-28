@@ -102,12 +102,13 @@ void MassFit::setupWorkspaceAndData()
   }
   ws->import(*dataset);
 
-  TString kineCutStr = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh);
-  TString accCutStr = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )"; // 2018
-  TString osCutStr = "recoQQsign==0";
-  // TString angleCutStr = Form("cosEP>%.2f && cosEP<%.2f", cosLow, cosHigh);
-  TString angleCutStr = "true"; // For test -> user config? : cos, phi, frame
-  TString finalCut = TString::Format("%s && %s && %s && %s", osCutStr.Data(), accCutStr.Data(), kineCutStr.Data(), angleCutStr.Data());
+  // TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f && cBin>=%d && cBin<%d", ptLow, ptHigh, yLow, yHigh, massLow, massHigh, cLow, cHigh); // PbPb
+  TString kineCut = Form("pt>%.2f && pt<%.2f && abs(y)>%.2f && abs(y)<%.2f && mass>%.2f && mass<%.2f", ptLow, ptHigh, yLow, yHigh, massLow, massHigh); // OO
+  TString accCut = "( ((abs(eta1) <= 1.2) && (pt1 >=3.5)) || ((abs(eta2) <= 1.2) && (pt2 >=3.5)) || ((abs(eta1) > 1.2) && (abs(eta1) <= 2.1) && (pt1 >= 5.47-1.89*(abs(eta1)))) || ((abs(eta2) > 1.2)  && (abs(eta2) <= 2.1) && (pt2 >= 5.47-1.89*(abs(eta2)))) || ((abs(eta1) > 2.1) && (abs(eta1) <= 2.4) && (pt1 >= 1.5)) || ((abs(eta2) > 2.1)  && (abs(eta2) <= 2.4) && (pt2 >= 1.5)) )"; // 2018
+  TString osCut = "recoQQsign==0";
+  // TString angleCut = Form("cosEP>%.2f && cosEP<%.2f", cosLow, cosHigh);
+  TString angleCut = "true"; // For test -> user config? : cos, phi, frame
+  TString finalCut = TString::Format("%s && %s && %s && %s", osCut.Data(), accCut.Data(), kineCut.Data(), angleCut.Data());
 
   // is weighted?
   RooDataSet *datasetW = nullptr;
@@ -611,7 +612,6 @@ void MassFit::makePlot()
   pad2->Draw();
   pad2->cd();
   pad2->SetTopMargin(0); // Upper and lower plot are joined
-  pad2->SetBottomMargin(0.67);
   pad2->SetBottomMargin(0.4);
   pad2->SetFillStyle(4000);
   pad2->SetFrameFillStyle(4000);
@@ -631,7 +631,7 @@ void MassFit::makePlot()
   pullFrame->GetYaxis()->CenterTitle();
 
   pullFrame->GetXaxis()->SetTitle("m_{#mu^{+}#mu^{-}} (GeV/c^{2})");
-  pullFrame->GetXaxis()->SetTitleOffset(1.05);
+  pullFrame->GetXaxis()->SetTitleOffset(1.35);
   pullFrame->GetXaxis()->SetLabelOffset(0.04);
   pullFrame->GetXaxis()->SetLabelSize(0.08);
   pullFrame->GetXaxis()->SetTitleSize(0.08);

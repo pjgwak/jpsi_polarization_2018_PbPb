@@ -30,7 +30,7 @@ from ROOT import CtauResFit
 
 # make an instance
 fit = CtauResFit(
-    ptLow=12, ptHigh=15,
+    ptLow=9, ptHigh=12,
     yLow=0, yHigh=1.6,
     cLow=0, cHigh=180,
     cosLow=-1.0, cosHigh=1.0,

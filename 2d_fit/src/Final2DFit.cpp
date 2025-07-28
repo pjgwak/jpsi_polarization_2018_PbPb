@@ -30,7 +30,7 @@
 #include "TLine.h"
 #include "RooHist.h"
 
-#include "../headers/polarizationUtilities.h"
+#include "../../headers/polarizationUtilities.h"
 
 using std::cout; using std::endl;
 using namespace RooFit;
@@ -55,7 +55,7 @@ Final2DFit::Final2DFit(float ptLow, float ptHigh,
   RooMsgService::instance().getStream(1).removeTopic(Plotting);
   RooMsgService::instance().getStream(0).removeTopic(Integration);
   RooMsgService::instance().getStream(1).removeTopic(Integration);
-  RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
+  RooMsgService::instance().setGlobalKillBelow(WARNING);
 }
 
 Final2DFit::~Final2DFit()
@@ -66,7 +66,7 @@ Final2DFit::~Final2DFit()
   RooMsgService::instance().getStream(1).addTopic(Plotting);
   RooMsgService::instance().getStream(0).addTopic(Integration);
   RooMsgService::instance().getStream(1).addTopic(Integration);
-  RooMsgService::instance().setGlobalKillBelow(RooFit::INFO);
+  RooMsgService::instance().setGlobalKillBelow(INFO);
 
   delete ws;
   if (f1) { f1->Close(); delete f1; }
@@ -77,11 +77,14 @@ Final2DFit::~Final2DFit()
   if (fCTrue) { fCTrue->Close(); delete fCTrue; }
   delete fitMass;
   delete fit2DFit;
+  delete ws2dFit;
+  delete wsInput;
+  delete ws;
+  delete fInputData;
 }
 
-void Final2DFit::run()
+void Final2DFit::init()
 {
-  std::cout << "===== Start run() =====\n\n";
   setLabels();
   createKinematicCut();
   openInputFiles();
@@ -90,6 +93,11 @@ void Final2DFit::run()
   defineAndFitMassModel();
   defineCtauModel();
   define2DFitModel();
+}
+
+void Final2DFit::run()
+{
+  std::cout << "===== Start run() =====\n\n";
   perform2DFit();
   makePlots();
   saveResults();
@@ -174,7 +182,8 @@ void Final2DFit::setupWorksapceAndData()
   argSet.add(*(ws->var("recoQQsign")));
   argSet.add(*(ws->var("cBin")));
 
-  RooDataSet *datasetW = new RooDataSet("datasetW", "A sample", argSet, Import(*dataset), WeightVar(*ws->var("weight")));
+  RooDataSet *datasetW = new RooDataSet("datasetW", "A sample", argSet, Import(*dataset));
+  // RooDataSet *datasetW = new RooDataSet("datasetW", "A sample", argSet, Import(*dataset), WeightVar(*ws->var("weight")));
   ws->import(*datasetW);
 
   // Todo: Do we need it?
@@ -199,14 +208,17 @@ void Final2DFit::setVariableRanges()
   RooRealVar *ctauErrVar = ws->var("ctau3DErr");
   double ctauErrMin;
   double ctauErrMax;
-  dsTot->getRange(*ctauErrVar, ctauErrMin, ctauErrMax);
-  ctauErrVar->setRange(ctauErrMin, ctauErrMax);
-  ctauErrVar->setRange("ctauRange", ctauErrMin, ctauErrMax);
+  dsTot->getRange(*ctauErrVar, ctauErrMin, ctauErrMax); // bring ctauErrMin, Max 
+
+  ws->var("ctau3DErr")->setRange(ctauErrMin, ctauErrMax);
+  // ws->var("ctau3DErr")->setRange("fitRange", ctauErrMin, ctauErrMax);
 
   ws->var("mass")->setRange(massLow, massHigh);
+  ws->var("mass")->setRange("fitRange", massLow, massHigh);
+
   ws->var("ctau3D")->setRange(ctauLow, ctauHigh);
-  ws->var("ctau3D")->setRange("ctauRange", ctauLow, ctauHigh);  
-  
+  ws->var("ctau3D")->setRange("fitRange", ctauLow, ctauHigh);
+
   // Todo: get the range from sPlot dataset?
   ws->var("ctau3DRes")->setRange(-10, 10);
   ws->var("ctau3DRes")->setRange("ctauResRange", -10, 10);
@@ -226,12 +238,12 @@ void Final2DFit::defineAndFitMassModel()
   std::cout << "===== Start defineAndFitMassModel() =====\n\n";
   
   // Todo: move to define 2DFit model, user custom
-  ws->factory("b_Jpsi[0.22, 1e-8, 1.0]");
+  ws->factory("b_Jpsi[0.22, 0.05, 1.0]");
 
   std::cout << "*************************** START MASS FIT *****************************\n";
 
   // ===== use MC mass fit results =====
-  TFile *f_fit = new TFile(Form("roots/2DFit_%s/mc_Mass/mc_MassFitResult_%s_PRw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fEffW, fAccW, isPtW, isTnP));
+  TFile *f_fit = new TFile(Form("roots/2DFit_%s/mc_MassFitResult_%s_PRw_Effw%d_Accw%d_PtW%d_TnP%d.root", DATE.c_str(), kineLabel.c_str(), fEffW, fAccW, isPtW, isTnP));
   if (!f_fit || f_fit->IsZombie())
   {
     std::cerr << "Error: Could not open MC fit result file!\n";
@@ -282,16 +294,16 @@ void Final2DFit::defineAndFitMassModel()
 
   // ===== Sig model =====
   RooRealVar mean("mean_Jpsi", "mean of the signal", pdgMass.JPsi, pdgMass.JPsi - 0.1, pdgMass.JPsi + 0.1);
-  RooRealVar sigma_1_A("sigma_1_A", "sigma of CB1", sigma_MC_value, sigma_lower, sigma_higher);
+  RooRealVar sigma_1_A_smass_sig("sigma_1_A_smass_sig", "sigma of CB1", sigma_MC_value, sigma_lower, sigma_higher);
   RooRealVar x_A("x_A", "sigma ratio", xA_MC_value);
-  RooFormulaVar sigma_2_A("sigma_2_A", "@0*@1", RooArgList(sigma_1_A, x_A));
+  RooFormulaVar sigma_2_A("sigma_2_A", "@0*@1", RooArgList(sigma_1_A_smass_sig, x_A));
   RooRealVar alpha_1_A("alpha_1_A", "tail shift", alpha_MC_value);
   RooFormulaVar alpha_2_A("alpha_2_A", "1.0*@0", RooArgList(alpha_1_A));
   RooRealVar n_1_A("n_1_A", "power order", n_MC_value);
   RooFormulaVar n_2_A("n_2_A", "1.0*@0", RooArgList(n_1_A));
   RooRealVar f("f", "cb fraction", f_MC_value);
 
-  RooCBShape cb_1_A("cball_1_A", "Crystal Ball 1", *ws->var("mass"), mean, sigma_1_A, alpha_1_A, n_1_A);
+  RooCBShape cb_1_A("cball_1_A", "Crystal Ball 1", *ws->var("mass"), mean, sigma_1_A_smass_sig, alpha_1_A, n_1_A);
   RooCBShape cb_2_A("cball_2_A", "Crystal Ball 2", *ws->var("mass"), mean, sigma_2_A, alpha_2_A, n_2_A);
   RooAddPdf pdfMASS_Jpsi("pdfMASS_Jpsi", "Signal Shape", RooArgList(cb_1_A, cb_2_A), f);
 
@@ -314,7 +326,8 @@ void Final2DFit::defineAndFitMassModel()
 
   ws->import(pdfMASS_Tot);
 
-  fitMass = ws->pdf("pdfMASS_Tot")->fitTo(*ws->data("dsTot"), Save(), Range(massLow, massHigh), Timer(kTRUE), Extended(kTRUE), SumW2Error(true), NumCPU(nCPU), PrintLevel(0));
+  // fit the mass model only
+  fitMass = ws->pdf("pdfMASS_Tot")->fitTo(*ws->data("dsTot"), Save(), Range(massLow, massHigh), Timer(kTRUE), Extended(kTRUE), SumW2Error(true), NumCPU(nCPU), PrintLevel(0), Strategy(2));
   fitMass->Print("V");
   std::cout << "**************************** END MASS FIT ******************************\n";
 
@@ -332,18 +345,24 @@ void Final2DFit::defineCtauModel()
   //                               RooArgSet(*ws->var("ctau3D"), *ws->pdf("pdfCTAU_BkgPR"), *ws->pdf("pdfCTAU_BkgNoPR"), *ws->pdf("pdfCTAUCOND_BkgPR"), *ws->pdf("pdfCTAUCOND_BkgNoPR")))
   //     ->setAttribAll("Constant", kTRUE);
 
+
+  // --- NP compoents ---
   double lambda = ws->var("lambdaDSS")->getVal();
-  double lambda1 = ws->var("lambdaDSS2")->getVal();
+  double r_lambda2 = ws->var("r_lambda2")->getVal();
+  double lambda2 = lambda * r_lambda2;
   //   double lambda2 = ws->var("lambdaDSS3")->getVal();
   double fdss = ws->var("fDSS")->getVal();
   //   double fdss1 = ws->var("fDSS1")->getVal();
 
+  // double lambda = 5.5757e-01; // 5.5757e-01
+  // double lambda1 = 1.1277328407;
+  // double fdss = 2.6433e-01;
   ws->factory(Form("lambdaDSS_test1[%.4f]", lambda));
-  ws->factory(Form("lambdaDSS_test2[%.4f]", lambda1));
+  ws->factory(Form("lambdaDSS_test2[%.4f]", lambda2));
   //   ws->factory(Form("lambdaDSS_test3[%.4f]", lambda2));
   ws->factory(Form("fDSS1_test[%.4f]", fdss));
   //   ws->factory(Form("fDSS2_test[%.4f]", fdss1));
-
+  
   // ws->var("lambdaDSS_test1")->setConstant();
   // ws->var("lambdaDSS_test2")->setConstant();
   // //   ws->var("lambdaDSS_test3")->setConstant();
@@ -355,9 +374,10 @@ void Final2DFit::defineCtauModel()
   //   ws->factory(Form("Decay::%s(%s, %s, %s, RooDecay::SingleSided)", "pdfCTAUTRUE_test3", "ctau3D", "lambdaDSS_test3", "pdfCTAURES")); //NP
   RooAddPdf pdfCTAUCOND_JpsiNoPR("pdfCTAUCOND_JpsiNoPR", "", RooArgList(*ws->pdf("pdfCTAUTRUE_test1"), *ws->pdf("pdfCTAUTRUE_test2")), RooArgList(*ws->var("fDSS1_test")));
   ws->import(pdfCTAUCOND_JpsiNoPR);
-
+  
+  // --- ctau PR, NP in sig region
   ws->factory(Form("SUM::%s(%s)", "pdfCTAUCOND_JpsiPR", "pdfCTAURES"));
-
+  
   RooProdPdf pdfJpsiPR("pdfCTAU_JpsiPR", "", *ws->pdf("pdfCTAUERR_Jpsi"),
                        Conditional(*ws->pdf("pdfCTAUCOND_JpsiPR"), RooArgList(*ws->var("ctau3D"))));
   ws->import(pdfJpsiPR);
@@ -381,7 +401,9 @@ void Final2DFit::define2DFitModel()
                    "b_Jpsi",
                    "pdfCTAUMASS_JpsiNoPR",
                    "pdfCTAUMASS_JpsiPR"));
-  
+
+  // ws->factory(Form("b_Bkg2D[0.5, 0.01, 0.99]"));
+
   // 2D Bkg model
   ws->factory(Form("PROD::%s(%s, %s)", "pdfCTAUMASS_BkgPR",
                    "pdfCTAU_BkgPR",
@@ -399,6 +421,11 @@ void Final2DFit::define2DFitModel()
   double nbkg = ws->var("N_Bkg")->getVal();
   ws->factory(Form("nBkg2D[%.3f, %.3f, %.3f]", nbkg, 1., 1e+8));
 
+  // ws->var("sigma_1_A_smass_sig")->setConstant(true);
+  // ws->var("mean_Jpsi")->setConstant(true);
+  // ws->var("nSig2D")->setConstant(true);
+  // ws->var("nBkg2D")->setConstant(true);
+
   // 2D Sig + Bkg model
   RooAbsPdf *themodel = NULL;
   themodel = new RooAddPdf("pdfCTAUMASS_Tot", "",
@@ -409,12 +436,42 @@ void Final2DFit::define2DFitModel()
   delete themodel;
 }
 
+void Final2DFit::initVar(const std::string &varName, double init, double low, double high)
+{
+  RooRealVar *var = ws->var(varName.c_str());
+  if (!var)
+  {
+    std::cerr << "[ERROR] there is no variable:: " << varName << "\n";
+    exit(1);
+  }
+
+  if (init < low || init > high)
+  {
+    std::cerr << "[ERROR] init value out of bounds for variable: " << varName << "\n";
+    std::cerr << "        init = " << init << ", range = [" << low << ", " << high << "]\n";
+    exit(1);
+  }
+
+  var->setVal(init);
+  // var->setMin(low);
+  // var->setMax(high);
+  var->setRange(low, high);
+}
+
+void Final2DFit::setConstVar(const std::string &varName, bool isConst, double value)
+{
+  if (value != 3096)
+    ws->var(varName.c_str())->setVal(value);
+  ws->var(varName.c_str())->setConstant(isConst);
+}
+
 void Final2DFit::perform2DFit()
 {
   std::cout << "===== Start perform2DFit() =====\n\n";
   std::cout << "\n******************* Start Ctau-Mass 2D Fit *********************\n\n";
 
-  fit2DFit = ws->pdf("pdfCTAUMASS_Tot")->fitTo(*ws->data("dsTot"), Extended(kTRUE), NumCPU(nCPU), SumW2Error(true), PrintLevel(0), Save());
+  fit2DFit = ws->pdf("pdfCTAUMASS_Tot")->fitTo(*ws->data("dsTot"), Extended(true), NumCPU(nCPU), SumW2Error(true), PrintLevel(0), Save(), RecoverFromUndefinedRegions(1.), PrintEvalErrors(0), Strategy(2), ConditionalObservables(RooArgSet(*ws->var("ctau3DErr"))), Range("fitRange"));
+  // Range("ctauRange"),
   fit2DFit->Print("V");
 
   std::cout << "\n******************** Finish Ctau-Mass 2D Fit **********************\n";
@@ -422,13 +479,14 @@ void Final2DFit::perform2DFit()
 
 void Final2DFit::makePlots()
 {
-  std::cout << "\n===== Start makePlots() =====\n";
+  std::cout << "\n===== makePlots() =====\n";
   plotMass();
   plotCtau();
 }
 
 void Final2DFit::plotMass()
 {
+  std::cout << "===== plotMass() =====\n\n";
   RooDataSet *dsTot = (RooDataSet *)ws->data("dsTot");
 
   TCanvas *c_mass = new TCanvas("c_mass", "Mass Distribution", 800, 800);
@@ -440,10 +498,20 @@ void Final2DFit::plotMass()
   pad1->cd();
   gPad->SetLogy();
 
-  RooPlot *massFrame = ws->var("mass")->frame(RooFit::Title("Mass Distribution"), Bins(nMassBin), Range(massLow, massHigh));
-  dsTot->plotOn(massFrame, RooFit::Name("data_mass"));
-  ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, RooFit::Name("fit_mass"));
-  ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, RooFit::Components("pdfMASS_bkg"), RooFit::LineStyle(kDashed), RooFit::LineColor(kAzure - 9));
+  RooPlot *massFrame = ws->var("mass")->frame(Title("Mass Distribution"), Bins(nMassBin), Range(massLow, massHigh));
+
+  // --- test option 1 ---
+  // dsTot->plotOn(massFrame, Name("data_mass"));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, Name("fit_mass"), Range(massLow, massHigh), NormRange("massFitRange"));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, Components("pdfMASS_bkg"), LineStyle(kDashed), LineColor(kAzure - 9), Range(massLow, massHigh), NormRange("massFitRange"));
+  // ---------------------
+
+  // --- test option 2 ---
+  dsTot->plotOn(massFrame, Name("data_mass"));
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, Name("fit_mass"), Range("fitRange"), NormRange("fitRange"));
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(massFrame, Components("pdfMASS_bkg"), LineStyle(kDashed), LineColor(kAzure - 9), Range("fitRange"), NormRange("fitRange"));
+  // ---------------------
+
   massFrame->GetYaxis()->SetTitleSize(0.05);
   massFrame->GetYaxis()->SetLabelSize(0.04);
   massFrame->GetYaxis()->SetTitleOffset(1.0);
@@ -515,7 +583,10 @@ void Final2DFit::plotMass()
 
 void Final2DFit::plotCtau()
 {
+  std::cout << "===== plotCtau() =====\n\n";
   RooDataSet *dsTot = (RooDataSet *)ws->data("dsTot");
+  RooDataSet *projCtauErr = (RooDataSet *)ws->data("dsTot")->reduce(RooArgSet(*ws->var("ctau3DErr")));
+  RooArgSet projVars(*ws->var("ctau3DErr"));
 
   TCanvas *c_ctau = new TCanvas("c_ctau", "Lifetime Distribution", 800, 800);
   c_ctau->cd();
@@ -527,12 +598,36 @@ void Final2DFit::plotCtau()
   pad1->cd();
   gPad->SetLogy();
 
-  RooPlot *ctauFrame = ws->var("ctau3D")->frame(RooFit::Title("Lifetime Distribution"), Bins(nCtauBins), Range(ctauLow, ctauHigh));
-  ctauFrame->updateNormVars(RooArgSet(*ws->var("ctau3D")));
-  dsTot->plotOn(ctauFrame, RooFit::Name("data_ctau"));
-  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, RooFit::Name("fit_ctau"), RooFit::ProjWData(*dsTot));
-  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, RooFit::Components("pdfCTAUMASS_Bkg"), RooFit::LineStyle(kDashed), RooFit::LineColor(kAzure - 9), RooFit::ProjWData(*dsTot));
-  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, RooFit::ProjWData(*dsTot), RooFit::Components("pdfCTAUMASS_Bkg"), RooFit::LineStyle(kDashed), RooFit::LineColor(kAzure - 9));
+  RooPlot *ctauFrame = ws->var("ctau3D")->frame(Title("Lifetime Distribution"), Bins(nCtauBins), Range(ctauLow, ctauHigh));
+  ctauFrame->updateNormVars(RooArgSet(*ws->var("ctau3D"), *ws->var("mass")));
+  // ctauFrame->updateNormVars(RooArgSet(*ws->var("mass"), *ws->var("ctau3D"), *ws->var("ctau3DErr")));
+
+
+  // ---- plot option 1 ---
+  ws->var("mass")->setRange("fitRange", 2.6, 3.5);
+  dsTot->plotOn(ctauFrame, Name("data_ctau"));
+  // dsTot->plotOn(ctauFrame, Name("data_ctau"), CutRange("fitRange"));
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Name("fit_ctau"), ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange"), Name("fit_ctau"));
+  // , ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange")
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_Bkg"), LineStyle(kDashed), LineColor(kRed - 3), ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange"), Name("fit_ctau"));
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_JpsiPR"), LineStyle(kDashed), LineColor(kOrange - 3), ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange"), Name("fit_ctau"));
+  ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_JpsiNoPR"), LineStyle(kDashed), LineColor(kAzure - 3), ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange"), Name("fit_ctau"));
+  // ----------------------
+
+  // ---- plot option 2 ---
+  // dsTot->plotOn(ctauFrame, Name("data_ctau"));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Name("fit_ctau"), ProjWData(projVars, *dsTot));
+  // // , ProjWData(projVars, *dsTot), Range("fitRange"), NormRange("fitRange")
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_Bkg"), LineStyle(kDashed), LineColor(kRed - 3), ProjWData(projVars, *dsTot));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_JpsiPR"), LineStyle(kDashed), LineColor(kOrange - 3), ProjWData(projVars, *dsTot));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_JpsiNoPR"), LineStyle(kDashed), LineColor(kAzure - 3), ProjWData(projVars, *dsTot));
+  // ----------------------
+
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Name("fit_ctau"), ProjWData(projVars, *dsTot));
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, Components("pdfCTAUMASS_Bkg"), LineStyle(kDashed), LineColor(kAzure - 9), ProjWData(projVars, *dsTot));
+  // Range("ctauRange")
+  // ConditionalObservables(RooArgSet(*ws->var("ctauErr")))
+  // ws->pdf("pdfCTAUMASS_Tot")->plotOn(ctauFrame, ProjWData(*dsTot), Components("pdfCTAUMASS_Bkg"), LineStyle(kDashed), LineColor(kAzure - 9));
   ctauFrame->GetYaxis()->SetTitleSize(0.05);
   ctauFrame->GetYaxis()->SetRangeUser(0.01, 1000000);
   ctauFrame->GetYaxis()->SetLabelSize(0.04);
@@ -548,7 +643,9 @@ void Final2DFit::plotCtau()
   yUp = yMax * TMath::Power((yMax / 0.1), 0.3);
   // yUp = yMax * TMath::Power((yMax / 0.01), 0.5);
   yDown = yMin / (TMath::Power((yMax / yMin), (0.2 / (1.0 - 0.9))));
+  if (yDown < 1) yDown = 1;
   ctauFrame->GetYaxis()->SetRangeUser(yDown, yUp);
+  // ctauFrame->GetYaxis()->SetRangeUser(0, 100000);
   ctauFrame->Draw();
   delete h_tmp;
 
@@ -562,7 +659,7 @@ void Final2DFit::plotCtau()
 
   RooHist *h_ctau = (RooHist *)ctauFrame->findObject("data_ctau");
   RooCurve *c_fit = (RooCurve *)ctauFrame->findObject("fit_ctau");
-  RooPlot *ratioFrame = ws->var("ctau3D")->frame(RooFit::Title(" "));
+  RooPlot *ratioFrame = ws->var("ctau3D")->frame(Title(" "));
 
   TGraphAsymmErrors *g_ratio_ctau = new TGraphAsymmErrors();
   int point_idx_ctau = 0;
@@ -581,7 +678,7 @@ void Final2DFit::plotCtau()
     }
   }
 
-  ratioFrame->GetYaxis()->SetRangeUser(0, 2);
+  ratioFrame->GetYaxis()->SetRangeUser(0, 8);
   ratioFrame->GetYaxis()->SetTitle("Data / Fit");
   ratioFrame->GetYaxis()->SetNdivisions(505);
   ratioFrame->GetYaxis()->SetTitleSize(0.1);
@@ -609,15 +706,15 @@ void Final2DFit::plotCtau()
 void Final2DFit::saveResults()
 {
   std::cout << "\n===== Start saveResults() =====\n";
-  TFile *outputFile = new TFile(Form("roots/2DFit_%s/FitResult_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
-  outputFile->cd();
+  // TFile *outputFile = new TFile(Form("roots/2DFit_%s/FitResult_%s.root", DATE.c_str(), kineLabel.c_str()), "RECREATE");
+  // outputFile->cd();
 
-  RooWorkspace wsTmp("ws_final");
-  wsTmp.import(*ws->pdf("pdfCTAUMASS_Tot"));
-  wsTmp.Write();
+  // RooWorkspace wsTmp("ws_final");
+  // wsTmp.import(*ws->pdf("pdfCTAUMASS_Tot"));
+  // wsTmp.Write();
 
-  fit2DFit->Write("fit2DFit");
+  // fit2DFit->Write("fit2DFit");
 
-  outputFile->Close();
-  delete outputFile;
+  // outputFile->Close();
+  // delete outputFile;
 }

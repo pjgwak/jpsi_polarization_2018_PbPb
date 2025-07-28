@@ -19,7 +19,7 @@ def get_common_config():
     # 'data_input_path': str(files_root / 'RooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250221.root'),
 
     'mc_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC1_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
-    'data_input_path': '../../../input_roodataset/roots/OniaRooDataSet_miniAOD_isMC0_Jpsi_cent0_180_Effw0_Accw0_PtW0_TnP0_Run3_PbPb_ptWeightFit.root',
+    'data_input_path': '/disk1/Oniatree/miniAOD/Run2025OO/OniaRooDataSet_miniAOD_2025OORun_isMC0_Charmonia_Effw0_Accw0_PtW0_TnP0_250722.root',
     'mc_gen_only_input_path': '../../../files_roodata/RooDataSet_miniAOD_isMC1_NP_Jpsi_GenOnly_cent0_180_Effw1_Accw1_PtW1_TnP1_HFNom_250307.root',
     
     'shared_lib_path': str(lib_path),
